@@ -7,6 +7,7 @@ import morecantile
 from morecantile.defaults import TileMatrixSets
 
 from titiler.core.factory import TilerFactory
+from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
 
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = APP_DIR.parent
@@ -48,6 +49,8 @@ app = FastAPI(
     redoc_url=None,
     openapi_url="/openapi.json" if settings.enable_docs else None,
 )
+
+add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
 
 def get_raster_path(raster: str = "test_raster.tif") -> Path:
