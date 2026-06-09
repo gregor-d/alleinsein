@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from starlette.middleware.cors import CORSMiddleware
 import morecantile
 from morecantile.defaults import TileMatrixSets
 
@@ -13,32 +13,33 @@ PROJECT_DIR = APP_DIR.parent
 
 
 class Settings(BaseSettings):
-    env: str = "dev"
+    env: str = "prod"
     enable_docs: bool = False
-    enable_tilejson: bool = False
     allowed_tms: str = "WebMercatorQuad"
-    raster_path: Path = PROJECT_DIR / "raster"
+    raster_path: str = "raster"
+    add_preview: bool = False
+    add_part: bool = False
+    add_viewer: bool = False
+    add_ogc_maps: bool = False
 
     model_config = SettingsConfigDict(
         env_prefix="APP_",
-        env_file=".env",
+        env_file=[APP_DIR / ".env", APP_DIR / ".env.dev"],
+        extra="ignore",
+        dotenv_filtering="only_existing",
     )
-
 
 settings = Settings()
 
 
-def build_supported_tms(names: str) -> TileMatrixSets:
+def build_supported_tms(name: str) -> TileMatrixSets:
     result = {}
-
-    for name in [x.strip() for x in names.split(",") if x.strip()]:
-        result[name] = morecantile.tms.get(name)
+    result[name] = morecantile.tms.get(name)
 
     if not result:
         raise RuntimeError("No TileMatrixSet configured")
 
     return TileMatrixSets(result)
-
 
 
 app = FastAPI(
@@ -48,46 +49,49 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.enable_docs else None,
 )
 
-def get_raster_path(raster:str="test_raster.tif") -> Path:
-    # only allow raster files in the specified raster path for security reasons
-    if not (settings.raster_path / raster).is_file():
-        raise FileNotFoundError(f"Raster file not found: {raster}")
-    return settings.raster_path / raster
+
+def get_raster_path(raster: str = "test_raster.tif") -> Path:
+    # prevent directory traversal or access to subdirectories
+    if not raster or "/" in raster or "\\" in raster or raster.startswith("."):
+        raise FileNotFoundError(f"Rasters file not found: {raster}")
+
+    target_path = PROJECT_DIR / settings.raster_path / raster
+    if not target_path.is_file():
+        raise FileNotFoundError(f"Raster file not found: {target_path}")
+    return target_path
+
 
 if settings.env == "prod":
-    class ProdTilerFactory(TilerFactory):
+    class CustomTiler(TilerFactory):
         def register_routes(self):
-            # Only:
-            # /tiles/{tileMatrixSetId}/{z}/{x}/{y}
             self.tile()
-
-    cog_prod = ProdTilerFactory(
-        supported_tms=build_supported_tms(settings.allowed_tms),
-        add_preview=False,
-        add_part=False,
-        add_viewer=False,
-        add_ogc_maps=False,
-    )
-    app.include_router(cog_prod.router)
-
 elif settings.env == "dev":
-    # Full normal TiTiler core routes
-    cog_pg = TilerFactory(
-        # add default raster
-        router_prefix="/api/raster",
-        path_dependency=get_raster_path,
-        supported_tms=build_supported_tms(settings.allowed_tms),
-        add_preview=True,
-        add_part=True,
-        add_viewer=True,
-        add_ogc_maps=True,
+    # Allow CORS in development for testing with the frontend running on different origin
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
-    app.include_router(cog_pg.router)
-
+    class CustomTiler(TilerFactory):
+        def register_routes(self):
+            super().register_routes()
 else:
-    raise RuntimeError(f"Invalid APP_ROUTE_MODE: {settings.env}")
+    raise RuntimeError(f"Unknown environment: {settings.env}")
 
+custom_tiler = CustomTiler(
+    path_dependency=get_raster_path,
+    supported_tms=build_supported_tms(settings.allowed_tms),
+    add_preview=settings.add_preview,
+    add_part=settings.add_part,
+    add_viewer=settings.add_viewer,
+    add_ogc_maps=settings.add_ogc_maps,
+)
 
+app.include_router(
+    custom_tiler.router,
+)
 
 
 @app.get("/healthz", include_in_schema=False)
