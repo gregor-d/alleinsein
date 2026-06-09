@@ -16,6 +16,7 @@ PROJECT_DIR = APP_DIR.parent
 class Settings(BaseSettings):
     env: str = "prod"
     enable_docs: bool = False
+    cors_origins: list[str] = ["https://alleinseinkarte.de", "https://www.alleinseinkarte.de"]
     allowed_tms: str = "WebMercatorQuad"
     raster_path: str = "raster"
     add_preview: bool = False
@@ -42,6 +43,17 @@ def build_supported_tms(name: str) -> TileMatrixSets:
 
     return TileMatrixSets(result)
 
+def get_raster_path(raster: str = "test_raster.tif") -> Path:
+    # prevent directory traversal or access to subdirectories
+    if not raster or "/" in raster or "\\" in raster or raster.startswith("."):
+        # should raise 404 to prevent information disclosure about the existence of files
+        raise FileNotFoundError(f"Rasters file not found: {raster}")
+
+    target_path = PROJECT_DIR / settings.raster_path / raster
+    if not target_path.is_file():
+        raise FileNotFoundError(f"Raster file not found: {target_path}")
+    return target_path
+
 
 app = FastAPI(
     title="TiTiler Backend",
@@ -52,16 +64,14 @@ app = FastAPI(
 
 add_exception_handlers(app, DEFAULT_STATUS_CODES)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if settings.env == "dev" else settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def get_raster_path(raster: str = "test_raster.tif") -> Path:
-    # prevent directory traversal or access to subdirectories
-    if not raster or "/" in raster or "\\" in raster or raster.startswith("."):
-        raise FileNotFoundError(f"Rasters file not found: {raster}")
-
-    target_path = PROJECT_DIR / settings.raster_path / raster
-    if not target_path.is_file():
-        raise FileNotFoundError(f"Raster file not found: {target_path}")
-    return target_path
 
 
 if settings.env == "prod":
@@ -69,14 +79,6 @@ if settings.env == "prod":
         def register_routes(self):
             self.tile()
 elif settings.env == "dev":
-    # Allow CORS in development for testing with the frontend running on different origin
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
     class CustomTiler(TilerFactory):
         def register_routes(self):
             super().register_routes()
@@ -95,6 +97,7 @@ custom_tiler = CustomTiler(
 app.include_router(
     custom_tiler.router,
 )
+
 
 
 @app.get("/healthz", include_in_schema=False)
