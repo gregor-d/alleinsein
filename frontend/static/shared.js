@@ -2,6 +2,9 @@
 //  SHARED.JS — Shared state, helpers & UI builder
 // ─────────────────────────────────────────────
 
+// ─── GLOBAL FLAGS ───
+window.boundsSet = false;
+
 // ─── CONFIG ───
 const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
 console.log("Using TileJSON URL:", TILE_JSON_URL.toString());

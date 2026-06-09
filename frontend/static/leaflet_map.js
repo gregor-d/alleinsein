@@ -55,10 +55,10 @@ class LeafletEngine {
             if (!tj.tiles || tj.tiles.length === 0) return;
 
             // Fit map to raster bounds on first load
-            if (!this.boundsSet && tj.bounds) {
+            if (!window.boundsSet && tj.bounds) {
                 const [west, south, east, north] = tj.bounds;
                 this.map.fitBounds([[south, west], [north, east]]);
-                this.boundsSet = true;
+                window.boundsSet = true;
             }
 
             let tileUrl = tj.tiles[0];
