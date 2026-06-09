@@ -45,7 +45,7 @@ class LeafletEngine {
             return;
         }
 
-        TILE_JSON_URL.searchParams.set('raster', RASTER_SOURCE_FILE);
+        TILE_JSON_URL.searchParams.set('raster', CONFIG.raster_name);
         TILE_JSON_URL.searchParams.set('colormap', colormapJson);
 
         try {
@@ -115,7 +115,7 @@ class LeafletEngine {
     }
 
     getZoom() {
-        if (!this.map) return 8;
+        if (!this.map) return 10;
         return this.map.getZoom();
     }
 }

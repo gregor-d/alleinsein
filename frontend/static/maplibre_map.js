@@ -102,7 +102,7 @@ class MapLibreEngine {
         }
 
         this.debounceTimer = setTimeout(async () => {
-            TILE_JSON_URL.searchParams.set('raster', RASTER_SOURCE_FILE);
+            TILE_JSON_URL.searchParams.set('raster', CONFIG.raster_name);
             TILE_JSON_URL.searchParams.set('colormap', colormapJson);
 
             try {
@@ -175,7 +175,7 @@ class MapLibreEngine {
     }
 
     getZoom() {
-        if (!this.map) return 8;
+        if (!this.map) return 14;
         return this.map.getZoom() + 1;
     }
 }
