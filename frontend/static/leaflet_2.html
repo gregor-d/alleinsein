@@ -178,14 +178,20 @@
             if (key === activeBasemapKey) return;
             activeBasemapKey = key;
 
-            map.removeLayer(basemapLayer);
-            const def = BASEMAPS[key];
-            basemapLayer = L.tileLayer(def.url, def.options).addTo(map);
-            basemapLayer.setOpacity(basemapOpacity);
+            if (basemapLayer) {
+                map.removeLayer(basemapLayer);
+                basemapLayer = null;
+            }
 
-            // Re-add data layer on top
-            if (dataLayer) {
-                dataLayer.bringToFront();
+            if (key !== 'none') {
+                const def = BASEMAPS[key];
+                basemapLayer = L.tileLayer(def.url, def.options).addTo(map);
+                basemapLayer.setOpacity(basemapOpacity);
+
+                // Re-add data layer on top
+                if (dataLayer) {
+                    dataLayer.bringToFront();
+                }
             }
 
             // Update button states
@@ -277,6 +283,7 @@
                     <div class="basemap-options">
                         <button class="basemap-btn active" data-key="osm" id="basemap-osm">OSM</button>
                         <button class="basemap-btn" data-key="satellite" id="basemap-satellite">Satellite</button>
+                        <button class="basemap-btn" data-key="none" id="basemap-none">None</button>
                     </div>
                     <div style="padding: 4px 14px 12px;">
                         <div class="ctrl-row">
@@ -319,73 +326,47 @@
                 card.className = `layer-card${layer.visible ? '' : ' inactive'}`;
                 card.id = `card-${layer.id}`;
 
-                let bodyHtml = '';
+                let headerControls = '';
+                let dropdownHtml = '';
+
                 if (layer.type === 'category') {
                     const schemeButtons = Object.keys(COLORMAP_PRESETS)
                         .map(k => `<button class="scheme-btn${k === layer.preset ? ' active' : ''}" data-scheme="${k}" data-layer="${layer.id}" title="${k}" style="background: ${buildGradient(k, false)};"></button>`)
                         .join('');
 
-                    bodyHtml = `
-                        <div class="ctrl-row">
-                            <div class="ctrl-label"><span>Color Scheme</span></div>
-                            <div class="scheme-active-row">
-                                <div class="scheme-active-bar" id="bar-${layer.id}" style="background: ${buildGradient(layer.preset, layer.reverse)};"></div>
-                                <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="rev-${layer.id}" title="Reverse palette">
-                                    ⇄ Rev
-                                </button>
-                            </div>
+                    headerControls = `
+                        <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="rev-${layer.id}" title="Reverse palette">⇄</button>
+                        <div class="scheme-bar-btn" id="bar-${layer.id}" title="Change color scheme" style="background: ${buildGradient(layer.preset, layer.reverse)};"></div>
+                    `;
+
+                    dropdownHtml = `
+                        <div class="scheme-dropdown" id="dropdown-${layer.id}">
                             <div class="scheme-grid" id="schemes-${layer.id}">
                                 ${schemeButtons}
                             </div>
                         </div>
                     `;
                 } else if (layer.type === 'solid') {
-                    bodyHtml = `
-                        <div class="ctrl-row">
-                            <div class="ctrl-label"><span>Water Color</span></div>
-                            <div class="scheme-row">
-                                <input type="color" id="color-${layer.id}" value="${layer.preset}" style="width: 100%; height: 34px; background: transparent; border: 1px solid var(--border-hi); border-radius: 6px; padding: 2px; cursor: pointer;" />
-                            </div>
-                        </div>
+                    headerControls = `
+                        <input type="color" id="color-${layer.id}" value="${layer.preset}" class="header-color-picker" title="Pick color" />
                     `;
                 }
 
-                const colors = COLORMAP_PRESETS[layer.preset] || layer.preset;
-                const topColor = Array.isArray(colors) ? (layer.reverse ? colors[colors.length - 1] : colors[0]) : colors;
-
                 card.innerHTML = `
                     <div class="layer-header" id="hdr-${layer.id}">
-                        <span class="layer-dot" id="dot-${layer.id}" style="color:${topColor}; background:${topColor};"></span>
-                        <span class="layer-name">${layer.id}</span>
                         <label class="toggle" title="Toggle visibility">
                             <input type="checkbox" id="vis-${layer.id}" ${layer.visible ? 'checked' : ''} />
                             <span class="toggle-track"></span>
                         </label>
-                        <svg class="settings-cog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <span class="layer-name">${layer.id}</span>
+                        ${headerControls}
                     </div>
-                    <div class="layer-body">
-                        ${bodyHtml}
-                    </div>
+                    ${dropdownHtml}
                 `;
 
                 container.appendChild(card);
 
                 // ── EVENTS ──
-
-                // Expand / collapse only with cog, or toggle visibility with general click
-                document.getElementById(`hdr-${layer.id}`).addEventListener('click', (e) => {
-                    if (e.target.closest('.settings-cog')) {
-                        card.classList.toggle('open');
-                        return;
-                    }
-                    if (e.target.closest('.toggle')) {
-                        return;
-                    }
-                    // Toggle the visibility check programmatically
-                    const checkbox = document.getElementById(`vis-${layer.id}`);
-                    checkbox.checked = !checkbox.checked;
-                    checkbox.dispatchEvent(new Event('change'));
-                });
 
                 // Visibility toggle
                 document.getElementById(`vis-${layer.id}`).addEventListener('change', (e) => {
@@ -394,25 +375,46 @@
                     updateDataLayer();
                 });
 
-
+                // Click on header (not on interactive elements) toggles visibility
+                document.getElementById(`hdr-${layer.id}`).addEventListener('click', (e) => {
+                    if (e.target.closest('.toggle') || e.target.closest('.scheme-bar-btn') || e.target.closest('.btn-reverse') || e.target.closest('.header-color-picker')) return;
+                    const checkbox = document.getElementById(`vis-${layer.id}`);
+                    checkbox.checked = !checkbox.checked;
+                    checkbox.dispatchEvent(new Event('change'));
+                });
 
                 if (layer.type === 'category') {
+                    // Gradient bar toggles dropdown
+                    document.getElementById(`bar-${layer.id}`).addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // Close other open dropdowns
+                        document.querySelectorAll('.scheme-dropdown.open').forEach(d => {
+                            if (d.id !== `dropdown-${layer.id}`) d.classList.remove('open');
+                        });
+                        document.getElementById(`dropdown-${layer.id}`).classList.toggle('open');
+                    });
+
                     // Color scheme buttons
                     document.getElementById(`schemes-${layer.id}`).querySelectorAll('.scheme-btn').forEach(btn => {
                         btn.addEventListener('click', () => {
                             layer.preset = btn.dataset.scheme;
-                            // Update active state
                             document.getElementById(`schemes-${layer.id}`).querySelectorAll('.scheme-btn').forEach(b => b.classList.remove('active'));
                             btn.classList.add('active');
+                            // Update the gradient bar in header
+                            document.getElementById(`bar-${layer.id}`).style.background = buildGradient(layer.preset, layer.reverse);
                             updateColorbar(layer);
                             updateDataLayer();
+                            // Close dropdown after selection
+                            document.getElementById(`dropdown-${layer.id}`).classList.remove('open');
                         });
                     });
 
                     // Reverse button
-                    document.getElementById(`rev-${layer.id}`).addEventListener('click', () => {
+                    document.getElementById(`rev-${layer.id}`).addEventListener('click', (e) => {
+                        e.stopPropagation();
                         layer.reverse = !layer.reverse;
                         document.getElementById(`rev-${layer.id}`).classList.toggle('active', layer.reverse);
+                        document.getElementById(`bar-${layer.id}`).style.background = buildGradient(layer.preset, layer.reverse);
                         updateColorbar(layer);
                         updateDataLayer();
                     });
@@ -420,9 +422,6 @@
                     // Color picker
                     document.getElementById(`color-${layer.id}`).addEventListener('input', (e) => {
                         layer.preset = e.target.value;
-                        const dot = document.getElementById(`dot-${layer.id}`);
-                        dot.style.color = layer.preset;
-                        dot.style.background = layer.preset;
                         updateDataLayer();
                     });
                 }
@@ -460,14 +459,6 @@
             const bar = document.getElementById(`bar-${layer.id}`);
             if (bar) {
                 bar.style.background = buildGradient(layer.preset, layer.reverse);
-            }
-
-            // Update dot to highest value of the current ramp
-            const topColor = layer.reverse ? colors[colors.length - 1] : colors[0];
-            const dot = document.getElementById(`dot-${layer.id}`);
-            if (dot) {
-                dot.style.color = topColor;
-                dot.style.background = topColor;
             }
         }
 
