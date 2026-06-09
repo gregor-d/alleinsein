@@ -1,5 +1,7 @@
 const CONFIG = {
-    fqdn: "http://127.0.0.1:8000",
+    // fqdn: "http://127.0.0.1:8000",
+    // on prod the fqdn is on the same origin
+    fqdn: "tiles.alleinseinkarte.de",
     tile_json_path: "WebMercatorQuad/tilejson.json",
     raster_name: "germany_raster_v1.tif"
 };
