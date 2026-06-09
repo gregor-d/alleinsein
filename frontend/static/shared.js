@@ -244,7 +244,7 @@ function buildPanel() {
         dataLayerOpacity = parseFloat(e.target.value);
         document.getElementById('data-layer-op-val').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
         if (mapEngine) {
-            mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
+            mapEngine.updateDataLayerOpacity(dataLayerOpacity);
         }
     });
 }

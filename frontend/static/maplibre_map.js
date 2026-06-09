@@ -148,6 +148,12 @@ class MapLibreEngine {
         }, 50);
     }
 
+    updateDataLayerOpacity(opacity) {
+        if (this.map && this.map.getLayer('data-layer')) {
+            this.map.setPaintProperty('data-layer', 'raster-opacity', opacity);
+        }
+    }
+
     switchBasemap(key) {
         if (!this.map) return;
         if (this.map.getLayer('basemap-osm-layer')) {

@@ -84,6 +84,12 @@ class LeafletEngine {
         }
     }
 
+    updateDataLayerOpacity(opacity) {
+        if (this.dataLayer) {
+            this.dataLayer.setOpacity(opacity);
+        }
+    }
+
     switchBasemap(key) {
         if (this.basemapLayer) {
             this.map.removeLayer(this.basemapLayer);
