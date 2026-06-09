@@ -78,6 +78,7 @@ if settings.env == "prod":
     class CustomTiler(TilerFactory):
         def register_routes(self):
             self.tile()
+            self.tilejson()
 elif settings.env == "dev":
     class CustomTiler(TilerFactory):
         def register_routes(self):
