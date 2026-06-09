@@ -1,0 +1,20 @@
+:root {
+    --bg-deep: #060a07;
+    --bg-panel: #0b120c; /* black-green panel background */
+    --bg-card: #344e39;  /* sage green cards for strong green contrast */
+    --bg-hover: #406046;
+    --border: #233527;
+    --border-hi: #a3b18a;
+    --text-hi: #dad7cd;
+    --text-mid: #a3b18a;
+    --text-lo: #588157;
+    --text-card-hi: #ffffff;
+    --text-card-mid: #dad7cd;
+    --text-card-lo: #a3b18a;
+    --accent: #a3b18a;
+    --accent2: #dad7cd;
+    --accent-dim: rgba(163, 177, 138, 0.2);
+    --accent-glow: rgba(163, 177, 138, 0.45);
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.45);
+    --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.65);
+}

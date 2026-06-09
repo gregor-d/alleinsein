@@ -1,0 +1,20 @@
+:root {
+    --bg-deep: #030406;
+    --bg-panel: #080a0f; /* deep dark blue-black panel */
+    --bg-card: #202736;  /* navy-slate cards for strong contrast */
+    --bg-hover: #2d364b;
+    --border: #3b4866;
+    --border-hi: #ffb000; /* Amber accent */
+    --text-hi: #f0f4fc;
+    --text-mid: #1e90ff; /* Deep Sky Blue accent */
+    --text-lo: #7483a3;
+    --text-card-hi: #ffffff;
+    --text-card-mid: #ffb000;
+    --text-card-lo: #1e90ff;
+    --accent: #ffb000;
+    --accent2: #1e90ff;
+    --accent-dim: rgba(255, 176, 0, 0.2);
+    --accent-glow: rgba(255, 176, 0, 0.5);
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.7);
+}

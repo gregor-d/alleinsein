@@ -1,0 +1,20 @@
+:root {
+    --bg-deep: #f4f7f6;
+    --bg-panel: #1f2c2a; /* dark slate-teal panel */
+    --bg-card: #ffffff;  /* white cards for strong contrast */
+    --bg-hover: #f4f7f6;
+    --border: #ccd8d6;
+    --border-hi: #00a896; /* Turquoise */
+    --text-hi: #ffffff; /* text on dark panel */
+    --text-mid: #a9c5be;
+    --text-lo: #52796f;
+    --text-card-hi: #1f2c2a; /* text on white card */
+    --text-card-mid: #f05d5e; /* Coral / Orange-Red */
+    --text-card-lo: #00a896;
+    --accent: #00a896;
+    --accent2: #f05d5e;
+    --accent-dim: rgba(0, 168, 150, 0.15);
+    --accent-glow: rgba(0, 168, 150, 0.4);
+    --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-card-hover: 0 10px 20px rgba(0, 0, 0, 0.12);
+}

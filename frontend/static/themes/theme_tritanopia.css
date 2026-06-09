@@ -1,0 +1,20 @@
+:root {
+    --bg-deep: #f7fafc;
+    --bg-panel: #1e293b; /* dark navy-slate panel */
+    --bg-card: #ffffff;  /* white card for strong contrast */
+    --bg-hover: #f1f5f9;
+    --border: #cbd5e1;
+    --border-hi: #00a3a3; /* Tritanopia safe cyan/teal */
+    --text-hi: #ffffff; /* text on dark panel */
+    --text-mid: #94a3b8;
+    --text-lo: #475569;
+    --text-card-hi: #1a202c; /* text on white card */
+    --text-card-mid: #e53e3e; /* Tritanopia safe red-pink */
+    --text-card-lo: #00a3a3;
+    --accent: #e53e3e;
+    --accent2: #00a3a3;
+    --accent-dim: rgba(229, 62, 62, 0.15);
+    --accent-glow: rgba(229, 62, 62, 0.4);
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    --shadow-card-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+}
