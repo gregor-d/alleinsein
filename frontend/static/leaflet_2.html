@@ -78,8 +78,9 @@
         // ─────────────────────────────────────────────
         //  CONFIG
         // ─────────────────────────────────────────────
-        const TILEJSON_BASE = CONFIG.apiBaseUrl + '/api/raster/WebMercatorQuad/tilejson.json';
-        const RASTER_SOURCE_FILE = CONFIG.rasterCog;
+        const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
+        console.log("Using TileJSON URL:", TILE_JSON_URL.toString());
+        const RASTER_SOURCE_FILE = CONFIG.raster_name;
 
         const COLORMAP_PRESETS = {
             viridis: ['#440154', '#472d7b', '#3b528b', '#2c728e', '#21918c', '#28ae80', '#5ec962', '#addc30', '#fde725'],
@@ -197,16 +198,18 @@
         // ─────────────────────────────────────────────
         //  TILE LAYER UPDATE
         // ─────────────────────────────────────────────
+        
+        
         let debounceTimer;
         function updateDataLayer() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(async () => {
-                const url = new URL(TILEJSON_BASE);
-                url.searchParams.set('raster', RASTER_SOURCE_FILE);
-                url.searchParams.set('colormap', getCombinedColormapJson());
+                // get TILE information from server only once
+                TILE_JSON_URL.searchParams.set('raster', RASTER_SOURCE_FILE);
+                TILE_JSON_URL.searchParams.set('colormap', getCombinedColormapJson());
 
                 try {
-                    const res = await fetch(url.toString());
+                    const res = await fetch(TILE_JSON_URL.toString());
                     const tj = await res.json();
 
                     if (!tj.tiles || tj.tiles.length === 0) return;
