@@ -148,7 +148,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 11px 14px 11px 24px;
+    padding: 11px 14px;
     cursor: pointer;
     user-select: none;
     transition: background var(--transition);
@@ -156,15 +156,6 @@ body {
 
 .layer-header:hover {
     background: var(--bg-hover);
-}
-
-.layer-dot {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 20px;
-    flex-shrink: 0;
 }
 
 .layer-name {
@@ -246,6 +237,45 @@ body {
 
 .layer-card.open .layer-body {
     display: flex;
+}
+
+/* Scheme bar button in header */
+.scheme-bar-btn {
+    flex: 1;
+    height: 14px;
+    min-width: 40px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.scheme-bar-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Scheme dropdown */
+.scheme-dropdown {
+    display: none;
+    padding: 8px 14px 10px;
+    border-top: 1px solid var(--border);
+}
+
+.scheme-dropdown.open {
+    display: block;
+}
+
+/* Header color picker for solid layers */
+.header-color-picker {
+    width: 32px;
+    height: 22px;
+    background: transparent;
+    border: 1px solid var(--border-hi);
+    border-radius: 4px;
+    padding: 1px;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 /* Control rows */
@@ -343,15 +373,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .btn-reverse {
     background: var(--bg-card);
     border: 1px solid var(--text-card-lo, var(--border-hi));
-    border-radius: 8px;
+    border-radius: 6px;
     color: var(--text-card-mid, var(--text-mid));
     cursor: pointer;
-    padding: 5px 8px;
-    font-size: 12px;
+    padding: 3px 7px;
+    font-size: 13px;
     display: flex;
     align-items: center;
-    gap: 4px;
-    white-space: nowrap;
+    justify-content: center;
+    flex-shrink: 0;
     transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
