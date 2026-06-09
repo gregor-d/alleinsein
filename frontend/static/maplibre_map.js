@@ -57,7 +57,7 @@ class MapLibreEngine {
                     ]
                 },
                 center: center, // MapLibre center format is [lng, lat]
-                zoom: zoom,
+                zoom: zoom - 1,
                 attributionControl: false
             });
 
@@ -176,7 +176,7 @@ class MapLibreEngine {
 
     getZoom() {
         if (!this.map) return 8;
-        return this.map.getZoom();
+        return this.map.getZoom() + 1;
     }
 }
 
