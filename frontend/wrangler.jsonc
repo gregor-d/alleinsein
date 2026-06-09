@@ -3,17 +3,9 @@
   "name": "rough-frost-f369",
   "compatibility_date": "2026-06-09",
   "assets": {
-    "directory": "./public"
+    "directory": "./static"
   },
-  "routes": [
-    {
-      "pattern": "sonnenkarte.de/*",
-      "zone_name": "sonnenkarte.de"
-    },
-    {
-      "pattern": "www.sonnenkarte.de/*",
-      "zone_name": "sonnenkarte.de"
-    },
+  "routes": [   
     {
       "pattern": "alleinseinkarte.de/*",
       "zone_name": "alleinseinkarte.de"
