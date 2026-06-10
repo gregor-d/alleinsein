@@ -5,7 +5,7 @@ if ! command -v gdal --version &> /dev/null; then
     if command -v apt-get &> /dev/null; then
         echo "Attempting to install GDAL using apt-get..."
         sudo apt-get update
-        sudo apt-get install -y gdal-bin libgdal-dev
+        sudo apt-get install -y gdal-bin libgdal-dev python3-gdal
     else
         echo "Error: apt-get is not available. With ubuntu add GIS ppa repository and install GDAL from there."
         echo "sudo add-apt-repository ppa:ubuntugis/ppa"

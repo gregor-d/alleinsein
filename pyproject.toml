@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "titiler.core>=2.0.4",
     "uvicorn>=0.49.0",
+    "pydantic-settings>=2.14.1",
 ]
 
 [dependency-groups]
@@ -15,8 +16,8 @@ dev = [
     "ruff>=0.15.16",
     "rio-cogeo>=7.0.2",
     "osmnx>=2.1.0",
-    "pydantic-settings>=2.14.1",
     "pytest>=9.0.3",
+    "gdal==3.12.3",
 ]
 
 [tool.pytest.ini_options]
