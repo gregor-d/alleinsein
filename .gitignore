@@ -47,6 +47,8 @@ Thumbs.db
 # geospatial data files
 *.tif*
 *.TIF*
+# allow this file which is used in pytest and smoketest
+!raster/out/test_raster.tif
 *.gpkg
 *.osm.pbf
 
@@ -55,7 +57,4 @@ uv.lock
 input_data/transformed/raster_stack_dataframe.csv
 cloud-config.env.txt
 README (2).md
-README.md
-README.md
-README.md
 README.md
