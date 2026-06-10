@@ -37,6 +37,12 @@ function getCombinedColormapJson() {
 }
 
 // ─── UI BUILDER ───
+function refreshDataLayer() {
+    if (mapEngine) {
+        mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
+    }
+}
+
 function buildPanel() {
     const container = document.getElementById('panel-body');
     container.innerHTML = '';
@@ -161,17 +167,22 @@ function buildPanel() {
         document.getElementById(`vis-${layer.id}`).addEventListener('change', (e) => {
             layer.visible = e.target.checked;
             card.classList.toggle('inactive', !layer.visible);
-            if (mapEngine) {
-                mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
-            }
+            refreshDataLayer();
         });
 
-        // Click on header (not on interactive elements) toggles visibility
+        // Click on header (not on interactive elements) opens the color picker
         document.getElementById(`hdr-${layer.id}`).addEventListener('click', (e) => {
             if (e.target.closest('.toggle') || e.target.closest('.scheme-bar-btn') || e.target.closest('.btn-reverse') || e.target.closest('.header-color-picker')) return;
-            const checkbox = document.getElementById(`vis-${layer.id}`);
-            checkbox.checked = !checkbox.checked;
-            checkbox.dispatchEvent(new Event('change'));
+            
+            if (layer.type === 'category') {
+                // Close other open dropdowns
+                document.querySelectorAll('.scheme-dropdown.open').forEach(d => {
+                    if (d.id !== `dropdown-${layer.id}`) d.classList.remove('open');
+                });
+                document.getElementById(`dropdown-${layer.id}`).classList.toggle('open');
+            } else if (layer.type === 'solid') {
+                document.getElementById(`color-${layer.id}`).click();
+            }
         });
 
         if (layer.type === 'category') {
@@ -194,9 +205,7 @@ function buildPanel() {
                     // Update the gradient bar in header
                     document.getElementById(`bar-${layer.id}`).style.background = buildGradient(layer.preset, layer.reverse);
                     updateColorbar(layer);
-                    if (mapEngine) {
-                        mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
-                    }
+                    refreshDataLayer();
                     // Close dropdown after selection
                     document.getElementById(`dropdown-${layer.id}`).classList.remove('open');
                 });
@@ -209,17 +218,13 @@ function buildPanel() {
                 document.getElementById(`rev-${layer.id}`).classList.toggle('active', layer.reverse);
                 document.getElementById(`bar-${layer.id}`).style.background = buildGradient(layer.preset, layer.reverse);
                 updateColorbar(layer);
-                if (mapEngine) {
-                    mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
-                }
+                refreshDataLayer();
             });
         } else if (layer.type === 'solid') {
             // Color picker
             document.getElementById(`color-${layer.id}`).addEventListener('input', (e) => {
                 layer.preset = e.target.value;
-                if (mapEngine) {
-                    mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
-                }
+                refreshDataLayer();
             });
         }
     });
@@ -306,7 +311,7 @@ function switchEngine(newEngineKey) {
     mapEngine.init('map', center, zoom).then(() => {
         mapEngine.switchBasemap(activeBasemapKey);
         mapEngine.updateBasemapOpacity(basemapOpacity);
-        mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
+        refreshDataLayer();
     });
 
     // Update switcher buttons UI

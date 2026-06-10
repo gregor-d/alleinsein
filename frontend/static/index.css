@@ -49,7 +49,7 @@ body {
     position: absolute;
     top: 16px;
     right: 16px;
-    bottom: 16px;
+    max-height: calc(100% - 32px);
     width: var(--panel-w);
     background: color-mix(in srgb, var(--bg-panel) 80%, transparent);
     backdrop-filter: blur(24px) saturate(160%);
@@ -64,7 +64,7 @@ body {
 }
 
 .panel-header {
-    padding: 18px 20px 14px;
+    padding: 14px 16px 10px;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
@@ -87,12 +87,12 @@ body {
 }
 
 .panel-body {
-    flex: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
-    padding: 12px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .panel-body::-webkit-scrollbar {
@@ -147,8 +147,8 @@ body {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 11px 14px;
+    gap: 8px;
+    padding: 8px 12px;
     cursor: pointer;
     user-select: none;
     transition: background var(--transition);
@@ -170,6 +170,17 @@ body {
     width: 34px;
     height: 18px;
     flex-shrink: 0;
+}
+
+/* Expand the clickable area */
+.toggle::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    bottom: -5px;
+    left: -5px;
+    right: -5px;
+    z-index: 1;
 }
 
 .toggle input {
@@ -258,7 +269,7 @@ body {
 /* Scheme dropdown */
 .scheme-dropdown {
     display: none;
-    padding: 8px 14px 10px;
+    padding: 6px 12px 8px;
     border-top: 1px solid var(--border);
 }
 
@@ -423,8 +434,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .basemap-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 11px 14px;
+    gap: 8px;
+    padding: 8px 12px;
     cursor: pointer;
     user-select: none;
     transition: background var(--transition);
@@ -454,8 +465,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .basemap-options {
     display: flex;
-    gap: 8px;
-    padding: 10px 14px;
+    gap: 6px;
+    padding: 8px 12px;
 }
 
 .basemap-btn {
