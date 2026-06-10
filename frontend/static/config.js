@@ -7,9 +7,7 @@ const CONFIG = {
     raster_name: "germany_raster_v1.tif"
 };
 
-// ─── CONFIG ───
 const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
-console.log("Using TileJSON URL:", TILE_JSON_URL.toString());
 
 // ─── COLORMAP PRESETS ───
 const COLORMAP_PRESETS = {

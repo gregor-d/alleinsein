@@ -17,7 +17,7 @@
     <!-- MapLibre GL JS Assets -->
     <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-
+    
     <!-- App Styles -->
     <link rel="stylesheet" href="index.css" />
     <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css?v1" />
@@ -26,8 +26,10 @@
             const savedTheme = localStorage.getItem('map-theme') || 'glass';
             document.getElementById('theme-link').href = `themes/theme_${savedTheme}.css?v1`;
         })();
-    </script>
+        </script>
     <script src="config.js"></script>
+    <script src="map.js"></script>
+    <script src="shared.js"></script>
 </head>
 
 <body>
@@ -90,9 +92,6 @@
     </div>
 
     <!-- Map Engine Scripts -->
-    <script src="leaflet_map.js"></script>
-    <script src="maplibre_map.js"></script>
-    <script src="shared.js"></script>
 </body>
 
 </html>
