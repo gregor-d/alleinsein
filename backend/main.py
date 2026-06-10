@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     enable_docs: bool = False
     cors_origins: list[str] = ["https://alleinseinkarte.de", "https://www.alleinseinkarte.de"]
     allowed_tms: str = "WebMercatorQuad"
-    raster_path: str = "raster"
+    raster_path: str = "raster/out"
     add_preview: bool = False
     add_part: bool = False
     add_viewer: bool = False
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="APP_",
-        env_file=[APP_DIR / ".env", APP_DIR / ".env.dev"],
+        # env_file=[APP_DIR / ".env", APP_DIR / ".env.dev"],
         extra="ignore",
         dotenv_filtering="only_existing",
     )
@@ -49,7 +49,7 @@ def get_raster_path(raster: str = "test_raster.tif") -> Path:
         # should raise 404 to prevent information disclosure about the existence of files
         raise FileNotFoundError(f"Rasters file not found: {raster}")
 
-    target_path = PROJECT_DIR / settings.raster_path / raster
+    target_path = PROJECT_DIR / settings.raster_path / raster 
     if not target_path.is_file():
         raise FileNotFoundError(f"Raster file not found: {target_path}")
     return target_path
