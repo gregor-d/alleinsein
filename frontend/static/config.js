@@ -4,7 +4,7 @@ const CONFIG = {
     // test cloudflare wrangler trigger
     fqdn: "https://tiles.alleinseinkarte.de",
     tile_json_path: "WebMercatorQuad/tilejson.json",
-    raster_name: "germany_raster_v1.tif"
+    raster_name: "germany_raster_v2.tif"
 };
 
 const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
