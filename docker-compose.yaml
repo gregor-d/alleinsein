@@ -1,5 +1,6 @@
 services:
-  alleinsein:
+  tiler:
+    container_name: tiler
     build:
       context: .
       dockerfile: dockerfile/Dockerfile
