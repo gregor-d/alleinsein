@@ -39,6 +39,7 @@ htmlcov/
 
 # Editor settings
 .vscode/
+.swp
 
 # OS files
 .DS_Store

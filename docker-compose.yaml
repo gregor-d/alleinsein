@@ -29,7 +29,7 @@ services:
       - ./raster/out:/raster/out
 
     # run uvicorn app
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips "*"
 
     healthcheck:
       test: ["CMD", "bash", "/scripts/smoke-test.sh"]
