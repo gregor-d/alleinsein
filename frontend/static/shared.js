@@ -160,6 +160,7 @@ function buildBasemapBlock(el, opts = {}) {
             <div class="basemap-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
                 <button class="basemap-btn${uiBaseKey === 'osm' ? ' active' : ''}" data-key="osm">OSM</button>
                 <button class="basemap-btn${uiBaseKey === 'satellite' ? ' active' : ''}" data-key="satellite">Satellite</button>
+                <button class="basemap-btn${uiBaseKey === 'schummerung' ? ' active' : ''}" data-key="schummerung">Relief</button>
             </div>
             <div class="ctrl-row">
                 <div class="ctrl-label">

@@ -45,6 +45,18 @@ const BASEMAPS = {
             attribution: '&copy; <a href="https://www.esri.com/">Esri</a> · Sources: Esri, Maxar, Earthstar Geographics',
             maxZoom: 15
         }
+    },
+    schummerung: {
+        label: 'Relief',
+        type: 'wms',
+        url: 'https://sgx.geodatenzentrum.de/wms_basemapde_schummerung',
+        options: {
+            layers: 'de_basemapde_web_raster_combshade',
+            format: 'image/png',
+            transparent: true,
+            attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
+            maxZoom: 15
+        }
     }
 };
 
