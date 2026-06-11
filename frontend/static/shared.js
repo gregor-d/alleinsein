@@ -40,16 +40,12 @@ function refreshDataLayer() {
 
 // ─── ENGINE STATE ───
 
-let activeLayout = localStorage.getItem('map-layout') || '1';
 let activeEngine = localStorage.getItem('map-engine') || 'leaflet';
 let mapEngine = null;
-let _l2PopupHandlerAttached = false;
 let _l4PopupHandlerAttached = false;
 
 function getNavControlPos() {
-    if (activeLayout === '1') return { leaflet: 'bottomright', maplibre: 'bottom-right' };
-    if (activeLayout === '2' || activeLayout === '4') return { leaflet: 'topleft',     maplibre: 'top-left'     };
-    return                           { leaflet: 'bottomleft',  maplibre: 'bottom-left'  };
+    return { leaflet: 'topleft', maplibre: 'top-left' };
 }
 
 function switchEngine(newKey) {
@@ -96,18 +92,6 @@ function initEngineBtns(container) {
 // ─── VISIBILITY SYNC ───
 // Called whenever a layer's visible flag changes — updates all live UI elements.
 function syncLayerVisible(layer) {
-    const chip = document.getElementById(`chip-${layer.id}`);
-    if (chip) {
-        chip.classList.toggle('inactive', !layer.visible);
-        const cb = chip.querySelector('input[type=checkbox]');
-        if (cb) cb.checked = layer.visible;
-    }
-    const pill = document.getElementById(`pill-${layer.id}`);
-    if (pill) {
-        pill.classList.toggle('inactive', !layer.visible);
-        const cb = pill.querySelector('input[type=checkbox]');
-        if (cb) cb.checked = layer.visible;
-    }
     const l4Chip = document.getElementById(`l4-chip-${layer.id}`);
     if (l4Chip) {
         l4Chip.classList.toggle('inactive', !layer.visible);
@@ -123,13 +107,11 @@ function syncLayerVisible(layer) {
 
 // ─── COLOR SYNC ───
 function syncLayerColor(layer) {
-    [`chip-color-${layer.id}`, `l4-chip-color-${layer.id}`].forEach(id => {
-        const chipColor = document.getElementById(id);
-        if (!chipColor) return;
-        chipColor.style.background = layer.type === 'category'
-            ? buildGradient(layer.preset, layer.reverse)
-            : layer.preset;
-    });
+    const chipColor = document.getElementById(`l4-chip-color-${layer.id}`);
+    if (!chipColor) return;
+    chipColor.style.background = layer.type === 'category'
+        ? buildGradient(layer.preset, layer.reverse)
+        : layer.preset;
 }
 
 function updateDrawerBar(layer) {
@@ -138,29 +120,6 @@ function updateDrawerBar(layer) {
 }
 
 // ─── TOGGLE WIDGET (no ID on checkbox — use container IDs for sync) ───
-function buildToggle(layer) {
-    const label = document.createElement('label');
-    label.className = 'toggle';
-    label.title = 'Toggle visibility';
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = layer.visible;
-
-    const track = document.createElement('span');
-    track.className = 'toggle-track';
-
-    label.appendChild(cb);
-    label.appendChild(track);
-
-    cb.addEventListener('change', e => {
-        layer.visible = e.target.checked;
-        syncLayerVisible(layer);
-        refreshDataLayer();
-    });
-
-    return label;
-}
 
 // ─── BASEMAP BLOCK (reusable) ───
 function buildBasemapBlock(el, opts = {}) {
@@ -219,57 +178,12 @@ function buildBasemapBlock(el, opts = {}) {
 }
 
 // ─── VERTICAL CARD (L2 bottom bar) ───
-function makeL2LayerCard(layer) {
-    const card = document.createElement('div');
-    card.className = `l2-layer-card${layer.visible ? '' : ' inactive'}`;
-    card.id = `chip-${layer.id}`;  // reuse chip- id so syncLayerVisible works
-
-    // Row 1: toggle
-    card.appendChild(buildToggle(layer));
-
-    // Row 2: name
-    const nameEl = document.createElement('span');
-    nameEl.className = 'layer-name';
-    nameEl.textContent = layer.id;
-    card.appendChild(nameEl);
-
-    // Row 3: color ramp / solid swatch
-    if (layer.type === 'category') {
-        const ramp = document.createElement('div');
-        ramp.className = 'l2-chip-ramp';
-        ramp.id = `chip-color-${layer.id}`;
-        ramp.style.background = buildGradient(layer.preset, layer.reverse);
-        ramp.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
-        card.appendChild(ramp);
-    } else {
-        const swatch = document.createElement('div');
-        swatch.className = 'l2-chip-solid-swatch';
-        swatch.id = `chip-color-${layer.id}`;
-        swatch.style.background = layer.preset;
-
-        const picker = document.createElement('input');
-        picker.type = 'color';
-        picker.value = layer.preset;
-        picker.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none;';
-        card.appendChild(picker);
-
-        swatch.addEventListener('click', e => { e.stopPropagation(); picker.click(); });
-        picker.addEventListener('input', e => {
-            layer.preset = e.target.value;
-            swatch.style.background = layer.preset;
-            refreshDataLayer();
-        });
-        card.appendChild(swatch);
-    }
-
-    return card;
-}
 
 // ─── LAYOUT 4 LAYER CARD (L2 base with per-layer status icons) ───
 function makeL4LayerCard(layer) {
     const key = layer.id.toLowerCase();
     const card = document.createElement('div');
-    card.className = `l2-layer-card l4-layer-card l4-layer-card--${key}${layer.visible ? '' : ' inactive'}`;
+    card.className = `layer-strip-card l4-layer-card l4-layer-card--${key}${layer.visible ? '' : ' inactive'}`;
     card.id = `l4-chip-${layer.id}`;
     card.tabIndex = 0;
     card.setAttribute('role', 'switch');
@@ -287,14 +201,14 @@ function makeL4LayerCard(layer) {
 
     if (layer.type === 'category') {
         const ramp = document.createElement('div');
-        ramp.className = 'l2-chip-ramp';
+        ramp.className = 'layer-strip-ramp';
         ramp.id = `l4-chip-color-${layer.id}`;
         ramp.style.background = buildGradient(layer.preset, layer.reverse);
         ramp.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
         card.appendChild(ramp);
     } else {
         const swatch = document.createElement('div');
-        swatch.className = 'l2-chip-solid-swatch';
+        swatch.className = 'layer-strip-solid-swatch';
         swatch.id = `l4-chip-color-${layer.id}`;
         swatch.style.background = layer.preset;
 
@@ -361,48 +275,6 @@ function getL4LayerStatusMarkup(key) {
 }
 
 // ─── STRIP CHIP (L1) ───
-function makeStripChip(layer) {
-    const chip = document.createElement('div');
-    chip.className = `strip-chip${layer.visible ? '' : ' inactive'}`;
-    chip.id = `chip-${layer.id}`;
-
-    chip.appendChild(buildToggle(layer));
-
-    const nameEl = document.createElement('span');
-    nameEl.className = 'layer-name';
-    nameEl.textContent = layer.id;
-    chip.appendChild(nameEl);
-
-    if (layer.type === 'category') {
-        const bar = document.createElement('div');
-        bar.className = 'chip-gradient';
-        bar.id = `chip-color-${layer.id}`;
-        bar.style.background = buildGradient(layer.preset, layer.reverse);
-        bar.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
-        chip.appendChild(bar);
-    } else {
-        const swatch = document.createElement('div');
-        swatch.className = 'chip-solid';
-        swatch.id = `chip-color-${layer.id}`;
-        swatch.style.background = layer.preset;
-
-        const picker = document.createElement('input');
-        picker.type = 'color';
-        picker.value = layer.preset;
-        picker.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none;';
-        chip.appendChild(picker);
-
-        swatch.addEventListener('click', e => { e.stopPropagation(); picker.click(); });
-        picker.addEventListener('input', e => {
-            layer.preset = e.target.value;
-            swatch.style.background = layer.preset;
-            refreshDataLayer();
-        });
-        chip.appendChild(swatch);
-    }
-
-    return chip;
-}
 
 // ─── COLOR SHEET (L1 + L2) ───
 
@@ -557,119 +429,30 @@ function getMyLocationIconSvg() {
 //  LAYOUT BUILDERS
 // ════════════════════════════════════════════════
 
-function clearAllLayouts() {
-    ['l1-layer-strip', 'l1-basemap-area',
-     'l2-layer-strip', 'l2-engine-row', 'l2-basemap-popup',
-     'l3-layers', 'l3-drawer-body',
-     'l4-layer-strip', 'l4-engine-row', 'l4-basemap-popup', 'l4-drawer-body'].forEach(id => {
+function clearLayout4() {
+    ['l4-layer-strip', 'l4-basemap-popup', 'l4-drawer-body'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '';
     });
-    // Remove popup open state
-    ['l2-basemap-popup', 'l4-basemap-popup'].forEach(id => {
-        document.getElementById(id)?.classList.remove('open');
-    });
-    // Close drawer
-    document.getElementById('l3-drawer')?.classList.remove('open');
-    document.getElementById('l3-backdrop')?.classList.remove('open');
+    document.getElementById('l4-basemap-popup')?.classList.remove('open');
     document.getElementById('l4-drawer')?.classList.remove('open');
     document.getElementById('l4-backdrop')?.classList.remove('open');
 }
 
-function buildCurrentLayout() {
-    clearAllLayouts();
-    if (activeLayout === '1') buildLayout1();
-    else if (activeLayout === '2') buildLayout2();
-    else if (activeLayout === '3') buildLayout3();
-    else buildLayout4();
-}
-
 // ── Layout 1 ──
 
-function buildLayout1() {
-    const strip = document.getElementById('l1-layer-strip');
-    layerState.forEach(layer => strip.appendChild(makeStripChip(layer)));
-
-    buildBasemapBlock(document.getElementById('l1-basemap-area'), { includeDataLayerOpacity: true });
-
-    bindSearchBtn('l1-search-btn');
-    bindLocBtn('l1-loc-btn');
-
-    requestAnimationFrame(() => {
-        const h = document.getElementById('l1-bottom')?.offsetHeight;
-        if (h) document.documentElement.style.setProperty('--l1-bottom-h', `${h}px`);
-    });
-}
 
 // ── Layout 2 ──
 
-function buildLayout2() {
     // Vertical layer cards — one per layer, all fit in one row inside the strip
-    const strip = document.getElementById('l2-layer-strip');
-    strip.innerHTML = '';
-    document.getElementById('l2-engine-row').innerHTML = '';
-
-    layerState.forEach(layer => strip.appendChild(makeL2LayerCard(layer)));
-
-    // Config popup: engine switcher + basemap + opacity
-    const popup = document.getElementById('l2-basemap-popup');
-    popup.innerHTML = '';
-
-    // Engine switcher section
-    const engLabel = document.createElement('div');
-    engLabel.className = 'bm-row-label';
-    engLabel.style.marginBottom = '6px';
-    engLabel.textContent = 'Map Engine';
-    popup.appendChild(engLabel);
-
-    const engWrap = document.createElement('div');
-    engWrap.className = 'engine-switcher';
-    engWrap.style.marginBottom = '12px';
-    engWrap.innerHTML = `
-        <button class="engine-btn" data-engine="leaflet">Leaflet</button>
-        <button class="engine-btn" data-engine="maplibre">MapLibre</button>
-    `;
-    popup.appendChild(engWrap);
-    initEngineBtns(engWrap);
-
-    // Divider
-    const divider = document.createElement('div');
-    divider.style.cssText = 'border-top:1px solid var(--border);margin-bottom:12px;';
-    popup.appendChild(divider);
-
-    // Basemap + opacity block
-    const bmBlock = document.createElement('div');
-    bmBlock.id = 'l2-bm-inner';
-    popup.appendChild(bmBlock);
-    buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
-
     // Toggle popup on config FAB click
-    const bmBtn = document.getElementById('l2-basemap-btn');
-    bmBtn.onclick = e => { e.stopPropagation(); popup.classList.toggle('open'); };
-    if (!_l2PopupHandlerAttached) {
-        _l2PopupHandlerAttached = true;
-        document.addEventListener('click', e => {
-            const p = document.getElementById('l2-basemap-popup');
-            const b = document.getElementById('l2-basemap-btn');
-            if (p && b && !p.contains(e.target) && e.target !== b) p.classList.remove('open');
-        });
-    }
-
-    bindSearchBtn('l2-search-btn');
-    bindLocBtn('l2-loc-btn');
-
-    requestAnimationFrame(() => {
-        const h = document.getElementById('l2-bottom')?.offsetHeight;
-        if (h) document.documentElement.style.setProperty('--l2-bottom-h', `${h}px`);
-    });
-}
 
 // ── Layout 4 ──
 
 function buildLayout4() {
+    clearLayout4();
+
     const strip = document.getElementById('l4-layer-strip');
-    strip.innerHTML = '';
-    document.getElementById('l4-engine-row').innerHTML = '';
 
     layerState.forEach(layer => strip.appendChild(makeL4LayerCard(layer)));
 
@@ -737,39 +520,6 @@ function buildLayout4() {
 }
 
 // ── Layout 3 ──
-
-function buildLayout3() {
-    // Layer pills
-    const pillsEl = document.getElementById('l3-layers');
-    layerState.forEach(layer => {
-        const pill = document.createElement('div');
-        pill.className = `layer-pill${layer.visible ? '' : ' inactive'}`;
-        pill.id = `pill-${layer.id}`;
-        pill.appendChild(buildToggle(layer));
-        const nameEl = document.createElement('span');
-        nameEl.className = 'layer-name';
-        nameEl.textContent = layer.id;
-        pill.appendChild(nameEl);
-        pillsEl.appendChild(pill);
-    });
-
-    buildDrawerBody(document.getElementById('l3-drawer-body'));
-
-    document.getElementById('l3-settings-btn').onclick = () => {
-        document.getElementById('l3-drawer').classList.add('open');
-        document.getElementById('l3-backdrop').classList.add('open');
-    };
-    document.getElementById('l3-drawer-close').onclick = closeDrawer;
-    document.getElementById('l3-backdrop').onclick = closeDrawer;
-
-    bindSearchBtn('l3-search-btn');
-    bindLocBtn('l3-loc-btn');
-}
-
-function closeDrawer() {
-    document.getElementById('l3-drawer').classList.remove('open');
-    document.getElementById('l3-backdrop').classList.remove('open');
-}
 
 function closeLayout4Drawer() {
     document.getElementById('l4-drawer').classList.remove('open');
@@ -872,15 +622,15 @@ function buildDrawerBody(container, opts = {}) {
         <div class="ctrl-row">
             <div class="ctrl-label">
                 <span>Opacity</span>
-                <span class="val" id="d3-dl-val">${Math.round(dataLayerOpacity * 100)}%</span>
+                <span class="val" id="drawer-dl-val">${Math.round(dataLayerOpacity * 100)}%</span>
             </div>
-            <input type="range" id="d3-dl-opacity" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
+            <input type="range" id="drawer-dl-opacity" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
         </div>
     `;
     container.appendChild(opDiv);
-    document.getElementById('d3-dl-opacity').addEventListener('input', e => {
+    document.getElementById('drawer-dl-opacity').addEventListener('input', e => {
         dataLayerOpacity = parseFloat(e.target.value);
-        document.getElementById('d3-dl-val').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
+        document.getElementById('drawer-dl-val').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
         if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
     });
 
@@ -902,7 +652,7 @@ function buildDrawerBody(container, opts = {}) {
     addSectionLabel(container, 'Basemap');
     const bmWrap = document.createElement('div');
     bmWrap.className = 'basemap-card';
-    bmWrap.id = 'l3-bm-area';
+    bmWrap.id = 'drawer-bm-area';
     bmWrap.style.padding = '10px 12px';
     container.appendChild(bmWrap);
     buildBasemapBlock(bmWrap);
@@ -945,64 +695,30 @@ function addSectionLabel(parent, text) {
 
 // ─── LAYOUT SWITCHER ───
 
-function initLayoutSwitcher() {
-    const sw = document.getElementById('layout-switcher');
-    sw.value = activeLayout;
-
-    sw.addEventListener('change', e => {
-        const next = e.target.value;
-        if (next === activeLayout) return;
-
-        let center = [13.3, 51.0], zoom = 8;
-        if (mapEngine) {
-            center = mapEngine.getCenter();
-            zoom   = mapEngine.getZoom();
-            mapEngine.destroy();
-            mapEngine = null;
-        }
-
-        activeLayout = next;
-        localStorage.setItem('map-layout', activeLayout);
-        document.body.dataset.layout = activeLayout;
-
-        buildCurrentLayout();
-
-        // Reinit engine with new nav-control position
-        const oldEl = document.getElementById('map');
-        oldEl.parentNode.replaceChild(oldEl.cloneNode(false), oldEl);
-        window.boundsSet = true; // keep current viewport
-
-        const pos = getNavControlPos();
-        const ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-        const cpos = activeEngine === 'leaflet' ? pos.leaflet    : pos.maplibre;
-
-        mapEngine = new ctor();
-        mapEngine.init('map', center, zoom, cpos).then(afterEngineInit);
-    });
-}
 
 // ─── THEME SWITCHER ───
 
 function initThemeSwitcher() {
-    const sw = document.getElementById('theme-switcher');
     const saved = localStorage.getItem('map-theme') || 'glass';
-    sw.value = saved;
     document.getElementById('theme-link').href = `themes/theme_${saved}.css`;
 
-    sw.addEventListener('change', e => {
-        const t = e.target.value;
-        document.getElementById('theme-link').href = `themes/theme_${t}.css`;
-        localStorage.setItem('map-theme', t);
+    const buttons = document.querySelectorAll('.dev-theme-btn');
+    buttons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === saved);
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const t = btn.dataset.theme;
+            document.getElementById('theme-link').href = `themes/theme_${t}.css`;
+            localStorage.setItem('map-theme', t);
+        });
     });
 }
 
 // ─── STARTUP ───
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.body.dataset.layout = activeLayout;
-
-    buildCurrentLayout();
-    initLayoutSwitcher();
+    buildLayout4();
     initThemeSwitcher();
 
     // Shared sheet init
@@ -1020,10 +736,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         requestAnimationFrame(() => {
-            const h1 = document.getElementById('l1-bottom')?.offsetHeight;
-            if (h1) document.documentElement.style.setProperty('--l1-bottom-h', `${h1}px`);
-            const h2 = document.getElementById('l2-bottom')?.offsetHeight;
-            if (h2) document.documentElement.style.setProperty('--l2-bottom-h', `${h2}px`);
             const h4 = document.getElementById('l4-bottom')?.offsetHeight;
             if (h4) document.documentElement.style.setProperty('--l4-bottom-h', `${h4}px`);
         });
