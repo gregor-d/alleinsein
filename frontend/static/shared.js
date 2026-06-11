@@ -458,7 +458,7 @@ function closeColorSheet() {
 function openSearchSheet() {
     document.getElementById('search-sheet').classList.add('open');
     document.getElementById('search-sheet-backdrop').classList.add('open');
-    setTimeout(() => document.getElementById('search-input').focus(), 280);
+    setTimeout(() => document.getElementById('search-input').focus(), 180);
 }
 
 function closeSearchSheet() {
@@ -466,10 +466,13 @@ function closeSearchSheet() {
     document.getElementById('search-sheet-backdrop').classList.remove('open');
 }
 
-async function doSearch() {
-    const q = document.getElementById('search-input').value.trim();
+async function doSearch(inputId = 'search-input', resultsId = 'search-results', opts = {}) {
+    const input = document.getElementById(inputId);
+    const list = document.getElementById(resultsId);
+    if (!input || !list) return;
+
+    const q = input.value.trim();
     if (!q) return;
-    const list = document.getElementById('search-results');
     list.innerHTML = '<li class="result-empty">Searching…</li>';
 
     try {
@@ -490,7 +493,7 @@ async function doSearch() {
                 <div class="result-detail">${parts.slice(1, 3).map(s => s.trim()).join(', ')}</div>`;
             li.addEventListener('click', () => {
                 if (mapEngine) mapEngine.flyTo([parseFloat(item.lon), parseFloat(item.lat)], 12);
-                closeSearchSheet();
+                if (opts.closeOnSelect) opts.closeOnSelect();
             });
             list.appendChild(li);
         });
@@ -502,9 +505,17 @@ async function doSearch() {
 function initSearch() {
     document.getElementById('search-sheet-close').addEventListener('click', closeSearchSheet);
     document.getElementById('search-sheet-backdrop').addEventListener('click', closeSearchSheet);
-    document.getElementById('search-go').addEventListener('click', doSearch);
-    document.getElementById('search-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') doSearch();
+    bindSearchControls('search-input', 'search-go', 'search-results', { closeOnSelect: closeSearchSheet });
+}
+
+function bindSearchControls(inputId, buttonId, resultsId, opts = {}) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    if (!input || !button) return;
+
+    button.addEventListener('click', () => doSearch(inputId, resultsId, opts));
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') doSearch(inputId, resultsId, opts);
     });
 }
 
@@ -530,6 +541,16 @@ function bindLocBtn(id) {
 function bindSearchBtn(id) {
     const btn = document.getElementById(id);
     if (btn) btn.onclick = openSearchSheet;
+}
+
+function getMyLocationIconSvg() {
+    return `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/>
+            <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+        </svg>
+    `;
 }
 
 // ════════════════════════════════════════════════
@@ -696,7 +717,7 @@ function buildLayout4() {
         });
     }
 
-    buildDrawerBody(document.getElementById('l4-drawer-body'));
+    buildDrawerBody(document.getElementById('l4-drawer-body'), { includeLocationTools: true });
 
     document.getElementById('l4-settings-btn').onclick = () => {
         popup.classList.remove('open');
@@ -757,7 +778,7 @@ function closeLayout4Drawer() {
 
 // ── Drawer body (L3 settings) ──
 
-function buildDrawerBody(container) {
+function buildDrawerBody(container, opts = {}) {
     container.innerHTML = '';
 
     addSectionLabel(container, 'Data Layers');
@@ -885,6 +906,34 @@ function buildDrawerBody(container) {
     bmWrap.style.padding = '10px 12px';
     container.appendChild(bmWrap);
     buildBasemapBlock(bmWrap);
+
+    if (opts.includeLocationTools) appendDrawerLocationTools(container);
+}
+
+function appendDrawerLocationTools(container) {
+    const section = document.createElement('div');
+    section.className = 'drawer-location-section';
+    container.appendChild(section);
+
+    addSectionLabel(section, 'Location');
+
+    const locWrap = document.createElement('div');
+    locWrap.className = 'basemap-card drawer-location-card';
+    locWrap.innerHTML = `
+        <div class="search-input-row drawer-search-row">
+            <input id="drawer-search-input" type="text" placeholder="Search location…" autocomplete="off" />
+            <button id="drawer-search-go" class="search-go-btn">Go</button>
+        </div>
+        <ul id="drawer-search-results" class="search-results drawer-search-results"></ul>
+        <button id="drawer-loc-btn" class="drawer-action-btn" type="button">
+            ${getMyLocationIconSvg()}
+            <span>My location</span>
+        </button>
+    `;
+    section.appendChild(locWrap);
+
+    bindSearchControls('drawer-search-input', 'drawer-search-go', 'drawer-search-results');
+    bindLocBtn('drawer-loc-btn');
 }
 
 function addSectionLabel(parent, text) {

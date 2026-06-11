@@ -839,13 +839,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
     min-height: 62px;
 }
 
-.l2-layer-card.l4-layer-card.inactive {
-    opacity: 1;
-}
-
 .l4-layer-card.inactive .l2-chip-ramp,
 .l4-layer-card.inactive .l2-chip-solid-swatch {
-    opacity: 0.42;
+    opacity: 1;
 }
 
 .l4-layer-card .l4-layer-status {
@@ -993,6 +989,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 #l3-drawer.open,
 #l4-drawer.open { transform: translateX(0); }
+
+#l4-drawer {
+    bottom: auto;
+    height: auto;
+    max-height: calc(100vh - var(--dev-bar-h) - 12px);
+}
 
 .drawer-backdrop {
     position: fixed;
@@ -1325,8 +1327,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
     gap: 8px;
     margin-bottom: 10px;
 }
-#search-input {
+.search-input-row input {
     flex: 1;
+    min-width: 0;
     background: color-mix(in srgb, var(--bg-deep) 90%, transparent);
     border: 1px solid var(--border-hi);
     border-radius: 8px;
@@ -1337,7 +1340,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-family: inherit;
     transition: border-color var(--transition);
 }
-#search-input:focus { border-color: var(--accent); }
+.search-input-row input:focus { border-color: var(--accent); }
 .search-go-btn {
     padding: 9px 16px;
     background: var(--accent-dim);
@@ -1371,4 +1374,59 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border: none !important;
     background: transparent !important;
     cursor: default;
+}
+
+.drawer-location-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.drawer-location-card {
+    padding: 10px 12px;
+}
+
+.drawer-location-card .search-input-row {
+    margin-bottom: 8px;
+}
+
+.drawer-search-results {
+    max-height: 160px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+}
+
+.drawer-search-results:empty {
+    display: none;
+}
+
+.drawer-action-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 12px;
+    background: color-mix(in srgb, var(--bg-deep) 78%, transparent);
+    border: 1px solid var(--border-hi);
+    border-radius: 8px;
+    color: var(--text-hi);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.drawer-action-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.drawer-action-btn:hover,
+.drawer-action-btn.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
 }
