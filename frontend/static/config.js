@@ -1,8 +1,9 @@
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 const CONFIG = {
-    fqdn: "http://127.0.0.1:8080",
-    // on prod the fqdn is on the same origin
-    // test cloudflare wrangler trigger
+    // Fallback to local server when developing, or use the production backend when online
+    // fqdn: "http://127.0.0.1:8000",
     // fqdn: "https://tiles.alleinseinkarte.de",
+    fqdn: isLocal ? "http://127.0.0.1:8080" : "https://tiles.alleinseinkarte.de",
     tile_json_path: "WebMercatorQuad/tilejson.json",
     raster_name: "germany_raster_v2.tif",
     mask_opacity: 0.45,
