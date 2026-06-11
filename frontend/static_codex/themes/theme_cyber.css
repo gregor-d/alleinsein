@@ -1,0 +1,20 @@
+:root {
+    --bg-deep: #0c0012;
+    --bg-panel: #14001c; /* deep dark violet panel */
+    --bg-card: #4a0e66;  /* vibrant electric purple card */
+    --bg-hover: #5d1280;
+    --border: #f0f306;
+    --border-hi: #00f0ff;
+    --text-hi: #00f0ff;
+    --text-mid: #ff007f;
+    --text-lo: #4a0e66;
+    --text-card-hi: #00f0ff;
+    --text-card-mid: #f0f306;
+    --text-card-lo: #ff007f;
+    --accent: #f0f306;
+    --accent2: #ff007f;
+    --accent-dim: rgba(240, 243, 6, 0.25);
+    --accent-glow: rgba(240, 243, 6, 0.65);
+    --shadow-card: 0 0 8px rgba(240, 243, 6, 0.3);
+    --shadow-card-hover: 0 0 20px rgba(0, 240, 255, 0.7);
+}

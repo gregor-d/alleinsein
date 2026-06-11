@@ -1,0 +1,20 @@
+:root {
+    --bg-deep: #020204;
+    --bg-panel: #05070c; /* deep blue-black panel */
+    --bg-card: #2f3647;  /* lighter cobalt-gray card for strong contrast */
+    --bg-hover: #3d465c;
+    --border: #4d5875;
+    --border-hi: #ffd000; /* Protanopia Safe Gold Yellow */
+    --text-hi: #f0f4fc;
+    --text-mid: #2f60d4; /* Protanopia Safe Cobalt Blue */
+    --text-lo: #7483a3;
+    --text-card-hi: #ffffff;
+    --text-card-mid: #ffd000;
+    --text-card-lo: #2f60d4;
+    --accent: #2f60d4;
+    --accent2: #ffd000;
+    --accent-dim: rgba(47, 96, 212, 0.2);
+    --accent-glow: rgba(47, 96, 212, 0.5);
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.7);
+}

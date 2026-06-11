@@ -1,0 +1,21 @@
+:root {
+    --bg-deep: #eceff4;
+    --bg-panel: #b2c2d6; /* darker slate-blue grey panel */
+    --bg-card: #ffffff;  /* pure white card for strong contrast */
+    --bg-hover: #f5f7fa;
+    --border: #d8dee9;
+    --border-hi: #88c0d0;
+    --text-hi: #2e3440;
+    --text-mid: #4c566a;
+    --text-lo: #9eabbf;
+    --text-card-hi: #2e3440;
+    --text-card-mid: #4c566a;
+    --text-card-lo: #88c0d0;
+    --accent: #5e81ac;
+    --accent2: #81a1c1;
+    --accent-dim: rgba(94, 129, 172, 0.15);
+    --accent-glow: rgba(94, 129, 172, 0.35);
+    --shadow-card: 0 4px 10px rgba(0, 0, 0, 0.08);
+    --shadow-card-hover: 0 10px 24px rgba(0, 0, 0, 0.15);
+    --control-icon-filter: none;
+}

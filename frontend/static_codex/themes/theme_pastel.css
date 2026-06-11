@@ -1,0 +1,21 @@
+:root {
+    --bg-deep: #fff0f3;
+    --bg-panel: #fbcfe8; /* pink panel background */
+    --bg-card: #ffffff;  /* white cards */
+    --bg-hover: #fff1f2;
+    --border: #f87171;
+    --border-hi: #ff85a1;
+    --text-hi: #5c3d46;
+    --text-mid: #db2777;
+    --text-lo: #c99ea3;
+    --text-card-hi: #4c1d95;
+    --text-card-mid: #db2777;
+    --text-card-lo: #f472b6;
+    --accent: #db2777;
+    --accent2: #f472b6;
+    --accent-dim: rgba(219, 39, 119, 0.12);
+    --accent-glow: rgba(219, 39, 119, 0.35);
+    --shadow-card: 0 4px 10px rgba(219, 39, 119, 0.15);
+    --shadow-card-hover: 0 10px 24px rgba(219, 39, 119, 0.3);
+    --control-icon-filter: none;
+}
