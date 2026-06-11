@@ -524,24 +524,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 
 /* ── LAYOUT VISIBILITY ── */
-/* ═══════════════════════════════════════════════
-   LAYOUT 1
-═══════════════════════════════════════════════ */
-
-/* Top bar — data layer chips */
-/* Bottom bar — basemap + opacity */
-/* FABs — above bottom bar, right */
-/* Map controls: push above bottom bars / FABs per layout */
 /* L4: attribution follows the mobile bottom strip by default */
 .leaflet-bottom.leaflet-right,
 .maplibregl-ctrl-bottom-right {
     bottom: calc(var(--l4-bottom-h) + 6px) !important;
 }
-
-/* L3: right-side attribution pushed above FABs (3 × 44 + 2 × 8 + 12 ≈ 150px) */
-/* ═══════════════════════════════════════════════
-   LAYOUT 2
-═══════════════════════════════════════════════ */
 
 /* Bottom bar — layer cards only (engine moved to config popup) */
 #l4-bottom {
@@ -736,12 +723,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
     background: currentColor;
 }
 
-/* ═══════════════════════════════════════════════
-   LAYOUT 3
-═══════════════════════════════════════════════ */
-
-/* Layer pills — left side */
-/* FABs — bottom-right */
 /* Settings drawer */
 #l4-drawer {
     position: fixed;
@@ -830,7 +811,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     position: fixed;
     inset: 0;
     top: var(--dev-bar-h);
-    background: rgba(0, 0, 0, 0.5);
+    background: transparent;
     z-index: 590;
     opacity: 0;
     pointer-events: none;
@@ -875,40 +856,50 @@ input[type="range"]::-webkit-slider-thumb:hover {
         display: none !important;
     }
 
-    #l4-drawer[data-pos="right-middle"],
-    #l4-drawer[data-pos="left-middle"],
-    #l4-drawer:not([data-pos]) {
+    #l4-drawer {
         width: var(--l4-drawer-w);
-        transform: translate(0, -50%);
-    }
-    #l4-drawer[data-pos="top-right"],
-    #l4-drawer[data-pos="top-left"],
-    #l4-drawer[data-pos="right-bottom"],
-    #l4-drawer[data-pos="left-bottom"] {
-        width: var(--l4-drawer-w);
-        transform: translate(0, 0);
     }
 
-    #l4-drawer-close,
-    #l4-settings-btn,
     #l4-backdrop {
         display: none !important;
     }
 
     #l4-fab {
-        right: calc(var(--l4-drawer-w) + 12px);
+        right: 12px;
         bottom: 12px;
+        transition: right var(--transition);
+    }
+    body:has(#l4-drawer.open:not([data-pos*="left"])) #l4-fab {
+        right: calc(var(--l4-drawer-w) + 12px);
     }
 
     #l4-basemap-popup {
-        right: calc(var(--l4-drawer-w) + 12px);
+        right: 12px;
         bottom: calc(12px + 44px + 10px);
+        transition: right var(--transition);
+    }
+    body:has(#l4-drawer.open:not([data-pos*="left"])) #l4-basemap-popup {
+        right: calc(var(--l4-drawer-w) + 12px);
     }
 
     .leaflet-bottom.leaflet-right,
     .maplibregl-ctrl-bottom-right {
-        right: calc(var(--l4-drawer-w) + 6px) !important;
+        right: 6px !important;
         bottom: 6px !important;
+        transition: right var(--transition);
+    }
+    body:has(#l4-drawer.open:not([data-pos*="left"])) .leaflet-bottom.leaflet-right,
+    body:has(#l4-drawer.open:not([data-pos*="left"])) .maplibregl-ctrl-bottom-right {
+        right: calc(var(--l4-drawer-w) + 6px) !important;
+    }
+
+    .leaflet-top.leaflet-left,
+    .maplibregl-ctrl-top-left {
+        transition: left var(--transition);
+    }
+    body:has(#l4-drawer.open[data-pos*="left"]) .leaflet-top.leaflet-left,
+    body:has(#l4-drawer.open[data-pos*="left"]) .maplibregl-ctrl-top-left {
+        left: calc(var(--l4-drawer-w) + 10px) !important;
     }
 }
 
@@ -939,7 +930,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border-color: var(--accent);
     transform: scale(1.06);
 }
-.fab.active {
+.fab.active,
+body:has(#l4-basemap-popup.open) #l4-basemap-btn,
+body:has(#l4-drawer.open) #l4-settings-btn {
     background: var(--accent-dim);
     border-color: var(--accent);
     color: var(--accent);
@@ -970,10 +963,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 .icon-btn:hover { color: var(--text-hi); }
 .icon-btn svg { width: 18px; height: 18px; }
-
-/* ═══════════════════════════════════════════════
-   LAYER STRIP CHIPS  (L1 top bar + L2 bottom bar)
-═══════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════
    BOTTOM SHEET

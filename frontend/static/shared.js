@@ -125,13 +125,21 @@ function updateDrawerBar(layer) {
 function buildBasemapBlock(el, opts = {}) {
     const uid = el.id || ('bm' + Math.random().toString(36).slice(2, 7));
 
+    const isEnabled = activeBasemapKey !== 'none';
+    const uiBaseKey = activeBasemapKey === 'none' ? 'osm' : activeBasemapKey;
+
     el.innerHTML = `
         <div class="bm-row">
-            <div class="bm-row-label">Basemap</div>
-            <div class="basemap-options">
-                <button class="basemap-btn${activeBasemapKey === 'osm'       ? ' active' : ''}" data-key="osm">OSM</button>
-                <button class="basemap-btn${activeBasemapKey === 'satellite' ? ' active' : ''}" data-key="satellite">Satellite</button>
-                <button class="basemap-btn${activeBasemapKey === 'none'      ? ' active' : ''}" data-key="none">None</button>
+            <div class="bm-row-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Basemap</span>
+                <label class="toggle">
+                    <input type="checkbox" id="bm-toggle-${uid}" ${isEnabled ? 'checked' : ''} />
+                    <span class="toggle-track"></span>
+                </label>
+            </div>
+            <div class="basemap-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
+                <button class="basemap-btn${uiBaseKey === 'osm'       ? ' active' : ''}" data-key="osm">OSM</button>
+                <button class="basemap-btn${uiBaseKey === 'satellite' ? ' active' : ''}" data-key="satellite">Satellite</button>
             </div>
             <div class="ctrl-row">
                 <div class="ctrl-label">
@@ -151,6 +159,26 @@ function buildBasemapBlock(el, opts = {}) {
         </div>
         ` : ''}
     `;
+
+    document.getElementById(`bm-toggle-${uid}`).addEventListener('change', e => {
+        const enabled = e.target.checked;
+        const optsDiv = document.getElementById(`bm-opts-${uid}`);
+        if (enabled) {
+            optsDiv.style.opacity = '1';
+            optsDiv.style.pointerEvents = 'auto';
+            if (activeBasemapKey === 'none') {
+                activeBasemapKey = 'osm';
+                el.querySelectorAll('.basemap-btn').forEach(b =>
+                    b.classList.toggle('active', b.dataset.key === activeBasemapKey)
+                );
+            }
+            if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
+        } else {
+            optsDiv.style.opacity = '0.5';
+            optsDiv.style.pointerEvents = 'none';
+            if (mapEngine) mapEngine.switchBasemap('none');
+        }
+    });
 
     el.querySelectorAll('.basemap-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -485,10 +513,11 @@ function buildLayout4() {
     buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
 
     const bmBtn = document.getElementById('l4-basemap-btn');
+    const settingsBtn = document.getElementById('l4-settings-btn');
+
     bmBtn.onclick = e => {
         e.stopPropagation();
-        document.getElementById('l4-drawer')?.classList.remove('open');
-        document.getElementById('l4-backdrop')?.classList.remove('open');
+        closeLayout4Drawer();
         popup.classList.toggle('open');
     };
     if (!_l4PopupHandlerAttached) {
@@ -496,16 +525,25 @@ function buildLayout4() {
         document.addEventListener('click', e => {
             const p = document.getElementById('l4-basemap-popup');
             const b = document.getElementById('l4-basemap-btn');
-            if (p && b && !p.contains(e.target) && e.target !== b) p.classList.remove('open');
+            if (p && b && !p.contains(e.target) && e.target !== b) {
+                p.classList.remove('open');
+            }
         });
     }
 
     buildDrawerBody(document.getElementById('l4-drawer-body'), { includeLocationTools: true });
 
-    document.getElementById('l4-settings-btn').onclick = () => {
+    settingsBtn.onclick = () => {
         popup.classList.remove('open');
-        document.getElementById('l4-drawer').classList.add('open');
-        document.getElementById('l4-backdrop').classList.add('open');
+        const drawer = document.getElementById('l4-drawer');
+        const backdrop = document.getElementById('l4-backdrop');
+        if (drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            backdrop.classList.remove('open');
+        } else {
+            drawer.classList.add('open');
+            backdrop.classList.add('open');
+        }
     };
     document.getElementById('l4-drawer-close').onclick = closeLayout4Drawer;
     document.getElementById('l4-backdrop').onclick = closeLayout4Drawer;
@@ -723,6 +761,10 @@ function initThemeSwitcher() {
 document.addEventListener('DOMContentLoaded', () => {
     buildLayout4();
     initThemeSwitcher();
+
+    if (window.innerWidth >= 769) {
+        document.getElementById('l4-drawer').classList.add('open');
+    }
 
     // Shared sheet init
     document.getElementById('color-sheet-close').addEventListener('click', closeColorSheet);
