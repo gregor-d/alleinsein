@@ -1,5 +1,5 @@
 const CONFIG = {
-    fqdn: "http://127.0.0.1:8000",
+    fqdn: "http://127.0.0.1:8080",
     // on prod the fqdn is on the same origin
     // test cloudflare wrangler trigger
     // fqdn: "https://tiles.alleinseinkarte.de",

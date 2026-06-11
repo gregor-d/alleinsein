@@ -54,7 +54,7 @@ function switchEngine(newKey) {
     let center = [13.3, 51.0], zoom = 8;
     if (mapEngine) {
         center = mapEngine.getCenter();
-        zoom   = mapEngine.getZoom();
+        zoom = mapEngine.getZoom();
         mapEngine.destroy();
     }
 
@@ -66,7 +66,7 @@ function switchEngine(newKey) {
 
     const pos = getNavControlPos();
     const ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-    const cpos = activeEngine === 'leaflet' ? pos.leaflet    : pos.maplibre;
+    const cpos = activeEngine === 'leaflet' ? pos.leaflet : pos.maplibre;
 
     mapEngine = new ctor();
     mapEngine.init('map', center, zoom, cpos).then(afterEngineInit);
@@ -76,10 +76,30 @@ function switchEngine(newKey) {
     );
 }
 
+async function getIpLocation() {
+    try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data && data.latitude && data.longitude) {
+            return [data.longitude, data.latitude];
+        }
+    } catch (e) {
+        console.info("IP Geolocation failed:", e);
+    }
+    return null;
+}
 function afterEngineInit() {
     mapEngine.switchBasemap(activeBasemapKey);
     mapEngine.updateBasemapOpacity(basemapOpacity);
     refreshDataLayer();
+
+    getIpLocation().then(coords => {
+        if (coords && mapEngine) {
+            setTimeout(() => {
+                if (mapEngine) mapEngine.flyTo(coords, 10);
+            }, 1000);
+        }
+    });
 }
 
 function initEngineBtns(container) {
@@ -138,7 +158,7 @@ function buildBasemapBlock(el, opts = {}) {
                 </label>
             </div>
             <div class="basemap-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
-                <button class="basemap-btn${uiBaseKey === 'osm'       ? ' active' : ''}" data-key="osm">OSM</button>
+                <button class="basemap-btn${uiBaseKey === 'osm' ? ' active' : ''}" data-key="osm">OSM</button>
                 <button class="basemap-btn${uiBaseKey === 'satellite' ? ' active' : ''}" data-key="satellite">Satellite</button>
             </div>
             <div class="ctrl-row">
@@ -470,8 +490,8 @@ function clearLayout4() {
 
 // ── Layout 2 ──
 
-    // Vertical layer cards — one per layer, all fit in one row inside the strip
-    // Toggle popup on config FAB click
+// Vertical layer cards — one per layer, all fit in one row inside the strip
+// Toggle popup on config FAB click
 
 // ── Layout 4 ──
 
@@ -762,10 +782,10 @@ function updateFabShift() {
     if (isOpen && isOnRight) {
         const fabHeight = fab.offsetHeight || 200;
         const drawerRect = drawer.getBoundingClientRect();
-        
+
         const spaceBelow = window.innerHeight - drawerRect.bottom;
         const neededSpace = fabHeight + 24;
-        
+
         if (spaceBelow < neededSpace) {
             document.body.classList.add('fab-shifted');
             return;
@@ -834,7 +854,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start map engine
     const pos = getNavControlPos();
     const ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-    const cpos = activeEngine === 'leaflet' ? pos.leaflet    : pos.maplibre;
+    const cpos = activeEngine === 'leaflet' ? pos.leaflet : pos.maplibre;
 
     mapEngine = new ctor();
     mapEngine.init('map', [13.3, 51.0], 8, cpos).then(afterEngineInit);
