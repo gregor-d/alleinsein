@@ -70,26 +70,15 @@ function switchEngine(newKey) {
     const cpos = activeEngine === 'leaflet' ? pos.leaflet : pos.maplibre;
 
     mapEngine = new ctor();
-    mapEngine.init('map', center, zoom, cpos).then(afterEngineInit);
+    mapEngine.init('map', center, zoom, cpos).then(() => afterEngineInit(false));
 
     document.querySelectorAll('.basemap-btn[data-engine]').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.engine === activeEngine)
     );
 }
 
-async function getIpLocation() {
-    try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        if (data && data.latitude && data.longitude) {
-            return [data.longitude, data.latitude];
-        }
-    } catch (e) {
-        console.info("IP Geolocation failed:", e);
-    }
-    return null;
-}
-function afterEngineInit() {
+
+function afterEngineInit(isFirstLoad = false) {
     mapEngine.switchBasemap(activeBasemapKey);
     mapEngine.updateBasemapOpacity(basemapOpacity);
     refreshDataLayer();
@@ -100,13 +89,18 @@ function afterEngineInit() {
         }
     }
 
-    getIpLocation().then(coords => {
-        if (coords && mapEngine) {
-            setTimeout(() => {
-                if (mapEngine) mapEngine.flyTo(coords, 10);
-            }, 1000);
-        }
-    });
+    if (isFirstLoad) {
+        getIpLocation().then(coords => {
+            if (coords && mapEngine) {
+                setTimeout(() => {
+                    if (mapEngine) {
+                        const locZoom = CONFIG.location_zoom !== undefined ? CONFIG.location_zoom : (CONFIG['location-zoom'] !== undefined ? CONFIG['location-zoom'] : 10);
+                        mapEngine.flyTo(coords, locZoom);
+                    }
+                }, 1000);
+            }
+        });
+    }
 }
 
 function initEngineBtns(container) {
@@ -470,36 +464,9 @@ function bindSearchControls(inputId, buttonId, resultsId, opts = {}) {
     });
 }
 
-// ─── GEOLOCATION ───
-
-function bindLocBtn(id) {
-    const btn = document.getElementById(id);
-    if (!btn) return;
-    // Use onclick to avoid listener accumulation on layout switches
-    btn.onclick = () => {
-        if (!navigator.geolocation) return;
-        btn.classList.add('active');
-        navigator.geolocation.getCurrentPosition(
-            pos => {
-                btn.classList.remove('active');
-                if (mapEngine) mapEngine.flyTo([pos.coords.longitude, pos.coords.latitude], 14);
-            },
-            () => btn.classList.remove('active')
-        );
-    };
-}
-
 function bindSearchBtn(id) {
     const btn = document.getElementById(id);
     if (btn) btn.onclick = openSearchSheet;
-}
-
-function getMyLocationIconSvg() {
-    return `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-        </svg>
-    `;
 }
 
 // ════════════════════════════════════════════════
@@ -891,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cpos = activeEngine === 'leaflet' ? pos.leaflet : pos.maplibre;
 
     mapEngine = new ctor();
-    mapEngine.init('map', [13.3, 51.0], 8, cpos).then(afterEngineInit);
+    mapEngine.init('map', [13.3, 51.0], 8, cpos).then(() => afterEngineInit(true));
 
     window.addEventListener('resize', () => {
         requestAnimationFrame(() => {

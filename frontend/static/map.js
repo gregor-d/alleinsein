@@ -17,9 +17,15 @@ class LeafletEngine {
             // center is [lng, lat], Leaflet setView expects [lat, lng]
             const latlng = [center[1], center[0]];
 
-            this.map = L.map(containerId, {
+            const minZoomSetting = CONFIG.minimal_zoom !== undefined ? CONFIG.minimal_zoom : (CONFIG['minimal-zoom'] !== undefined ? CONFIG['minimal-zoom'] : undefined);
+            const mapOptions = {
                 zoomControl: false
-            }).setView(latlng, zoom);
+            };
+            if (minZoomSetting !== undefined) {
+                mapOptions.minZoom = minZoomSetting;
+            }
+
+            this.map = L.map(containerId, mapOptions).setView(latlng, zoom);
 
             L.control.zoom({ position: zoomPos }).addTo(this.map);
             L.control.scale({ position: 'bottomleft', imperial: false }).addTo(this.map);
@@ -220,7 +226,8 @@ class MapLibreEngine {
     init(containerId, center, zoom, navPos = 'top-left') {
         this._navPos = navPos;
         return new Promise((resolve) => {
-            this.map = new maplibregl.Map({
+            const minZoomSetting = CONFIG.minimal_zoom !== undefined ? CONFIG.minimal_zoom : (CONFIG['minimal-zoom'] !== undefined ? CONFIG['minimal-zoom'] : undefined);
+            const mapOptions = {
                 container: containerId,
                 style: {
                     version: 8,
@@ -288,9 +295,12 @@ class MapLibreEngine {
                 center: center, // MapLibre center format is [lng, lat]
                 zoom: zoom - 1,
                 attributionControl: false
-            });
+            };
+            if (minZoomSetting !== undefined) {
+                mapOptions.minZoom = minZoomSetting - 1;
+            }
+            this.map = new maplibregl.Map(mapOptions);
 
-            // Add navigation control at the position requested by the active layout
             this.map.addControl(new maplibregl.NavigationControl({
                 showCompass: false
             }), this._navPos || 'top-left');

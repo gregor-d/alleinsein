@@ -7,7 +7,9 @@ const CONFIG = {
     tile_json_path: "WebMercatorQuad/tilejson.json",
     raster_name: "germany_raster_v2.tif",
     mask_opacity: 0.45,
-    mask_color: "#111111"
+    mask_color: "#111111",
+    minimal_zoom: 6,
+    location_zoom: 14
 };
 console.log("using fqdn:" + CONFIG.fqdn)
 
