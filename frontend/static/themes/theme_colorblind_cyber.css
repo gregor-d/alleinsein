@@ -1,0 +1,21 @@
+/* Theme: Colorblind Cyber — cyberpunk aesthetic with colorblind-safe accent pair */
+/* Electric cyan + orange: avoids red/green distinction, safe across all major types */
+:root {
+    --bg-deep:           #080c14;
+    --bg-panel:          rgba(8, 12, 20, 0.94);
+    --bg-card:           #0f1520;
+    --bg-hover:          #162030;
+    --border:            #1e2d44;
+    --border-hi:         #2e4060;
+    --text-hi:           #e8f4ff;
+    --text-mid:          #7099bb;
+    --text-lo:           #445566;
+    --accent:            #00ccff;
+    --accent2:           #ff8800;
+    --accent-dim:        rgba(0, 204, 255, 0.12);
+    --accent-glow:       rgba(0, 204, 255, 0.55);
+    --shadow-card:       0 1px 4px rgba(0,0,0,0.70);
+    --shadow-card-hover: 0 4px 24px rgba(0,204,255,0.24);
+    --radius:            4px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
+}

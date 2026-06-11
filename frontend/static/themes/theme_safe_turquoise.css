@@ -1,0 +1,20 @@
+/* Theme: Safe Turquoise Light — teal + orange, broadly safe across color-vision types */
+:root {
+    --bg-deep:           #f0f8f5;
+    --bg-panel:          rgba(240, 248, 245, 0.94);
+    --bg-card:           #e4f2ec;
+    --bg-hover:          #d4e8e0;
+    --border:            #b8d8ce;
+    --border-hi:         #6090a0;
+    --text-hi:           #0c1e1a;
+    --text-mid:          #2a4a44;
+    --text-lo:           #5a8880;
+    --accent:            #009988;
+    --accent2:           #ee7733;
+    --accent-dim:        rgba(0, 153, 136, 0.14);
+    --accent-glow:       rgba(0, 153, 136, 0.42);
+    --shadow-card:       0 1px 4px rgba(12,30,26,0.08);
+    --shadow-card-hover: 0 4px 16px rgba(12,30,26,0.16);
+    --radius:            12px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
+}

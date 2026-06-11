@@ -10,7 +10,7 @@ class LeafletEngine {
         this.boundsSet = false;
     }
 
-    init(containerId, center, zoom) {
+    init(containerId, center, zoom, zoomPos = 'topleft') {
         return new Promise((resolve) => {
             // center is [lng, lat], Leaflet setView expects [lat, lng]
             const latlng = [center[1], center[0]];
@@ -19,11 +19,16 @@ class LeafletEngine {
                 zoomControl: false
             }).setView(latlng, zoom);
 
-            // Add zoom control top-left
-            L.control.zoom({ position: 'topleft' }).addTo(this.map);
+            L.control.zoom({ position: zoomPos }).addTo(this.map);
 
             resolve();
         });
+    }
+
+    flyTo(lngLat, zoom) {
+        if (this.map) {
+            this.map.flyTo([lngLat[1], lngLat[0]], zoom, { duration: 1.2 });
+        }
     }
 
     destroy() {
@@ -141,7 +146,8 @@ class MapLibreEngine {
         this.debounceTimer = null;
     }
 
-    init(containerId, center, zoom) {
+    init(containerId, center, zoom, navPos = 'top-left') {
+        this._navPos = navPos;
         return new Promise((resolve) => {
             this.map = new maplibregl.Map({
                 container: containerId,
@@ -193,10 +199,10 @@ class MapLibreEngine {
                 attributionControl: false
             });
 
-            // Add navigation control top-left without compass
+            // Add navigation control at the position requested by the active layout
             this.map.addControl(new maplibregl.NavigationControl({
                 showCompass: false
-            }), 'top-left');
+            }), this._navPos || 'top-left');
 
             // Add attribution control bottom-right
             this.map.addControl(new maplibregl.AttributionControl({
@@ -303,6 +309,12 @@ class MapLibreEngine {
         }
         if (this.map.getLayer('basemap-satellite-layer')) {
             this.map.setPaintProperty('basemap-satellite-layer', 'raster-opacity', opacity);
+        }
+    }
+
+    flyTo(lngLat, zoom) {
+        if (this.map) {
+            this.map.flyTo({ center: lngLat, zoom: zoom - 1, duration: 1200, essential: true });
         }
     }
 

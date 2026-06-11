@@ -1,0 +1,20 @@
+/* Theme: Dracula */
+:root {
+    --bg-deep:           #282a36;
+    --bg-panel:          rgba(40, 42, 54, 0.92);
+    --bg-card:           #383a59;
+    --bg-hover:          #44475a;
+    --border:            #44475a;
+    --border-hi:         #6272a4;
+    --text-hi:           #f8f8f2;
+    --text-mid:          #a0aac8;
+    --text-lo:           #6272a4;
+    --accent:            #bd93f9;
+    --accent2:           #ff79c6;
+    --accent-dim:        rgba(189, 147, 249, 0.16);
+    --accent-glow:       rgba(189, 147, 249, 0.50);
+    --shadow-card:       0 1px 4px rgba(0,0,0,0.50);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.60);
+    --radius:            12px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
+}

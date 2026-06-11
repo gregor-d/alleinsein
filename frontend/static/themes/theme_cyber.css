@@ -1,0 +1,20 @@
+/* Theme: Cyberpunk — electric yellow & neon pink on near-black */
+:root {
+    --bg-deep:           #09090f;
+    --bg-panel:          rgba(9, 9, 18, 0.94);
+    --bg-card:           #13131e;
+    --bg-hover:          #1c1c2e;
+    --border:            #26263a;
+    --border-hi:         #484870;
+    --text-hi:           #f0f0ff;
+    --text-mid:          #9090cc;
+    --text-lo:           #50507a;
+    --accent:            #f7ff00;
+    --accent2:           #ff0090;
+    --accent-dim:        rgba(247, 255, 0, 0.10);
+    --accent-glow:       rgba(247, 255, 0, 0.52);
+    --shadow-card:       0 1px 4px rgba(0,0,0,0.70);
+    --shadow-card-hover: 0 4px 24px rgba(247,255,0,0.20);
+    --radius:            4px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
+}

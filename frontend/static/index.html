@@ -5,93 +5,218 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Raster Explorer</title>
-    <meta name="description"
-        content="Interactive raster viewer supporting Leaflet and MapLibre GL JS with server-side colormap and premium UI." />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
+    <meta name="description" content="Interactive raster viewer supporting Leaflet and MapLibre GL JS." />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Leaflet Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- MapLibre GL JS Assets -->
     <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-    
-    <!-- App Styles -->
+
     <link rel="stylesheet" href="index.css" />
-    <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css?v1" />
+    <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css" />
     <script>
         (function () {
-            const savedTheme = localStorage.getItem('map-theme') || 'glass';
-            document.getElementById('theme-link').href = `themes/theme_${savedTheme}.css?v1`;
+            const t = localStorage.getItem('map-theme') || 'glass';
+            document.getElementById('theme-link').href = `themes/theme_${t}.css`;
         })();
-        </script>
+    </script>
     <script src="config.js"></script>
     <script src="map.js"></script>
     <script src="shared.js"></script>
 </head>
 
-<body>
+<body data-layout="1">
 
-    <!-- Map container -->
-    <div id="map"></div>
-
-    <!-- UI Control Panel -->
-    <div id="panel">
-        <div class="panel-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                <h1>Raster Explorer</h1>
-                <select id="theme-switcher"
-                    style="padding: 4px 8px; font-size: 11px; border-radius: 6px; background: var(--bg-card); color: var(--text-hi); border: 1px solid var(--border-hi); outline: none; cursor: pointer; font-family: inherit;">
-                    <optgroup label="Dark Themes">
-                        <option value="glass">Glass (Default)</option>
-                        <option value="dracula">Dracula</option>
-                        <option value="nord_frost">Nord Frost</option>
-                        <option value="terminal">Terminal</option>
-                        <option value="cyber">Cyberpunk</option>
-                    </optgroup>
-                    <optgroup label="Light Themes">
-                        <option value="nordic_light">Nordic Light</option>
-                        <option value="pastel">Pastel Candy</option>
-                        <option value="brutalist">Neo-Brutalist</option>
-                        <option value="forest">Forest Earth</option>
-                        <option value="corporate">Corporate</option>
-                    </optgroup>
-                    <optgroup label="Colorblind Friendly (Dark)">
-                        <option value="okabe_ito_dark">Okabe-Ito Dark</option>
-                        <option value="deuteranopia">Deuteranopia Dark</option>
-                        <option value="protanopia">Protanopia Dark</option>
-                        <option value="barrier_free">Barrier-Free Dark</option>
-                        <option value="colorblind_cyber">Colorblind Cyber</option>
-                    </optgroup>
-                    <optgroup label="Colorblind Friendly (Light)">
-                        <option value="paul_tol_light">Paul Tol Light</option>
-                        <option value="tritanopia">Tritanopia Light</option>
-                        <option value="achromatopsia">Achromatopsia HC</option>
-                        <option value="amber_blue">Safe Amber & Blue</option>
-                        <option value="safe_turquoise">Safe Turquoise Light</option>
-                    </optgroup>
-                </select>
-            </div>
-            
-            <p id="engine-desc">Server-side colormap · single tile layer · Leaflet</p>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px;">
-                <span style="font-size: 10px; color: var(--text-mid); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Map Engine</span>
-                <div class="engine-switcher">
-                    <button class="engine-btn" data-engine="leaflet" id="engine-leaflet">Leaflet</button>
-                    <button class="engine-btn" data-engine="maplibre" id="engine-maplibre">MapLibre</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel-body" id="panel-body">
-            <!-- Basemap switcher and layer cards dynamically injected here -->
-        </div>
+    <!-- ─── DEV BAR (remove before release) ─── -->
+    <div id="dev-bar">
+        <span class="dev-label">DEV</span>
+        <label class="dev-select-group">
+            Layout
+            <select id="layout-switcher">
+                <option value="1">Layout 1 — Top / Bottom</option>
+                <option value="2">Layout 2 — Bottom-heavy</option>
+                <option value="3">Layout 3 — Floating</option>
+            </select>
+        </label>
+        <label class="dev-select-group">
+            Theme
+            <select id="theme-switcher">
+                <optgroup label="Dark">
+                    <option value="glass">Glass (Default)</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="nord_frost">Nord Frost</option>
+                    <option value="terminal">Terminal</option>
+                    <option value="cyber">Cyberpunk</option>
+                </optgroup>
+                <optgroup label="Light">
+                    <option value="nordic_light">Nordic Light</option>
+                    <option value="pastel">Pastel Candy</option>
+                    <option value="brutalist">Neo-Brutalist</option>
+                    <option value="forest">Forest Earth</option>
+                    <option value="corporate">Corporate</option>
+                </optgroup>
+                <optgroup label="Colorblind (Dark)">
+                    <option value="okabe_ito_dark">Okabe-Ito Dark</option>
+                    <option value="deuteranopia">Deuteranopia Dark</option>
+                    <option value="protanopia">Protanopia Dark</option>
+                    <option value="barrier_free">Barrier-Free Dark</option>
+                    <option value="colorblind_cyber">Colorblind Cyber</option>
+                </optgroup>
+                <optgroup label="Colorblind (Light)">
+                    <option value="paul_tol_light">Paul Tol Light</option>
+                    <option value="tritanopia">Tritanopia Light</option>
+                    <option value="achromatopsia">Achromatopsia HC</option>
+                    <option value="amber_blue">Safe Amber &amp; Blue</option>
+                    <option value="safe_turquoise">Safe Turquoise Light</option>
+                </optgroup>
+            </select>
+        </label>
     </div>
 
-    <!-- Map Engine Scripts -->
-</body>
+    <!-- ─── MAP ─── -->
+    <div id="map"></div>
 
+    <!-- ══════════════════════ LAYOUT 1 ══════════════════════ -->
+
+    <!-- Top bar: data-layer chips -->
+    <div id="l1-top" class="l1-only">
+        <div id="l1-layer-strip"></div>
+    </div>
+
+    <!-- Bottom bar: basemap + opacity -->
+    <div id="l1-bottom" class="l1-only">
+        <div id="l1-basemap-area"></div>
+    </div>
+
+    <!-- Floating bottom-right: search + location (above bottom bar) -->
+    <div id="l1-fab" class="l1-only">
+        <button class="fab" id="l1-loc-btn" title="My location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+        </button>
+        <button class="fab" id="l1-search-btn" title="Search location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- ══════════════════════ LAYOUT 2 ══════════════════════ -->
+
+    <!-- Bottom bar: data-layer chips + engine switcher -->
+    <div id="l2-bottom" class="l2-only">
+        <div id="l2-layer-strip"></div>
+        <div id="l2-engine-row"></div>
+    </div>
+
+    <!-- Floating (above bottom bar, right): basemap, search, location -->
+    <div id="l2-fab" class="l2-only">
+        <button class="fab" id="l2-loc-btn" title="My location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+        </button>
+        <button class="fab" id="l2-search-btn" title="Search location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+        </button>
+        <button class="fab fab--primary" id="l2-basemap-btn" title="Map settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- L2 basemap popup (anchored above the basemap FAB) -->
+    <div id="l2-basemap-popup" class="fab-popup"></div>
+
+    <!-- ══════════════════════ LAYOUT 3 ══════════════════════ -->
+
+    <!-- Floating layer pills (left side) -->
+    <div id="l3-layers" class="l3-only"></div>
+
+    <!-- Floating action buttons (bottom-right) -->
+    <div id="l3-fabs" class="l3-only">
+        <button class="fab fab--primary" id="l3-settings-btn" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
+        <button class="fab" id="l3-loc-btn" title="My location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/>
+                <line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/>
+                <line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+        </button>
+        <button class="fab" id="l3-search-btn" title="Search location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- L3 Settings drawer -->
+    <div id="l3-drawer" class="l3-only">
+        <div class="drawer-header">
+            <h2>Settings</h2>
+            <button id="l3-drawer-close" class="icon-btn" title="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="drawer-body" id="l3-drawer-body"></div>
+    </div>
+    <div id="l3-backdrop" class="l3-only drawer-backdrop"></div>
+
+    <!-- ══════════════════════ SHARED SHEETS ══════════════════════ -->
+
+    <!-- Color scheme bottom sheet (L1 + L2) -->
+    <div id="color-sheet" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span id="color-sheet-title">Color Scheme</span>
+            <button id="color-sheet-close" class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="sheet-body" id="color-sheet-body"></div>
+    </div>
+    <div id="color-sheet-backdrop" class="sheet-backdrop"></div>
+
+    <!-- Search bottom sheet -->
+    <div id="search-sheet" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span>Search Location</span>
+            <button id="search-sheet-close" class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="sheet-body">
+            <div class="search-input-row">
+                <input id="search-input" type="text" placeholder="Search location…" autocomplete="off" />
+                <button id="search-go" class="search-go-btn">Go</button>
+            </div>
+            <ul id="search-results" class="search-results"></ul>
+        </div>
+    </div>
+    <div id="search-sheet-backdrop" class="sheet-backdrop"></div>
+
+</body>
 </html>

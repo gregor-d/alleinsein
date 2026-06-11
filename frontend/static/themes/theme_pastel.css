@@ -1,0 +1,20 @@
+/* Theme: Pastel Candy */
+:root {
+    --bg-deep:           #fdf4fa;
+    --bg-panel:          rgba(253, 244, 250, 0.93);
+    --bg-card:           #f7e8f4;
+    --bg-hover:          #f0d8ee;
+    --border:            #e4c0e2;
+    --border-hi:         #cc88cc;
+    --text-hi:           #2d1830;
+    --text-mid:          #6e3a70;
+    --text-lo:           #a870aa;
+    --accent:            #d94faa;
+    --accent2:           #6a5acd;
+    --accent-dim:        rgba(217, 79, 170, 0.12);
+    --accent-glow:       rgba(217, 79, 170, 0.40);
+    --shadow-card:       0 1px 4px rgba(100,0,100,0.08);
+    --shadow-card-hover: 0 4px 16px rgba(100,0,100,0.16);
+    --radius:            16px;
+    --transition:        0.22s cubic-bezier(.4,0,.2,1);
+}

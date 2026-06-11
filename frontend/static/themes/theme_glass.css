@@ -1,0 +1,20 @@
+/* Theme: Glass (Default Dark) */
+:root {
+    --bg-deep:        #0d1117;
+    --bg-panel:       rgba(22, 27, 34, 0.85);
+    --bg-card:        #21262d;
+    --bg-hover:       #30363d;
+    --border:         #30363d;
+    --border-hi:      #484f58;
+    --text-hi:        #e6edf3;
+    --text-mid:       #8b949e;
+    --text-lo:        #6e7681;
+    --accent:         #bd93f9;
+    --accent2:        #ff79c6;
+    --accent-dim:     rgba(189, 147, 249, 0.15);
+    --accent-glow:    rgba(189, 147, 249, 0.5);
+    --shadow-card:    0 1px 4px rgba(0,0,0,0.4);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.55);
+    --radius:         12px;
+    --transition:     0.18s cubic-bezier(.4,0,.2,1);
+}

@@ -1,0 +1,21 @@
+/* Theme: Achromatopsia HC — high contrast monochrome for total color blindness */
+/* No hue at all; shape and contrast carry all meaning */
+:root {
+    --bg-deep:           #ffffff;
+    --bg-panel:          rgba(255, 255, 255, 0.98);
+    --bg-card:           #eeeeee;
+    --bg-hover:          #dddddd;
+    --border:            #bbbbbb;
+    --border-hi:         #555555;
+    --text-hi:           #000000;
+    --text-mid:          #333333;
+    --text-lo:           #777777;
+    --accent:            #000000;
+    --accent2:           #555555;
+    --accent-dim:        rgba(0, 0, 0, 0.10);
+    --accent-glow:       rgba(0, 0, 0, 0.32);
+    --shadow-card:       0 1px 4px rgba(0,0,0,0.12);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.22);
+    --radius:            12px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
+}

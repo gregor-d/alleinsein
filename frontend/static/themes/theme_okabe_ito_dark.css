@@ -1,0 +1,21 @@
+/* Theme: Okabe-Ito Dark — UI accent colors from the Okabe-Ito colorblind-safe palette */
+/* Palette: sky-blue #56b4e9, orange #e69f00, green #009e73, yellow #f0e442, blue #0072b2 */
+:root {
+    --bg-deep:           #0d1117;
+    --bg-panel:          rgba(13, 17, 23, 0.92);
+    --bg-card:           #161b22;
+    --bg-hover:          #21262d;
+    --border:            #21262d;
+    --border-hi:         #3d444d;
+    --text-hi:           #e6edf3;
+    --text-mid:          #8b949e;
+    --text-lo:           #6e7681;
+    --accent:            #56b4e9;
+    --accent2:           #e69f00;
+    --accent-dim:        rgba(86, 180, 233, 0.15);
+    --accent-glow:       rgba(86, 180, 233, 0.48);
+    --shadow-card:       0 1px 4px rgba(0,0,0,0.40);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.52);
+    --radius:            12px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
+}

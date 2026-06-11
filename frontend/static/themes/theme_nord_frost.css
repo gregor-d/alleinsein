@@ -1,0 +1,20 @@
+/* Theme: Nord Frost */
+:root {
+    --bg-deep:           #2e3440;
+    --bg-panel:          rgba(46, 52, 64, 0.92);
+    --bg-card:           #3b4252;
+    --bg-hover:          #434c5e;
+    --border:            #434c5e;
+    --border-hi:         #4c566a;
+    --text-hi:           #eceff4;
+    --text-mid:          #d8dee9;
+    --text-lo:           #81a1c1;
+    --accent:            #88c0d0;
+    --accent2:           #b48ead;
+    --accent-dim:        rgba(136, 192, 208, 0.18);
+    --accent-glow:       rgba(136, 192, 208, 0.48);
+    --shadow-card:       0 1px 4px rgba(0,0,0,0.40);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.52);
+    --radius:            12px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
+}
