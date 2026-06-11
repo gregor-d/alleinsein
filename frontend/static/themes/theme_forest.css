@@ -1,20 +1,20 @@
+/* Theme: Forest Earth */
 :root {
-    --bg-deep: #060a07;
-    --bg-panel: #0b120c; /* black-green panel background */
-    --bg-card: #344e39;  /* sage green cards for strong green contrast */
-    --bg-hover: #406046;
-    --border: #233527;
-    --border-hi: #a3b18a;
-    --text-hi: #dad7cd;
-    --text-mid: #a3b18a;
-    --text-lo: #588157;
-    --text-card-hi: #ffffff;
-    --text-card-mid: #dad7cd;
-    --text-card-lo: #a3b18a;
-    --accent: #a3b18a;
-    --accent2: #dad7cd;
-    --accent-dim: rgba(163, 177, 138, 0.2);
-    --accent-glow: rgba(163, 177, 138, 0.45);
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.45);
-    --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.65);
+    --bg-deep:           #f0ede5;
+    --bg-panel:          rgba(240, 237, 229, 0.93);
+    --bg-card:           #e8e3d8;
+    --bg-hover:          #ddd6c8;
+    --border:            #c4b9a0;
+    --border-hi:         #8b7355;
+    --text-hi:           #1c1209;
+    --text-mid:          #4a3820;
+    --text-lo:           #7a6040;
+    --accent:            #2d7a37;
+    --accent2:           #b05a00;
+    --accent-dim:        rgba(45, 122, 55, 0.13);
+    --accent-glow:       rgba(45, 122, 55, 0.40);
+    --shadow-card:       0 1px 4px rgba(28,18,9,0.10);
+    --shadow-card-hover: 0 4px 16px rgba(28,18,9,0.18);
+    --radius:            10px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

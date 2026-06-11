@@ -1,20 +1,21 @@
+/* Theme: Barrier-Free Dark — broad accessibility across multiple color-vision types */
+/* Cyan + orange: distinguishable for deuteranopia, protanopia, and typical vision */
 :root {
-    --bg-deep: #050507;
-    --bg-panel: #0a0a0c; /* very dark charcoal panel */
-    --bg-card: #34343d;  /* distinct warm-gray cards for strong contrast */
-    --bg-hover: #43434e;
-    --border: #52525f;
-    --border-hi: #4db8ff; /* Barrier-free sky blue */
-    --text-hi: #ffffff;
-    --text-mid: #e65c00; /* Barrier-free deep orange */
-    --text-lo: #9a9a9f;
-    --text-card-hi: #ffffff;
-    --text-card-mid: #4db8ff;
-    --text-card-lo: #e65c00;
-    --accent: #e65c00;
-    --accent2: #4db8ff;
-    --accent-dim: rgba(230, 92, 0, 0.2);
-    --accent-glow: rgba(230, 92, 0, 0.5);
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.45);
-    --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.65);
+    --bg-deep:           #111418;
+    --bg-panel:          rgba(17, 20, 24, 0.93);
+    --bg-card:           #1c2128;
+    --bg-hover:          #272e38;
+    --border:            #2d3540;
+    --border-hi:         #4a5568;
+    --text-hi:           #f0f6fc;
+    --text-mid:          #9ab0c8;
+    --text-lo:           #6a849c;
+    --accent:            #33bbee;
+    --accent2:           #ee7733;
+    --accent-dim:        rgba(51, 187, 238, 0.14);
+    --accent-glow:       rgba(51, 187, 238, 0.48);
+    --shadow-card:       0 1px 4px rgba(0,0,0,0.45);
+    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.56);
+    --radius:            12px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

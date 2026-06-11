@@ -5,93 +5,140 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Raster Explorer</title>
-    <meta name="description"
-        content="Interactive raster viewer supporting Leaflet and MapLibre GL JS with server-side colormap and premium UI." />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
+    <meta name="description" content="Interactive raster viewer supporting Leaflet and MapLibre GL JS." />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Leaflet Assets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- MapLibre GL JS Assets -->
     <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-    
-    <!-- App Styles -->
+
     <link rel="stylesheet" href="index.css" />
-    <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css?v1" />
+    <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css" />
     <script>
         (function () {
-            const savedTheme = localStorage.getItem('map-theme') || 'glass';
-            document.getElementById('theme-link').href = `themes/theme_${savedTheme}.css?v1`;
+            const themes = ['glass', 'nordic_light', 'brutalist', 'forest', 'corporate', 'barrier_free', 'paul_tol_light', 'achromatopsia', 'amber_blue'];
+            const saved = localStorage.getItem('map-theme');
+            const t = themes.includes(saved) ? saved : 'glass';
+            localStorage.setItem('map-theme', t);
+            document.getElementById('theme-link').href = `themes/theme_${t}.css`;
         })();
-        </script>
+    </script>
     <script src="config.js"></script>
     <script src="map.js"></script>
     <script src="shared.js"></script>
+    <script src="dev-drawer.js"></script>
 </head>
 
 <body>
-
-    <!-- Map container -->
-    <div id="map"></div>
-
-    <!-- UI Control Panel -->
-    <div id="panel">
-        <div class="panel-header">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                <h1>Raster Explorer</h1>
-                <select id="theme-switcher"
-                    style="padding: 4px 8px; font-size: 11px; border-radius: 6px; background: var(--bg-card); color: var(--text-hi); border: 1px solid var(--border-hi); outline: none; cursor: pointer; font-family: inherit;">
-                    <optgroup label="Dark Themes">
-                        <option value="glass">Glass (Default)</option>
-                        <option value="dracula">Dracula</option>
-                        <option value="nord_frost">Nord Frost</option>
-                        <option value="terminal">Terminal</option>
-                        <option value="cyber">Cyberpunk</option>
-                    </optgroup>
-                    <optgroup label="Light Themes">
-                        <option value="nordic_light">Nordic Light</option>
-                        <option value="pastel">Pastel Candy</option>
-                        <option value="brutalist">Neo-Brutalist</option>
-                        <option value="forest">Forest Earth</option>
-                        <option value="corporate">Corporate</option>
-                    </optgroup>
-                    <optgroup label="Colorblind Friendly (Dark)">
-                        <option value="okabe_ito_dark">Okabe-Ito Dark</option>
-                        <option value="deuteranopia">Deuteranopia Dark</option>
-                        <option value="protanopia">Protanopia Dark</option>
-                        <option value="barrier_free">Barrier-Free Dark</option>
-                        <option value="colorblind_cyber">Colorblind Cyber</option>
-                    </optgroup>
-                    <optgroup label="Colorblind Friendly (Light)">
-                        <option value="paul_tol_light">Paul Tol Light</option>
-                        <option value="tritanopia">Tritanopia Light</option>
-                        <option value="achromatopsia">Achromatopsia HC</option>
-                        <option value="amber_blue">Safe Amber & Blue</option>
-                        <option value="safe_turquoise">Safe Turquoise Light</option>
-                    </optgroup>
-                </select>
-            </div>
-            
-            <p id="engine-desc">Server-side colormap · single tile layer · Leaflet</p>
-
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px;">
-                <span style="font-size: 10px; color: var(--text-mid); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Map Engine</span>
-                <div class="engine-switcher">
-                    <button class="engine-btn" data-engine="leaflet" id="engine-leaflet">Leaflet</button>
-                    <button class="engine-btn" data-engine="maplibre" id="engine-maplibre">MapLibre</button>
-                </div>
-            </div>
+    <div id="dev-bar">
+        <span class="dev-label">DEV</span>
+        <div class="dev-select-group" id="theme-switcher">
+            <button class="dev-theme-btn" data-theme="glass">Glass</button>
+            <button class="dev-theme-btn" data-theme="nordic_light">Nordic Light</button>
+            <button class="dev-theme-btn" data-theme="brutalist">Neo-Brutalist</button>
+            <button class="dev-theme-btn" data-theme="forest">Forest</button>
+            <button class="dev-theme-btn" data-theme="corporate">Corporate</button>
+            <button class="dev-theme-btn" data-theme="barrier_free">Barrier-Free</button>
+            <button class="dev-theme-btn" data-theme="paul_tol_light">Paul Tol</button>
+            <button class="dev-theme-btn" data-theme="achromatopsia">Achromatopsia</button>
+            <button class="dev-theme-btn" data-theme="amber_blue">Amber/Blue</button>
         </div>
-
-        <div class="panel-body" id="panel-body">
-            <!-- Basemap switcher and layer cards dynamically injected here -->
+        <div class="dev-select-group" id="drawer-pos-switcher">
+            Drawer:
+            <button class="dev-pos-btn" data-pos="top-left">TL</button>
+            <button class="dev-pos-btn" data-pos="left-middle">LM</button>
+            <button class="dev-pos-btn" data-pos="left-bottom">LB</button>
+            <button class="dev-pos-btn" data-pos="top-right">TR</button>
+            <button class="dev-pos-btn active" data-pos="right-middle">RM</button>
+            <button class="dev-pos-btn" data-pos="right-bottom">RB</button>
         </div>
     </div>
 
-    <!-- Map Engine Scripts -->
+    <div id="map"></div>
+
+    <div id="l4-bottom">
+        <div id="l4-layer-strip"></div>
+    </div>
+
+    <div id="l4-fab">
+        <button class="fab" id="l4-loc-btn" title="My location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 11 22 2 13 21 11 13 3 11" />
+            </svg>
+        </button>
+        <button class="fab" id="l4-search-btn" title="Search location">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="10" cy="10" r="7" />
+                <line x1="21" y1="21" x2="15" y2="15" />
+            </svg>
+        </button>
+        <button class="fab" id="l4-settings-btn" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+        </button>
+        <button class="fab" id="l4-basemap-btn" title="Basemap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6" />
+                <line x1="9" y1="3" x2="9" y2="18" />
+                <line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+        </button>
+    </div>
+
+    <div id="l4-basemap-popup" class="fab-popup"></div>
+
+    <div id="l4-drawer" class="main-drawer">
+        <div class="drawer-header">
+            <h2>Settings</h2>
+            <button id="l4-drawer-close" class="icon-btn" title="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+        <div class="drawer-body" id="l4-drawer-body"></div>
+    </div>
+    <div id="l4-backdrop" class="drawer-backdrop"></div>
+
+    <div id="color-sheet" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span id="color-sheet-title">Color Scheme</span>
+            <button id="color-sheet-close" class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+        <div class="sheet-body" id="color-sheet-body"></div>
+    </div>
+    <div id="color-sheet-backdrop" class="sheet-backdrop"></div>
+
+    <div id="search-sheet" class="search-popup">
+        <div class="sheet-header">
+            <span>Search Location</span>
+            <button id="search-sheet-close" class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+        <div class="sheet-body">
+            <div class="search-input-row">
+                <input id="search-input" type="text" placeholder="Search location..." autocomplete="off" />
+                <button id="search-go" class="search-go-btn">Go</button>
+            </div>
+            <ul id="search-results" class="search-results"></ul>
+        </div>
+    </div>
+    <div id="search-sheet-backdrop" class="sheet-backdrop"></div>
 </body>
 
 </html>

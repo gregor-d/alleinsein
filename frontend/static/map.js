@@ -10,7 +10,7 @@ class LeafletEngine {
         this.boundsSet = false;
     }
 
-    init(containerId, center, zoom) {
+    init(containerId, center, zoom, zoomPos = 'topleft') {
         return new Promise((resolve) => {
             // center is [lng, lat], Leaflet setView expects [lat, lng]
             const latlng = [center[1], center[0]];
@@ -19,11 +19,16 @@ class LeafletEngine {
                 zoomControl: false
             }).setView(latlng, zoom);
 
-            // Add zoom control top-left
-            L.control.zoom({ position: 'topleft' }).addTo(this.map);
+            L.control.zoom({ position: zoomPos }).addTo(this.map);
 
             resolve();
         });
+    }
+
+    flyTo(lngLat, zoom) {
+        if (this.map) {
+            this.map.flyTo([lngLat[1], lngLat[0]], zoom, { duration: 1.2 });
+        }
     }
 
     destroy() {
@@ -98,7 +103,11 @@ class LeafletEngine {
 
         if (key !== 'none') {
             const def = BASEMAPS[key];
-            this.basemapLayer = L.tileLayer(def.url, def.options).addTo(this.map);
+            if (def.type === 'wms') {
+                this.basemapLayer = L.tileLayer.wms(def.url, def.options).addTo(this.map);
+            } else {
+                this.basemapLayer = L.tileLayer(def.url, def.options).addTo(this.map);
+            }
             this.basemapLayer.setOpacity(basemapOpacity);
 
             // Re-add data layer on top
@@ -141,7 +150,8 @@ class MapLibreEngine {
         this.debounceTimer = null;
     }
 
-    init(containerId, center, zoom) {
+    init(containerId, center, zoom, navPos = 'top-left') {
+        this._navPos = navPos;
         return new Promise((resolve) => {
             this.map = new maplibregl.Map({
                 container: containerId,
@@ -161,6 +171,15 @@ class MapLibreEngine {
                             tileSize: 256,
                             attribution: BASEMAPS.satellite.options.attribution,
                             maxzoom: BASEMAPS.satellite.options.maxZoom
+                        },
+                        'basemap-schummerung': {
+                            type: 'raster',
+                            tiles: [
+                                'https://sgx.geodatenzentrum.de/wms_basemapde_schummerung?service=WMS&version=1.1.1&request=GetMap&layers=de_basemapde_web_raster_combshade&styles=&format=image/png&transparent=true&height=256&width=256&srs=EPSG:3857&bbox={bbox-epsg-3857}'
+                            ],
+                            tileSize: 256,
+                            attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
+                            maxzoom: 15
                         }
                     },
                     layers: [
@@ -185,6 +204,17 @@ class MapLibreEngine {
                             paint: {
                                 'raster-opacity': 1.0
                             }
+                        },
+                        {
+                            id: 'basemap-schummerung-layer',
+                            type: 'raster',
+                            source: 'basemap-schummerung',
+                            layout: {
+                                visibility: 'none'
+                            },
+                            paint: {
+                                'raster-opacity': 1.0
+                            }
                         }
                     ]
                 },
@@ -193,10 +223,10 @@ class MapLibreEngine {
                 attributionControl: false
             });
 
-            // Add navigation control top-left without compass
+            // Add navigation control at the position requested by the active layout
             this.map.addControl(new maplibregl.NavigationControl({
                 showCompass: false
-            }), 'top-left');
+            }), this._navPos || 'top-left');
 
             // Add attribution control bottom-right
             this.map.addControl(new maplibregl.AttributionControl({
@@ -294,6 +324,9 @@ class MapLibreEngine {
         if (this.map.getLayer('basemap-satellite-layer')) {
             this.map.setLayoutProperty('basemap-satellite-layer', 'visibility', key === 'satellite' ? 'visible' : 'none');
         }
+        if (this.map.getLayer('basemap-schummerung-layer')) {
+            this.map.setLayoutProperty('basemap-schummerung-layer', 'visibility', key === 'schummerung' ? 'visible' : 'none');
+        }
     }
 
     updateBasemapOpacity(opacity) {
@@ -303,6 +336,15 @@ class MapLibreEngine {
         }
         if (this.map.getLayer('basemap-satellite-layer')) {
             this.map.setPaintProperty('basemap-satellite-layer', 'raster-opacity', opacity);
+        }
+        if (this.map.getLayer('basemap-schummerung-layer')) {
+            this.map.setPaintProperty('basemap-schummerung-layer', 'raster-opacity', opacity);
+        }
+    }
+
+    flyTo(lngLat, zoom) {
+        if (this.map) {
+            this.map.flyTo({ center: lngLat, zoom: zoom - 1, duration: 1200, essential: true });
         }
     }
 

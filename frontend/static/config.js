@@ -1,8 +1,8 @@
 const CONFIG = {
-    // fqdn: "http://127.0.0.1:8000",
+    fqdn: "http://127.0.0.1:8080",
     // on prod the fqdn is on the same origin
     // test cloudflare wrangler trigger
-    fqdn: "https://tiles.alleinseinkarte.de",
+    // fqdn: "https://tiles.alleinseinkarte.de",
     tile_json_path: "WebMercatorQuad/tilejson.json",
     raster_name: "germany_raster_v2.tif"
 };
@@ -43,6 +43,18 @@ const BASEMAPS = {
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         options: {
             attribution: '&copy; <a href="https://www.esri.com/">Esri</a> · Sources: Esri, Maxar, Earthstar Geographics',
+            maxZoom: 15
+        }
+    },
+    schummerung: {
+        label: 'Relief',
+        type: 'wms',
+        url: 'https://sgx.geodatenzentrum.de/wms_basemapde_schummerung',
+        options: {
+            layers: 'de_basemapde_web_raster_combshade',
+            format: 'image/png',
+            transparent: true,
+            attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
             maxZoom: 15
         }
     }

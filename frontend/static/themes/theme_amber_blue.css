@@ -1,20 +1,21 @@
+/* Theme: Safe Amber & Blue — works for deuteranopia and protanopia */
+/* Dark blue + amber: highly distinct, never confused across the two most common deficiency types */
 :root {
-    --bg-deep: #030406;
-    --bg-panel: #080a0f; /* deep dark blue-black panel */
-    --bg-card: #202736;  /* navy-slate cards for strong contrast */
-    --bg-hover: #2d364b;
-    --border: #3b4866;
-    --border-hi: #ffb000; /* Amber accent */
-    --text-hi: #f0f4fc;
-    --text-mid: #1e90ff; /* Deep Sky Blue accent */
-    --text-lo: #7483a3;
-    --text-card-hi: #ffffff;
-    --text-card-mid: #ffb000;
-    --text-card-lo: #1e90ff;
-    --accent: #ffb000;
-    --accent2: #1e90ff;
-    --accent-dim: rgba(255, 176, 0, 0.2);
-    --accent-glow: rgba(255, 176, 0, 0.5);
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.5);
-    --shadow-card-hover: 0 8px 28px rgba(0, 0, 0, 0.7);
+    --bg-deep:           #f5f3ee;
+    --bg-panel:          rgba(245, 243, 238, 0.94);
+    --bg-card:           #ede9df;
+    --bg-hover:          #e0dace;
+    --border:            #c8c0b0;
+    --border-hi:         #9890a0;
+    --text-hi:           #18140e;
+    --text-mid:          #504030;
+    --text-lo:           #887060;
+    --accent:            #0057b8;
+    --accent2:           #e8a000;
+    --accent-dim:        rgba(0, 87, 184, 0.12);
+    --accent-glow:       rgba(0, 87, 184, 0.40);
+    --shadow-card:       0 1px 4px rgba(24,20,14,0.08);
+    --shadow-card-hover: 0 4px 16px rgba(24,20,14,0.16);
+    --radius:            12px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

@@ -1,20 +1,20 @@
+/* Theme: Corporate */
 :root {
-    --bg-deep: #f8fafc;
-    --bg-panel: #0f172a; /* dark slate navy panel */
-    --bg-card: #ffffff;  /* white card for strong contrast */
-    --bg-hover: #f1f5f9;
-    --border: #cbd5e1;
-    --border-hi: #2563eb;
-    --text-hi: #ffffff; /* text on dark panel */
-    --text-mid: #94a3b8;
-    --text-lo: #475569;
-    --text-card-hi: #0f172a; /* text on white card */
-    --text-card-mid: #475569;
-    --text-card-lo: #94a3b8;
-    --accent: #2563eb;
-    --accent2: #60a5fa;
-    --accent-dim: rgba(37, 99, 235, 0.15);
-    --accent-glow: rgba(37, 99, 235, 0.4);
-    --shadow-card: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-    --shadow-card-hover: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    --bg-deep:           #f5f7fa;
+    --bg-panel:          rgba(245, 247, 250, 0.96);
+    --bg-card:           #ffffff;
+    --bg-hover:          #eef1f6;
+    --border:            #dde1e8;
+    --border-hi:         #a0aec0;
+    --text-hi:           #1a202c;
+    --text-mid:          #4a5568;
+    --text-lo:           #a0aec0;
+    --accent:            #3182ce;
+    --accent2:           #805ad5;
+    --accent-dim:        rgba(49, 130, 206, 0.12);
+    --accent-glow:       rgba(49, 130, 206, 0.38);
+    --shadow-card:       0 1px 4px rgba(26,32,44,0.08);
+    --shadow-card-hover: 0 4px 16px rgba(26,32,44,0.14);
+    --radius:            8px;
+    --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }
