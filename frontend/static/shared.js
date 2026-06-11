@@ -551,6 +551,13 @@ function buildLayout4() {
     bindSearchBtn('l4-search-btn');
     bindLocBtn('l4-loc-btn');
 
+    document.getElementById('l4-zoom-in-btn').onclick = () => {
+        if (mapEngine) mapEngine.zoomIn();
+    };
+    document.getElementById('l4-zoom-out-btn').onclick = () => {
+        if (mapEngine) mapEngine.zoomOut();
+    };
+
     requestAnimationFrame(() => {
         const h = document.getElementById('l4-bottom')?.offsetHeight;
         if (h) document.documentElement.style.setProperty('--l4-bottom-h', `${h}px`);
@@ -724,6 +731,35 @@ function appendDrawerLocationTools(container) {
     bindLocBtn('drawer-loc-btn');
 }
 
+function updateFabShift() {
+    const drawer = document.getElementById('l4-drawer');
+    const fab = document.getElementById('l4-fab');
+    if (!drawer || !fab) return;
+
+    if (window.innerWidth < 769) {
+        document.body.classList.remove('fab-shifted');
+        return;
+    }
+
+    const isOpen = drawer.classList.contains('open');
+    const pos = drawer.dataset.pos || 'right-middle';
+    const isOnRight = !pos.includes('left');
+
+    if (isOpen && isOnRight) {
+        const fabHeight = fab.offsetHeight || 200;
+        const drawerRect = drawer.getBoundingClientRect();
+        
+        const spaceBelow = window.innerHeight - drawerRect.bottom;
+        const neededSpace = fabHeight + 24;
+        
+        if (spaceBelow < neededSpace) {
+            document.body.classList.add('fab-shifted');
+            return;
+        }
+    }
+    document.body.classList.remove('fab-shifted');
+}
+
 function addSectionLabel(parent, text) {
     const div = document.createElement('div');
     div.className = 'section-label';
@@ -765,6 +801,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth >= 769) {
         document.getElementById('l4-drawer').classList.add('open');
     }
+
+    const drawer = document.getElementById('l4-drawer');
+    if (drawer) {
+        const observer = new MutationObserver(() => {
+            updateFabShift();
+        });
+        observer.observe(drawer, { attributes: true, attributeFilter: ['class', 'data-pos'] });
+    }
+    window.addEventListener('resize', updateFabShift);
+    requestAnimationFrame(updateFabShift);
 
     // Shared sheet init
     document.getElementById('color-sheet-close').addEventListener('click', closeColorSheet);
