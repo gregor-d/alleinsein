@@ -348,38 +348,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* Panel footer */
-/* ── ENGINE SWITCHER ── */
-.engine-switcher {
-    display: flex;
-    background: var(--bg-deep);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2px;
-}
 
-.engine-btn {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text-mid);
-    padding: 4px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    font-family: inherit;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background var(--transition), color var(--transition);
-}
-
-.engine-btn:hover {
-    color: var(--text-hi);
-}
-
-.engine-btn.active {
-    background: var(--accent-dim);
-    color: var(--accent);
-    border: 1px solid rgba(189, 147, 249, 0.3);
-}
 
 /* ── LEAFLET & MAPLIBRE STYLING INJECTIONS ── */
 
@@ -911,7 +880,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+    background: color-mix(in srgb, var(--bg-card) 50%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-hi);

@@ -71,7 +71,7 @@ function switchEngine(newKey) {
     mapEngine = new ctor();
     mapEngine.init('map', center, zoom, cpos).then(afterEngineInit);
 
-    document.querySelectorAll('.engine-btn').forEach(btn =>
+    document.querySelectorAll('.basemap-btn[data-engine]').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.engine === activeEngine)
     );
 }
@@ -83,7 +83,7 @@ function afterEngineInit() {
 }
 
 function initEngineBtns(container) {
-    container.querySelectorAll('.engine-btn').forEach(btn => {
+    container.querySelectorAll('.basemap-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.engine === activeEngine);
         btn.addEventListener('click', () => switchEngine(btn.dataset.engine));
     });
@@ -446,9 +446,7 @@ function bindSearchBtn(id) {
 function getMyLocationIconSvg() {
     return `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/>
-            <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
-            <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
         </svg>
     `;
 }
@@ -487,18 +485,41 @@ function buildLayout4() {
     const popup = document.getElementById('l4-basemap-popup');
     popup.innerHTML = '';
 
+    const popupHeader = document.createElement('div');
+    popupHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
+
     const engLabel = document.createElement('div');
     engLabel.className = 'bm-row-label';
-    engLabel.style.marginBottom = '6px';
+    engLabel.style.margin = '0';
     engLabel.textContent = 'Map Engine';
-    popup.appendChild(engLabel);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'icon-btn';
+    closeBtn.title = 'Close';
+    closeBtn.style.padding = '2px';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+    `;
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        popup.classList.remove('open');
+    };
+
+    popupHeader.appendChild(engLabel);
+    popupHeader.appendChild(closeBtn);
+    popup.appendChild(popupHeader);
 
     const engWrap = document.createElement('div');
-    engWrap.className = 'engine-switcher';
+    engWrap.className = 'basemap-options';
+    engWrap.style.padding = '0';
     engWrap.style.marginBottom = '12px';
     engWrap.innerHTML = `
-        <button class="engine-btn" data-engine="leaflet">Leaflet</button>
-        <button class="engine-btn" data-engine="maplibre">MapLibre</button>
+        <button class="basemap-btn" data-engine="leaflet">Leaflet</button>
+        <button class="basemap-btn" data-engine="maplibre">MapLibre</button>
     `;
     popup.appendChild(engWrap);
     initEngineBtns(engWrap);
@@ -550,13 +571,6 @@ function buildLayout4() {
 
     bindSearchBtn('l4-search-btn');
     bindLocBtn('l4-loc-btn');
-
-    document.getElementById('l4-zoom-in-btn').onclick = () => {
-        if (mapEngine) mapEngine.zoomIn();
-    };
-    document.getElementById('l4-zoom-out-btn').onclick = () => {
-        if (mapEngine) mapEngine.zoomOut();
-    };
 
     requestAnimationFrame(() => {
         const h = document.getElementById('l4-bottom')?.offsetHeight;
@@ -685,9 +699,9 @@ function buildDrawerBody(container, opts = {}) {
     engWrap.className = 'basemap-card';
     engWrap.style.padding = '10px 12px';
     engWrap.innerHTML = `
-        <div class="engine-switcher">
-            <button class="engine-btn" data-engine="leaflet">Leaflet</button>
-            <button class="engine-btn" data-engine="maplibre">MapLibre</button>
+        <div class="basemap-options" style="padding:0;">
+            <button class="basemap-btn" data-engine="leaflet">Leaflet</button>
+            <button class="basemap-btn" data-engine="maplibre">MapLibre</button>
         </div>
     `;
     container.appendChild(engWrap);

@@ -19,16 +19,10 @@ class LeafletEngine {
                 zoomControl: false
             }).setView(latlng, zoom);
 
+            L.control.zoom({ position: zoomPos }).addTo(this.map);
+
             resolve();
         });
-    }
-
-    zoomIn() {
-        if (this.map) this.map.zoomIn();
-    }
-
-    zoomOut() {
-        if (this.map) this.map.zoomOut();
     }
 
     flyTo(lngLat, zoom) {
@@ -205,6 +199,11 @@ class MapLibreEngine {
                 attributionControl: false
             });
 
+            // Add navigation control at the position requested by the active layout
+            this.map.addControl(new maplibregl.NavigationControl({
+                showCompass: false
+            }), this._navPos || 'top-left');
+
             // Add attribution control bottom-right
             this.map.addControl(new maplibregl.AttributionControl({
                 compact: false
@@ -328,14 +327,6 @@ class MapLibreEngine {
     getZoom() {
         if (!this.map) return 14;
         return this.map.getZoom() + 1;
-    }
-
-    zoomIn() {
-        if (this.map) this.map.zoomIn();
-    }
-
-    zoomOut() {
-        if (this.map) this.map.zoomOut();
     }
 }
 
