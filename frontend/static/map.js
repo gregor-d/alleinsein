@@ -7,6 +7,7 @@ class LeafletEngine {
         this.map = null;
         this.basemapLayer = null;
         this.dataLayer = null;
+        this.maskLayer = null;
         this.boundsSet = false;
         this.overlays = {};
     }
@@ -22,6 +23,26 @@ class LeafletEngine {
 
             L.control.zoom({ position: zoomPos }).addTo(this.map);
             L.control.scale({ position: 'bottomleft', imperial: false }).addTo(this.map);
+
+            // Load Germany mask
+            fetch('germany-mask.geojson')
+                .then(res => res.json())
+                .then(data => {
+                    if (!this.map) return;
+                    this.maskLayer = L.geoJSON(data, {
+                        style: {
+                            stroke: false,
+                            fillColor: CONFIG.mask_color || '#111111',
+                            fillOpacity: CONFIG.mask_opacity !== undefined ? CONFIG.mask_opacity : 0.45,
+                            interactive: false
+                        }
+                    }).addTo(this.map);
+                    // Ensure data layer stays on top if it's already loaded
+                    if (this.dataLayer) {
+                        this.dataLayer.bringToFront();
+                    }
+                })
+                .catch(err => console.error("Error loading Leaflet mask:", err));
 
             resolve();
         });
@@ -125,7 +146,10 @@ class LeafletEngine {
             }
             this.basemapLayer.setOpacity(basemapOpacity);
 
-            // Re-add data layer on top
+            // Re-add mask and data layer on top in correct order
+            if (this.maskLayer) {
+                this.maskLayer.bringToFront();
+            }
             if (this.dataLayer) {
                 this.dataLayer.bringToFront();
             }
@@ -283,6 +307,27 @@ class MapLibreEngine {
             }), 'bottom-left');
 
             this.map.on('load', () => {
+                // Fetch and add Germany mask layer
+                fetch('germany-mask.geojson')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!this.map) return;
+                        this.map.addSource('germany-mask-source', {
+                            type: 'geojson',
+                            data: data
+                        });
+                        this.map.addLayer({
+                            id: 'germany-mask-layer',
+                            type: 'fill',
+                            source: 'germany-mask-source',
+                            paint: {
+                                'fill-color': CONFIG.mask_color || '#111111',
+                                'fill-opacity': CONFIG.mask_opacity !== undefined ? CONFIG.mask_opacity : 0.45
+                            }
+                        }, this.map.getLayer('data-layer') ? 'data-layer' : undefined);
+                    })
+                    .catch(err => console.error("Error loading MapLibre mask:", err));
+
                 resolve();
             });
         });
