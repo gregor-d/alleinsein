@@ -23,6 +23,7 @@ function getCombinedColormapJson() {
     const cmap = {};
     layerState.forEach(layer => {
         if (!layer.visible) return;
+        if (layer.type === 'overlay') return;
         if (layer.type === 'solid') {
             cmap[layer.start] = hexToRgba(layer.preset);
         } else {
@@ -93,6 +94,12 @@ function afterEngineInit() {
     mapEngine.updateBasemapOpacity(basemapOpacity);
     refreshDataLayer();
 
+    for (const key in activeOverlays) {
+        if (activeOverlays[key]) {
+            mapEngine.toggleOverlay(key, true);
+        }
+    }
+
     getIpLocation().then(coords => {
         if (coords && mapEngine) {
             setTimeout(() => {
@@ -127,6 +134,7 @@ function syncLayerVisible(layer) {
 
 // ─── COLOR SYNC ───
 function syncLayerColor(layer) {
+    if (layer.type === 'overlay') return;
     const chipColor = document.getElementById(`l4-chip-color-${layer.id}`);
     if (!chipColor) return;
     chipColor.style.background = layer.type === 'category'
@@ -170,6 +178,13 @@ function buildBasemapBlock(el, opts = {}) {
                 <input type="range" id="bm-op-${uid}" min="0" max="1" step="0.01" value="${basemapOpacity}" />
             </div>
         </div>
+        <div class="bm-row" style="margin-top:10px;">
+            <div class="bm-row-label">Overlays</div>
+            <div class="basemap-options" style="padding:0;">
+                <button class="basemap-btn${activeOverlays.hiking ? ' active' : ''}" data-overlay="hiking">Hiking</button>
+                <button class="basemap-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
+            </div>
+        </div>
         ${opts.includeDataLayerOpacity ? `
         <div class="ctrl-row" style="margin-top:10px;">
             <div class="ctrl-label">
@@ -189,7 +204,7 @@ function buildBasemapBlock(el, opts = {}) {
             optsDiv.style.pointerEvents = 'auto';
             if (activeBasemapKey === 'none') {
                 activeBasemapKey = 'osm';
-                el.querySelectorAll('.basemap-btn').forEach(b =>
+                el.querySelectorAll('.basemap-btn[data-key]').forEach(b =>
                     b.classList.toggle('active', b.dataset.key === activeBasemapKey)
                 );
             }
@@ -201,13 +216,28 @@ function buildBasemapBlock(el, opts = {}) {
         }
     });
 
-    el.querySelectorAll('.basemap-btn').forEach(btn => {
+    el.querySelectorAll('.basemap-btn[data-key]').forEach(btn => {
         btn.addEventListener('click', () => {
             activeBasemapKey = btn.dataset.key;
             if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
-            el.querySelectorAll('.basemap-btn').forEach(b =>
+            el.querySelectorAll('.basemap-btn[data-key]').forEach(b =>
                 b.classList.toggle('active', b.dataset.key === activeBasemapKey)
             );
+        });
+    });
+
+    el.querySelectorAll('button[data-overlay]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.overlay;
+            activeOverlays[key] = !activeOverlays[key];
+
+            document.querySelectorAll(`button[data-overlay="${key}"]`).forEach(b => {
+                b.classList.toggle('active', activeOverlays[key]);
+            });
+
+            if (mapEngine) {
+                mapEngine.toggleOverlay(key, activeOverlays[key]);
+            }
         });
     });
 
@@ -255,7 +285,7 @@ function makeL4LayerCard(layer) {
         ramp.style.background = buildGradient(layer.preset, layer.reverse);
         ramp.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
         card.appendChild(ramp);
-    } else {
+    } else if (layer.type === 'solid') {
         const swatch = document.createElement('div');
         swatch.className = 'layer-strip-solid-swatch';
         swatch.id = `l4-chip-color-${layer.id}`;
@@ -599,8 +629,6 @@ function buildLayout4() {
     });
 }
 
-// ── Layout 3 ──
-
 function closeLayout4Drawer() {
     document.getElementById('l4-drawer').classList.remove('open');
     document.getElementById('l4-backdrop').classList.remove('open');
@@ -631,7 +659,7 @@ function buildDrawerBody(container, opts = {}) {
                     <div class="scheme-grid" id="dschemes-${layer.id}">${schemeBtns}</div>
                 </div>
             `;
-        } else {
+        } else if (layer.type === 'solid') {
             headerControls = `<input type="color" id="dcol-${layer.id}" value="${layer.preset}" class="header-color-picker" />`;
         }
 
@@ -652,7 +680,11 @@ function buildDrawerBody(container, opts = {}) {
             layer.visible = e.target.checked;
             card.classList.toggle('inactive', !layer.visible);
             syncLayerVisible(layer);
-            refreshDataLayer();
+            if (layer.type === 'overlay') {
+                if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
+            } else {
+                refreshDataLayer();
+            }
         });
 
         if (layer.type === 'category') {
@@ -685,7 +717,7 @@ function buildDrawerBody(container, opts = {}) {
                 syncLayerColor(layer);
                 refreshDataLayer();
             });
-        } else {
+        } else if (layer.type === 'solid') {
             document.getElementById(`dcol-${layer.id}`).addEventListener('input', e => {
                 layer.preset = e.target.value;
                 syncLayerColor(layer);
@@ -693,6 +725,7 @@ function buildDrawerBody(container, opts = {}) {
             });
         }
     });
+
 
     // Data Layer Opacity
     addSectionLabel(container, 'Data Layer Opacity');

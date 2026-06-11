@@ -590,12 +590,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     gap: 8px;
 }
 
-/* Basemap popup — appears above the bottom-most FAB (basemap btn) */
+/* Basemap popup — appears to the left of the basemap FAB button */
 .fab-popup {
     position: fixed;
-    right: 12px;
-    /* basemap FAB is bottom-most; its top is at (bottom-h + 10 + 44px), add 10px gap */
-    bottom: calc(var(--l4-bottom-h) + 10px + 44px + 10px);
+    right: calc(12px + 44px + 10px);
+    bottom: calc(var(--l4-bottom-h) + 10px);
     z-index: 400;
     background: var(--bg-card);
     border: 1px solid var(--border-hi);
@@ -843,12 +842,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
     }
 
     #l4-basemap-popup {
-        right: 12px;
-        bottom: calc(12px + 44px + 10px);
+        right: calc(12px + 44px + 10px);
+        bottom: 12px;
         transition: right var(--transition);
     }
     body.fab-shifted #l4-basemap-popup {
-        right: calc(var(--l4-drawer-w) + 12px);
+        right: calc(var(--l4-drawer-w) + 12px + 44px + 10px);
     }
 
     .leaflet-bottom.leaflet-right,
@@ -1175,4 +1174,34 @@ body:has(#l4-drawer.open) #l4-settings-btn {
     background: var(--accent-dim);
     border-color: var(--accent);
     color: var(--accent);
+}
+
+.layer-strip-overlay-indicator {
+    width: 100%;
+    height: 10px;
+    border-radius: 3px;
+    border: 1px solid var(--border-hi);
+    flex-shrink: 0;
+}
+.layer-strip-overlay-indicator--hiking {
+    background: #ff4d4d;
+}
+.layer-strip-overlay-indicator--cycling {
+    background: #3b82f6;
+}
+
+/* Custom scale control dark mode styling */
+.leaflet-control-scale-line,
+.maplibregl-ctrl-scale {
+    background: var(--bg-panel) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1.5px solid var(--border-hi) !important;
+    border-top: none !important;
+    color: var(--text-hi) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    font-family: inherit !important;
+    box-shadow: var(--shadow-card) !important;
+    padding: 2px 5px !important;
 }

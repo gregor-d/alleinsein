@@ -57,9 +57,32 @@ const BASEMAPS = {
             attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
             maxZoom: 15
         }
+    },
+    hiking: {
+        label: 'Hiking',
+        type: 'overlay',
+        url: 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',
+        options: {
+            attribution: '&copy; <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>',
+            maxZoom: 15
+        }
+    },
+    cycling: {
+        label: 'Cycling',
+        type: 'overlay',
+        url: 'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png',
+        options: {
+            attribution: '&copy; <a href="https://cycling.waymarkedtrails.org">Waymarked Trails</a>',
+            maxZoom: 15
+        }
     }
 };
 
 let activeBasemapKey = 'osm';
 let basemapOpacity = 1.0;
 let dataLayerOpacity = 0.9;
+
+let activeOverlays = {
+    hiking: false,
+    cycling: false
+};
