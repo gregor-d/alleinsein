@@ -23,6 +23,7 @@ function getCombinedColormapJson() {
     const cmap = {};
     layerState.forEach(layer => {
         if (!layer.visible) return;
+        if (layer.type === 'overlay') return;
         if (layer.type === 'solid') {
             cmap[layer.start] = hexToRgba(layer.preset);
         } else {
@@ -93,6 +94,12 @@ function afterEngineInit() {
     mapEngine.updateBasemapOpacity(basemapOpacity);
     refreshDataLayer();
 
+    layerState.forEach(layer => {
+        if (layer.type === 'overlay' && layer.visible) {
+            mapEngine.toggleOverlay(layer.id, true);
+        }
+    });
+
     getIpLocation().then(coords => {
         if (coords && mapEngine) {
             setTimeout(() => {
@@ -123,10 +130,15 @@ function syncLayerVisible(layer) {
         const dcard = dcb.closest('.layer-card');
         if (dcard) dcard.classList.toggle('inactive', !layer.visible);
     }
+    const pcb = document.getElementById(`popup-overlay-${layer.id}`);
+    if (pcb) {
+        pcb.checked = layer.visible;
+    }
 }
 
 // ─── COLOR SYNC ───
 function syncLayerColor(layer) {
+    if (layer.type === 'overlay') return;
     const chipColor = document.getElementById(`l4-chip-color-${layer.id}`);
     if (!chipColor) return;
     chipColor.style.background = layer.type === 'category'
@@ -255,7 +267,7 @@ function makeL4LayerCard(layer) {
         ramp.style.background = buildGradient(layer.preset, layer.reverse);
         ramp.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
         card.appendChild(ramp);
-    } else {
+    } else if (layer.type === 'solid') {
         const swatch = document.createElement('div');
         swatch.className = 'layer-strip-solid-swatch';
         swatch.id = `l4-chip-color-${layer.id}`;
@@ -274,12 +286,21 @@ function makeL4LayerCard(layer) {
             refreshDataLayer();
         });
         card.appendChild(swatch);
+    } else if (layer.type === 'overlay') {
+        const indicator = document.createElement('div');
+        indicator.className = `layer-strip-overlay-indicator layer-strip-overlay-indicator--${key}`;
+        indicator.id = `l4-chip-color-${layer.id}`;
+        card.appendChild(indicator);
     }
 
     const toggleLayer = () => {
         layer.visible = !layer.visible;
         syncLayerVisible(layer);
-        refreshDataLayer();
+        if (layer.type === 'overlay') {
+            if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
+        } else {
+            refreshDataLayer();
+        }
     };
 
     card.addEventListener('click', toggleLayer);
@@ -554,6 +575,56 @@ function buildLayout4() {
     popup.appendChild(bmBlock);
     buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
 
+    // Append overlays section inside basemap FAB popup
+    const popupOverlayDivider = document.createElement('div');
+    popupOverlayDivider.style.cssText = 'border-top:1px solid var(--border);margin:12px 0 8px;';
+    popup.appendChild(popupOverlayDivider);
+
+    const overlaysHeader = document.createElement('div');
+    overlaysHeader.className = 'bm-row-label';
+    overlaysHeader.style.marginBottom = '6px';
+    overlaysHeader.textContent = 'Overlays';
+    popup.appendChild(overlaysHeader);
+
+    const overlaysContainer = document.createElement('div');
+    overlaysContainer.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+    layerState.forEach(layer => {
+        if (layer.type !== 'overlay') return;
+
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;font-size:12px;';
+
+        const label = document.createElement('span');
+        label.textContent = layer.id;
+        row.appendChild(label);
+
+        const toggleLabel = document.createElement('label');
+        toggleLabel.className = 'toggle';
+
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = `popup-overlay-${layer.id}`;
+        input.checked = layer.visible;
+        input.addEventListener('change', e => {
+            layer.visible = e.target.checked;
+            syncLayerVisible(layer);
+            if (mapEngine) {
+                mapEngine.toggleOverlay(layer.id, layer.visible);
+            }
+        });
+
+        const track = document.createElement('span');
+        track.className = 'toggle-track';
+
+        toggleLabel.appendChild(input);
+        toggleLabel.appendChild(track);
+        row.appendChild(toggleLabel);
+
+        overlaysContainer.appendChild(row);
+    });
+    popup.appendChild(overlaysContainer);
+
     const bmBtn = document.getElementById('l4-basemap-btn');
     const settingsBtn = document.getElementById('l4-settings-btn');
 
@@ -599,8 +670,6 @@ function buildLayout4() {
     });
 }
 
-// ── Layout 3 ──
-
 function closeLayout4Drawer() {
     document.getElementById('l4-drawer').classList.remove('open');
     document.getElementById('l4-backdrop').classList.remove('open');
@@ -631,7 +700,7 @@ function buildDrawerBody(container, opts = {}) {
                     <div class="scheme-grid" id="dschemes-${layer.id}">${schemeBtns}</div>
                 </div>
             `;
-        } else {
+        } else if (layer.type === 'solid') {
             headerControls = `<input type="color" id="dcol-${layer.id}" value="${layer.preset}" class="header-color-picker" />`;
         }
 
@@ -652,7 +721,11 @@ function buildDrawerBody(container, opts = {}) {
             layer.visible = e.target.checked;
             card.classList.toggle('inactive', !layer.visible);
             syncLayerVisible(layer);
-            refreshDataLayer();
+            if (layer.type === 'overlay') {
+                if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
+            } else {
+                refreshDataLayer();
+            }
         });
 
         if (layer.type === 'category') {
@@ -685,7 +758,7 @@ function buildDrawerBody(container, opts = {}) {
                 syncLayerColor(layer);
                 refreshDataLayer();
             });
-        } else {
+        } else if (layer.type === 'solid') {
             document.getElementById(`dcol-${layer.id}`).addEventListener('input', e => {
                 layer.preset = e.target.value;
                 syncLayerColor(layer);
@@ -693,6 +766,7 @@ function buildDrawerBody(container, opts = {}) {
             });
         }
     });
+
 
     // Data Layer Opacity
     addSectionLabel(container, 'Data Layer Opacity');

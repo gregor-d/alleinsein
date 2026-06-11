@@ -8,6 +8,7 @@ class LeafletEngine {
         this.basemapLayer = null;
         this.dataLayer = null;
         this.boundsSet = false;
+        this.overlays = {};
     }
 
     init(containerId, center, zoom, zoomPos = 'topleft') {
@@ -20,6 +21,7 @@ class LeafletEngine {
             }).setView(latlng, zoom);
 
             L.control.zoom({ position: zoomPos }).addTo(this.map);
+            L.control.scale({ position: 'bottomleft', imperial: false }).addTo(this.map);
 
             resolve();
         });
@@ -33,11 +35,17 @@ class LeafletEngine {
 
     destroy() {
         if (this.map) {
+            for (const id in this.overlays) {
+                if (this.map.hasLayer(this.overlays[id])) {
+                    this.map.removeLayer(this.overlays[id]);
+                }
+            }
             this.map.remove();
             this.map = null;
         }
         this.basemapLayer = null;
         this.dataLayer = null;
+        this.overlays = {};
     }
 
     async updateDataLayer(colormapJson, opacity) {
@@ -84,6 +92,13 @@ class LeafletEngine {
                 this.dataLayer.setUrl(tileUrl);
                 this.dataLayer.setOpacity(opacity);
             }
+
+            // Bring overlays to front
+            for (const id in this.overlays) {
+                if (this.map.hasLayer(this.overlays[id])) {
+                    this.overlays[id].bringToFront();
+                }
+            }
         } catch (e) {
             console.error("Error fetching TileJSON in Leaflet:", e);
         }
@@ -113,6 +128,36 @@ class LeafletEngine {
             // Re-add data layer on top
             if (this.dataLayer) {
                 this.dataLayer.bringToFront();
+            }
+
+            // Bring overlays to front
+            for (const id in this.overlays) {
+                if (this.map.hasLayer(this.overlays[id])) {
+                    this.overlays[id].bringToFront();
+                }
+            }
+        }
+    }
+
+    toggleOverlay(id, visible) {
+        if (!this.map) return;
+        if (visible) {
+            const layer = layerState.find(l => l.id === id);
+            if (!layer) return;
+
+            if (!this.overlays[id]) {
+                this.overlays[id] = L.tileLayer(layer.url, {
+                    attribution: layer.attribution,
+                    maxZoom: 15
+                });
+            }
+            if (!this.map.hasLayer(this.overlays[id])) {
+                this.overlays[id].addTo(this.map);
+                this.overlays[id].bringToFront();
+            }
+        } else {
+            if (this.overlays[id] && this.map.hasLayer(this.overlays[id])) {
+                this.map.removeLayer(this.overlays[id]);
             }
         }
     }
@@ -233,6 +278,12 @@ class MapLibreEngine {
                 compact: false
             }), 'bottom-right');
 
+            // Add scale control bottom-left
+            this.map.addControl(new maplibregl.ScaleControl({
+                maxWidth: 80,
+                unit: 'metric'
+            }), 'bottom-left');
+
             this.map.on('load', () => {
                 resolve();
             });
@@ -290,6 +341,16 @@ class MapLibreEngine {
                         minzoom: tj.minzoom,
                         maxzoom: tj.maxzoom || 12
                     });
+
+                    let beforeId = undefined;
+                    const layers = this.map.getStyle().layers;
+                    if (layers) {
+                        const firstOverlay = layers.find(l => l.id.startsWith('overlay-layer-'));
+                        if (firstOverlay) {
+                            beforeId = firstOverlay.id;
+                        }
+                    }
+
                     this.map.addLayer({
                         id: 'data-layer',
                         type: 'raster',
@@ -299,7 +360,7 @@ class MapLibreEngine {
                             'raster-fade-duration': 0, // disables style fade-in transition
                             'raster-resampling': 'nearest' // prevents interpolation between classes
                         }
-                    });
+                    }, beforeId);
                 } else {
                     this.map.getSource('data-source').setTiles([tileUrl]);
                     this.map.setPaintProperty('data-layer', 'raster-opacity', opacity);
@@ -339,6 +400,44 @@ class MapLibreEngine {
         }
         if (this.map.getLayer('basemap-schummerung-layer')) {
             this.map.setPaintProperty('basemap-schummerung-layer', 'raster-opacity', opacity);
+        }
+    }
+
+    toggleOverlay(id, visible) {
+        if (!this.map) return;
+        const sourceId = `overlay-source-${id.toLowerCase()}`;
+        const layerId = `overlay-layer-${id.toLowerCase()}`;
+
+        if (visible) {
+            const layer = layerState.find(l => l.id === id);
+            if (!layer) return;
+
+            if (!this.map.getSource(sourceId)) {
+                this.map.addSource(sourceId, {
+                    type: 'raster',
+                    tiles: [layer.url],
+                    tileSize: 256,
+                    attribution: layer.attribution,
+                    maxzoom: 15
+                });
+            }
+            if (!this.map.getLayer(layerId)) {
+                this.map.addLayer({
+                    id: layerId,
+                    type: 'raster',
+                    source: sourceId,
+                    paint: {
+                        'raster-opacity': 1.0
+                    }
+                }); // added to the very top
+            }
+        } else {
+            if (this.map.getLayer(layerId)) {
+                this.map.removeLayer(layerId);
+            }
+            if (this.map.getSource(sourceId)) {
+                this.map.removeSource(sourceId);
+            }
         }
     }
 
