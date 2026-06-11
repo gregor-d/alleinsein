@@ -94,11 +94,11 @@ function afterEngineInit() {
     mapEngine.updateBasemapOpacity(basemapOpacity);
     refreshDataLayer();
 
-    layerState.forEach(layer => {
-        if (layer.type === 'overlay' && layer.visible) {
-            mapEngine.toggleOverlay(layer.id, true);
+    for (const key in activeOverlays) {
+        if (activeOverlays[key]) {
+            mapEngine.toggleOverlay(key, true);
         }
-    });
+    }
 
     getIpLocation().then(coords => {
         if (coords && mapEngine) {
@@ -129,10 +129,6 @@ function syncLayerVisible(layer) {
         dcb.checked = layer.visible;
         const dcard = dcb.closest('.layer-card');
         if (dcard) dcard.classList.toggle('inactive', !layer.visible);
-    }
-    const pcb = document.getElementById(`popup-overlay-${layer.id}`);
-    if (pcb) {
-        pcb.checked = layer.visible;
     }
 }
 
@@ -182,6 +178,13 @@ function buildBasemapBlock(el, opts = {}) {
                 <input type="range" id="bm-op-${uid}" min="0" max="1" step="0.01" value="${basemapOpacity}" />
             </div>
         </div>
+        <div class="bm-row" style="margin-top:10px;">
+            <div class="bm-row-label">Overlays</div>
+            <div class="basemap-options" style="padding:0;">
+                <button class="basemap-btn${activeOverlays.hiking ? ' active' : ''}" data-overlay="hiking">Hiking</button>
+                <button class="basemap-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
+            </div>
+        </div>
         ${opts.includeDataLayerOpacity ? `
         <div class="ctrl-row" style="margin-top:10px;">
             <div class="ctrl-label">
@@ -201,7 +204,7 @@ function buildBasemapBlock(el, opts = {}) {
             optsDiv.style.pointerEvents = 'auto';
             if (activeBasemapKey === 'none') {
                 activeBasemapKey = 'osm';
-                el.querySelectorAll('.basemap-btn').forEach(b =>
+                el.querySelectorAll('.basemap-btn[data-key]').forEach(b =>
                     b.classList.toggle('active', b.dataset.key === activeBasemapKey)
                 );
             }
@@ -213,13 +216,28 @@ function buildBasemapBlock(el, opts = {}) {
         }
     });
 
-    el.querySelectorAll('.basemap-btn').forEach(btn => {
+    el.querySelectorAll('.basemap-btn[data-key]').forEach(btn => {
         btn.addEventListener('click', () => {
             activeBasemapKey = btn.dataset.key;
             if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
-            el.querySelectorAll('.basemap-btn').forEach(b =>
+            el.querySelectorAll('.basemap-btn[data-key]').forEach(b =>
                 b.classList.toggle('active', b.dataset.key === activeBasemapKey)
             );
+        });
+    });
+
+    el.querySelectorAll('button[data-overlay]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.overlay;
+            activeOverlays[key] = !activeOverlays[key];
+
+            document.querySelectorAll(`button[data-overlay="${key}"]`).forEach(b => {
+                b.classList.toggle('active', activeOverlays[key]);
+            });
+
+            if (mapEngine) {
+                mapEngine.toggleOverlay(key, activeOverlays[key]);
+            }
         });
     });
 
@@ -286,21 +304,12 @@ function makeL4LayerCard(layer) {
             refreshDataLayer();
         });
         card.appendChild(swatch);
-    } else if (layer.type === 'overlay') {
-        const indicator = document.createElement('div');
-        indicator.className = `layer-strip-overlay-indicator layer-strip-overlay-indicator--${key}`;
-        indicator.id = `l4-chip-color-${layer.id}`;
-        card.appendChild(indicator);
     }
 
     const toggleLayer = () => {
         layer.visible = !layer.visible;
         syncLayerVisible(layer);
-        if (layer.type === 'overlay') {
-            if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
-        } else {
-            refreshDataLayer();
-        }
+        refreshDataLayer();
     };
 
     card.addEventListener('click', toggleLayer);
@@ -574,56 +583,6 @@ function buildLayout4() {
     bmBlock.id = 'l4-bm-inner';
     popup.appendChild(bmBlock);
     buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
-
-    // Append overlays section inside basemap FAB popup
-    const popupOverlayDivider = document.createElement('div');
-    popupOverlayDivider.style.cssText = 'border-top:1px solid var(--border);margin:12px 0 8px;';
-    popup.appendChild(popupOverlayDivider);
-
-    const overlaysHeader = document.createElement('div');
-    overlaysHeader.className = 'bm-row-label';
-    overlaysHeader.style.marginBottom = '6px';
-    overlaysHeader.textContent = 'Overlays';
-    popup.appendChild(overlaysHeader);
-
-    const overlaysContainer = document.createElement('div');
-    overlaysContainer.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
-
-    layerState.forEach(layer => {
-        if (layer.type !== 'overlay') return;
-
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;font-size:12px;';
-
-        const label = document.createElement('span');
-        label.textContent = layer.id;
-        row.appendChild(label);
-
-        const toggleLabel = document.createElement('label');
-        toggleLabel.className = 'toggle';
-
-        const input = document.createElement('input');
-        input.type = 'checkbox';
-        input.id = `popup-overlay-${layer.id}`;
-        input.checked = layer.visible;
-        input.addEventListener('change', e => {
-            layer.visible = e.target.checked;
-            syncLayerVisible(layer);
-            if (mapEngine) {
-                mapEngine.toggleOverlay(layer.id, layer.visible);
-            }
-        });
-
-        const track = document.createElement('span');
-        track.className = 'toggle-track';
-
-        toggleLabel.appendChild(input);
-        toggleLabel.appendChild(track);
-        row.appendChild(toggleLabel);
-
-        overlaysContainer.appendChild(row);
-    });
-    popup.appendChild(overlaysContainer);
 
     const bmBtn = document.getElementById('l4-basemap-btn');
     const settingsBtn = document.getElementById('l4-settings-btn');

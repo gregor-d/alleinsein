@@ -590,12 +590,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     gap: 8px;
 }
 
-/* Basemap popup — appears above the bottom-most FAB (basemap btn) */
+/* Basemap popup — appears to the left of the basemap FAB button */
 .fab-popup {
     position: fixed;
-    right: 12px;
-    /* basemap FAB is bottom-most; its top is at (bottom-h + 10 + 44px), add 10px gap */
-    bottom: calc(var(--l4-bottom-h) + 10px + 44px + 10px);
+    right: calc(12px + 44px + 10px);
+    bottom: calc(var(--l4-bottom-h) + 10px);
     z-index: 400;
     background: var(--bg-card);
     border: 1px solid var(--border-hi);
@@ -843,12 +842,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
     }
 
     #l4-basemap-popup {
-        right: 12px;
-        bottom: calc(12px + 44px + 10px);
+        right: calc(12px + 44px + 10px);
+        bottom: 12px;
         transition: right var(--transition);
     }
     body.fab-shifted #l4-basemap-popup {
-        right: calc(var(--l4-drawer-w) + 12px);
+        right: calc(var(--l4-drawer-w) + 12px + 44px + 10px);
     }
 
     .leaflet-bottom.leaflet-right,

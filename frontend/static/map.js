@@ -141,23 +141,21 @@ class LeafletEngine {
 
     toggleOverlay(id, visible) {
         if (!this.map) return;
+        const key = id.toLowerCase();
         if (visible) {
-            const layer = layerState.find(l => l.id === id);
-            if (!layer) return;
+            const def = BASEMAPS[key];
+            if (!def) return;
 
-            if (!this.overlays[id]) {
-                this.overlays[id] = L.tileLayer(layer.url, {
-                    attribution: layer.attribution,
-                    maxZoom: 15
-                });
+            if (!this.overlays[key]) {
+                this.overlays[key] = L.tileLayer(def.url, def.options);
             }
-            if (!this.map.hasLayer(this.overlays[id])) {
-                this.overlays[id].addTo(this.map);
-                this.overlays[id].bringToFront();
+            if (!this.map.hasLayer(this.overlays[key])) {
+                this.overlays[key].addTo(this.map);
+                this.overlays[key].bringToFront();
             }
         } else {
-            if (this.overlays[id] && this.map.hasLayer(this.overlays[id])) {
-                this.map.removeLayer(this.overlays[id]);
+            if (this.overlays[key] && this.map.hasLayer(this.overlays[key])) {
+                this.map.removeLayer(this.overlays[key]);
             }
         }
     }
@@ -405,20 +403,21 @@ class MapLibreEngine {
 
     toggleOverlay(id, visible) {
         if (!this.map) return;
-        const sourceId = `overlay-source-${id.toLowerCase()}`;
-        const layerId = `overlay-layer-${id.toLowerCase()}`;
+        const key = id.toLowerCase();
+        const sourceId = `overlay-source-${key}`;
+        const layerId = `overlay-layer-${key}`;
 
         if (visible) {
-            const layer = layerState.find(l => l.id === id);
-            if (!layer) return;
+            const def = BASEMAPS[key];
+            if (!def) return;
 
             if (!this.map.getSource(sourceId)) {
                 this.map.addSource(sourceId, {
                     type: 'raster',
-                    tiles: [layer.url],
+                    tiles: [def.url],
                     tileSize: 256,
-                    attribution: layer.attribution,
-                    maxzoom: 15
+                    attribution: def.options.attribution || '',
+                    maxzoom: def.options.maxZoom || 15
                 });
             }
             if (!this.map.getLayer(layerId)) {
