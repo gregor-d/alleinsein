@@ -44,10 +44,11 @@ let activeLayout = localStorage.getItem('map-layout') || '1';
 let activeEngine = localStorage.getItem('map-engine') || 'leaflet';
 let mapEngine = null;
 let _l2PopupHandlerAttached = false;
+let _l4PopupHandlerAttached = false;
 
 function getNavControlPos() {
     if (activeLayout === '1') return { leaflet: 'bottomright', maplibre: 'bottom-right' };
-    if (activeLayout === '2') return { leaflet: 'topleft',     maplibre: 'top-left'     };
+    if (activeLayout === '2' || activeLayout === '4') return { leaflet: 'topleft',     maplibre: 'top-left'     };
     return                           { leaflet: 'bottomleft',  maplibre: 'bottom-left'  };
 }
 
@@ -107,6 +108,11 @@ function syncLayerVisible(layer) {
         const cb = pill.querySelector('input[type=checkbox]');
         if (cb) cb.checked = layer.visible;
     }
+    const l4Chip = document.getElementById(`l4-chip-${layer.id}`);
+    if (l4Chip) {
+        l4Chip.classList.toggle('inactive', !layer.visible);
+        l4Chip.setAttribute('aria-checked', String(layer.visible));
+    }
     const dcb = document.getElementById(`dvis-${layer.id}`);
     if (dcb) {
         dcb.checked = layer.visible;
@@ -117,11 +123,13 @@ function syncLayerVisible(layer) {
 
 // ─── COLOR SYNC ───
 function syncLayerColor(layer) {
-    const chipColor = document.getElementById(`chip-color-${layer.id}`);
-    if (!chipColor) return;
-    chipColor.style.background = layer.type === 'category'
-        ? buildGradient(layer.preset, layer.reverse)
-        : layer.preset;
+    [`chip-color-${layer.id}`, `l4-chip-color-${layer.id}`].forEach(id => {
+        const chipColor = document.getElementById(id);
+        if (!chipColor) return;
+        chipColor.style.background = layer.type === 'category'
+            ? buildGradient(layer.preset, layer.reverse)
+            : layer.preset;
+    });
 }
 
 function updateDrawerBar(layer) {
@@ -255,6 +263,101 @@ function makeL2LayerCard(layer) {
     }
 
     return card;
+}
+
+// ─── LAYOUT 4 LAYER CARD (L2 base with per-layer status icons) ───
+function makeL4LayerCard(layer) {
+    const key = layer.id.toLowerCase();
+    const card = document.createElement('div');
+    card.className = `l2-layer-card l4-layer-card l4-layer-card--${key}${layer.visible ? '' : ' inactive'}`;
+    card.id = `l4-chip-${layer.id}`;
+    card.tabIndex = 0;
+    card.setAttribute('role', 'switch');
+    card.setAttribute('aria-checked', String(layer.visible));
+
+    const status = document.createElement('span');
+    status.className = `l4-layer-status l4-status-${key}`;
+    status.innerHTML = getL4LayerStatusMarkup(key);
+    card.appendChild(status);
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'layer-name';
+    nameEl.textContent = layer.id;
+    card.appendChild(nameEl);
+
+    if (layer.type === 'category') {
+        const ramp = document.createElement('div');
+        ramp.className = 'l2-chip-ramp';
+        ramp.id = `l4-chip-color-${layer.id}`;
+        ramp.style.background = buildGradient(layer.preset, layer.reverse);
+        ramp.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
+        card.appendChild(ramp);
+    } else {
+        const swatch = document.createElement('div');
+        swatch.className = 'l2-chip-solid-swatch';
+        swatch.id = `l4-chip-color-${layer.id}`;
+        swatch.style.background = layer.preset;
+
+        const picker = document.createElement('input');
+        picker.type = 'color';
+        picker.value = layer.preset;
+        picker.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none;';
+        card.appendChild(picker);
+
+        swatch.addEventListener('click', e => { e.stopPropagation(); picker.click(); });
+        picker.addEventListener('input', e => {
+            layer.preset = e.target.value;
+            swatch.style.background = layer.preset;
+            refreshDataLayer();
+        });
+        card.appendChild(swatch);
+    }
+
+    const toggleLayer = () => {
+        layer.visible = !layer.visible;
+        syncLayerVisible(layer);
+        refreshDataLayer();
+    };
+
+    card.addEventListener('click', toggleLayer);
+    card.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        toggleLayer();
+    });
+
+    return card;
+}
+
+function getL4LayerStatusMarkup(key) {
+    if (key === 'parks') {
+        return `
+            <svg class="state-on" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <svg class="state-off" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"/>
+                <path d="M9.9 4.4A10.4 10.4 0 0 1 12 4c6.5 0 10 8 10 8a18.8 18.8 0 0 1-3.1 4.2"/>
+                <path d="M6.6 6.6C3.7 8.5 2 12 2 12a18.6 18.6 0 0 0 7.4 6.1A10.8 10.8 0 0 0 12 18c.7 0 1.4-.1 2.1-.3"/>
+                <line x1="3" y1="3" x2="21" y2="21"/>
+            </svg>
+        `;
+    }
+
+    if (key === 'urban') {
+        return `
+            <svg class="state-on" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <svg class="state-off" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        `;
+    }
+
+    return '';
 }
 
 // ─── STRIP CHIP (L1) ───
@@ -436,23 +539,28 @@ function bindSearchBtn(id) {
 function clearAllLayouts() {
     ['l1-layer-strip', 'l1-basemap-area',
      'l2-layer-strip', 'l2-engine-row', 'l2-basemap-popup',
-     'l3-layers', 'l3-drawer-body'].forEach(id => {
+     'l3-layers', 'l3-drawer-body',
+     'l4-layer-strip', 'l4-engine-row', 'l4-basemap-popup', 'l4-drawer-body'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '';
     });
     // Remove popup open state
-    const popup = document.getElementById('l2-basemap-popup');
-    if (popup) popup.classList.remove('open');
+    ['l2-basemap-popup', 'l4-basemap-popup'].forEach(id => {
+        document.getElementById(id)?.classList.remove('open');
+    });
     // Close drawer
     document.getElementById('l3-drawer')?.classList.remove('open');
     document.getElementById('l3-backdrop')?.classList.remove('open');
+    document.getElementById('l4-drawer')?.classList.remove('open');
+    document.getElementById('l4-backdrop')?.classList.remove('open');
 }
 
 function buildCurrentLayout() {
     clearAllLayouts();
     if (activeLayout === '1') buildLayout1();
     else if (activeLayout === '2') buildLayout2();
-    else buildLayout3();
+    else if (activeLayout === '3') buildLayout3();
+    else buildLayout4();
 }
 
 // ── Layout 1 ──
@@ -535,6 +643,78 @@ function buildLayout2() {
     });
 }
 
+// ── Layout 4 ──
+
+function buildLayout4() {
+    const strip = document.getElementById('l4-layer-strip');
+    strip.innerHTML = '';
+    document.getElementById('l4-engine-row').innerHTML = '';
+
+    layerState.forEach(layer => strip.appendChild(makeL4LayerCard(layer)));
+
+    const popup = document.getElementById('l4-basemap-popup');
+    popup.innerHTML = '';
+
+    const engLabel = document.createElement('div');
+    engLabel.className = 'bm-row-label';
+    engLabel.style.marginBottom = '6px';
+    engLabel.textContent = 'Map Engine';
+    popup.appendChild(engLabel);
+
+    const engWrap = document.createElement('div');
+    engWrap.className = 'engine-switcher';
+    engWrap.style.marginBottom = '12px';
+    engWrap.innerHTML = `
+        <button class="engine-btn" data-engine="leaflet">Leaflet</button>
+        <button class="engine-btn" data-engine="maplibre">MapLibre</button>
+    `;
+    popup.appendChild(engWrap);
+    initEngineBtns(engWrap);
+
+    const divider = document.createElement('div');
+    divider.style.cssText = 'border-top:1px solid var(--border);margin-bottom:12px;';
+    popup.appendChild(divider);
+
+    const bmBlock = document.createElement('div');
+    bmBlock.id = 'l4-bm-inner';
+    popup.appendChild(bmBlock);
+    buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
+
+    const bmBtn = document.getElementById('l4-basemap-btn');
+    bmBtn.onclick = e => {
+        e.stopPropagation();
+        document.getElementById('l4-drawer')?.classList.remove('open');
+        document.getElementById('l4-backdrop')?.classList.remove('open');
+        popup.classList.toggle('open');
+    };
+    if (!_l4PopupHandlerAttached) {
+        _l4PopupHandlerAttached = true;
+        document.addEventListener('click', e => {
+            const p = document.getElementById('l4-basemap-popup');
+            const b = document.getElementById('l4-basemap-btn');
+            if (p && b && !p.contains(e.target) && e.target !== b) p.classList.remove('open');
+        });
+    }
+
+    buildDrawerBody(document.getElementById('l4-drawer-body'));
+
+    document.getElementById('l4-settings-btn').onclick = () => {
+        popup.classList.remove('open');
+        document.getElementById('l4-drawer').classList.add('open');
+        document.getElementById('l4-backdrop').classList.add('open');
+    };
+    document.getElementById('l4-drawer-close').onclick = closeLayout4Drawer;
+    document.getElementById('l4-backdrop').onclick = closeLayout4Drawer;
+
+    bindSearchBtn('l4-search-btn');
+    bindLocBtn('l4-loc-btn');
+
+    requestAnimationFrame(() => {
+        const h = document.getElementById('l4-bottom')?.offsetHeight;
+        if (h) document.documentElement.style.setProperty('--l4-bottom-h', `${h}px`);
+    });
+}
+
 // ── Layout 3 ──
 
 function buildLayout3() {
@@ -568,6 +748,11 @@ function buildLayout3() {
 function closeDrawer() {
     document.getElementById('l3-drawer').classList.remove('open');
     document.getElementById('l3-backdrop').classList.remove('open');
+}
+
+function closeLayout4Drawer() {
+    document.getElementById('l4-drawer').classList.remove('open');
+    document.getElementById('l4-backdrop').classList.remove('open');
 }
 
 // ── Drawer body (L3 settings) ──
@@ -790,6 +975,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (h1) document.documentElement.style.setProperty('--l1-bottom-h', `${h1}px`);
             const h2 = document.getElementById('l2-bottom')?.offsetHeight;
             if (h2) document.documentElement.style.setProperty('--l2-bottom-h', `${h2}px`);
+            const h4 = document.getElementById('l4-bottom')?.offsetHeight;
+            if (h4) document.documentElement.style.setProperty('--l4-bottom-h', `${h4}px`);
         });
     });
 });

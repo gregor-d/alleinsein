@@ -551,6 +551,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
     --dev-bar-h: 36px;
     --l1-bottom-h: 118px;
     --l2-bottom-h: 78px;
+    --l4-bottom-h: 78px;
+    --l4-drawer-w: 320px;
 }
 
 /* ── DEV BAR ── */
@@ -602,11 +604,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* ── LAYOUT VISIBILITY ── */
-.l1-only, .l2-only, .l3-only { display: none !important; }
+.l1-only, .l2-only, .l3-only, .l4-only { display: none !important; }
 
 [data-layout="1"] .l1-only { display: block !important; }
 [data-layout="2"] .l2-only { display: block !important; }
 [data-layout="3"] .l3-only { display: block !important; }
+[data-layout="4"] .l4-only { display: block !important; }
 
 /* containers that need flex */
 [data-layout="1"] #l1-top  { display: flex !important; }
@@ -615,6 +618,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
 [data-layout="2"] #l2-fab  { display: flex !important; }
 [data-layout="3"] #l3-layers { display: flex !important; }
 [data-layout="3"] #l3-fabs  { display: flex !important; }
+[data-layout="4"] #l4-bottom { display: flex !important; }
+[data-layout="4"] #l4-fab  { display: flex !important; }
+[data-layout="4"] #l4-drawer { display: flex !important; }
 
 /* ═══════════════════════════════════════════════
    LAYOUT 1
@@ -688,6 +694,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
     bottom: calc(var(--l2-bottom-h) + 6px) !important;
 }
 
+/* L4: attribution follows the mobile bottom strip by default */
+[data-layout="4"] .leaflet-bottom.leaflet-right,
+[data-layout="4"] .maplibregl-ctrl-bottom-right {
+    bottom: calc(var(--l4-bottom-h) + 6px) !important;
+}
+
 /* L3: right-side attribution pushed above FABs (3 × 44 + 2 × 8 + 12 ≈ 150px) */
 [data-layout="3"] .leaflet-bottom.leaflet-right,
 [data-layout="3"] .maplibregl-ctrl-bottom-right {
@@ -699,7 +711,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 ═══════════════════════════════════════════════ */
 
 /* Bottom bar — layer cards only (engine moved to config popup) */
-#l2-bottom {
+#l2-bottom,
+#l4-bottom {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 200;
@@ -711,7 +724,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* Strip is now the only visible row — equal-width vertical cards, no scroll */
-#l2-layer-strip {
+#l2-layer-strip,
+#l4-layer-strip {
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -720,7 +734,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* Engine row is kept in DOM for clearing but never shown */
-#l2-engine-row { display: none !important; }
+#l2-engine-row,
+#l4-engine-row { display: none !important; }
 
 /* Vertical layer card — one per layer, all fit in one row */
 .l2-layer-card {
@@ -789,6 +804,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
     gap: 8px;
 }
 
+#l4-fab {
+    position: fixed;
+    right: 12px;
+    bottom: calc(var(--l4-bottom-h) + 10px);
+    z-index: 300;
+    flex-direction: column;
+    gap: 8px;
+}
+
 /* Basemap popup — appears above the bottom-most FAB (basemap btn) */
 .fab-popup {
     position: fixed;
@@ -805,6 +829,99 @@ input[type="range"]::-webkit-slider-thumb:hover {
     display: none;
 }
 .fab-popup.open { display: block; }
+
+#l4-basemap-popup {
+    bottom: calc(var(--l4-bottom-h) + 10px + 44px + 10px);
+}
+
+/* Layout 4 layer strip icons */
+.l4-layer-card {
+    min-height: 62px;
+}
+
+.l2-layer-card.l4-layer-card.inactive {
+    opacity: 1;
+}
+
+.l4-layer-card.inactive .l2-chip-ramp,
+.l4-layer-card.inactive .l2-chip-solid-swatch {
+    opacity: 0.42;
+}
+
+.l4-layer-card .l4-layer-status {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    color: var(--text-mid);
+    flex-shrink: 0;
+}
+
+.l4-layer-card:not(.inactive) .l4-layer-status {
+    color: var(--accent);
+}
+
+.l4-layer-status svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.l4-status-nature::before,
+.l4-status-farm::before,
+.l4-status-water::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.l4-layer-card--nature.inactive .l4-status-nature::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 999px;
+    transform: rotate(-45deg);
+}
+
+.l4-layer-card--farm:not(.inactive) .l4-status-farm::after {
+    content: '';
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    background: currentColor;
+    border-radius: 50%;
+}
+
+.l4-layer-card--farm.inactive .layer-name {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: currentColor;
+}
+
+.l4-layer-card--urban .l4-status-urban .state-off,
+.l4-layer-card--parks .l4-status-parks .state-off {
+    display: none;
+}
+
+.l4-layer-card--urban.inactive .l4-status-urban .state-on,
+.l4-layer-card--parks.inactive .l4-status-parks .state-on {
+    display: none;
+}
+
+.l4-layer-card--urban.inactive .l4-status-urban .state-off,
+.l4-layer-card--parks.inactive .l4-status-parks .state-off {
+    display: block;
+}
+
+.l4-layer-card--water:not(.inactive) .l4-status-water::before {
+    background: currentColor;
+}
 
 /* ═══════════════════════════════════════════════
    LAYOUT 3
@@ -857,7 +974,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* Settings drawer */
-#l3-drawer {
+#l3-drawer,
+#l4-drawer {
     position: fixed;
     top: var(--dev-bar-h);
     right: 0;
@@ -873,7 +991,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
     transform: translateX(100%);
     transition: transform 0.28s cubic-bezier(.4, 0, .2, 1);
 }
-#l3-drawer.open { transform: translateX(0); }
+#l3-drawer.open,
+#l4-drawer.open { transform: translateX(0); }
 
 .drawer-backdrop {
     position: fixed;
@@ -918,6 +1037,39 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 .drawer-body::-webkit-scrollbar { width: 4px; }
 .drawer-body::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
+
+@media (min-width: 769px) {
+    [data-layout="4"] #l4-bottom {
+        display: none !important;
+    }
+
+    [data-layout="4"] #l4-drawer {
+        width: var(--l4-drawer-w);
+        transform: translateX(0);
+    }
+
+    [data-layout="4"] #l4-drawer-close,
+    [data-layout="4"] #l4-settings-btn,
+    [data-layout="4"] #l4-backdrop {
+        display: none !important;
+    }
+
+    [data-layout="4"] #l4-fab {
+        right: calc(var(--l4-drawer-w) + 12px);
+        bottom: 12px;
+    }
+
+    [data-layout="4"] #l4-basemap-popup {
+        right: calc(var(--l4-drawer-w) + 12px);
+        bottom: calc(12px + 44px + 10px);
+    }
+
+    [data-layout="4"] .leaflet-bottom.leaflet-right,
+    [data-layout="4"] .maplibregl-ctrl-bottom-right {
+        right: calc(var(--l4-drawer-w) + 6px) !important;
+        bottom: 6px !important;
+    }
+}
 
 /* ═══════════════════════════════════════════════
    FAB BUTTON
@@ -1139,6 +1291,35 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 /* ── Search sheet ── */
+.search-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 700;
+    width: min(420px, calc(100vw - 28px));
+    max-height: min(520px, calc(100vh - var(--dev-bar-h) - 32px));
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border-hi);
+    border-radius: 10px;
+    box-shadow: var(--shadow-card-hover);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -48%) scale(0.96);
+    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(.4,0,.2,1);
+}
+.search-popup.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+.search-popup .sheet-header {
+    padding: 12px 14px;
+}
+.search-popup .sheet-body {
+    padding: 14px;
+}
 .search-input-row {
     display: flex;
     gap: 8px;
