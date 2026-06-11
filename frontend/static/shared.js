@@ -699,12 +699,15 @@ function addSectionLabel(parent, text) {
 // ─── THEME SWITCHER ───
 
 function initThemeSwitcher() {
-    const saved = localStorage.getItem('map-theme') || 'glass';
-    document.getElementById('theme-link').href = `themes/theme_${saved}.css`;
-
     const buttons = document.querySelectorAll('.dev-theme-btn');
+    const themes = [...buttons].map(btn => btn.dataset.theme);
+    const saved = localStorage.getItem('map-theme');
+    const activeTheme = themes.includes(saved) ? saved : 'glass';
+    document.getElementById('theme-link').href = `themes/theme_${activeTheme}.css`;
+    localStorage.setItem('map-theme', activeTheme);
+
     buttons.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.theme === saved);
+        btn.classList.toggle('active', btn.dataset.theme === activeTheme);
         btn.addEventListener('click', () => {
             buttons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');

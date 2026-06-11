@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Raster Explorer</title>
     <meta name="description" content="Interactive raster viewer supporting Leaflet and MapLibre GL JS." />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -19,7 +18,10 @@
     <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css" />
     <script>
         (function () {
-            const t = localStorage.getItem('map-theme') || 'glass';
+            const themes = ['glass', 'nordic_light', 'brutalist', 'forest', 'corporate', 'barrier_free', 'paul_tol_light', 'achromatopsia', 'amber_blue'];
+            const saved = localStorage.getItem('map-theme');
+            const t = themes.includes(saved) ? saved : 'glass';
+            localStorage.setItem('map-theme', t);
             document.getElementById('theme-link').href = `themes/theme_${t}.css`;
         })();
     </script>
@@ -29,8 +31,7 @@
     <script src="dev-drawer.js"></script>
 </head>
 
-<body data-layout="4">
-
+<body>
     <div id="dev-bar">
         <span class="dev-label">DEV</span>
         <div class="dev-select-group" id="theme-switcher">
@@ -44,7 +45,7 @@
             <button class="dev-theme-btn" data-theme="achromatopsia">Achromatopsia</button>
             <button class="dev-theme-btn" data-theme="amber_blue">Amber/Blue</button>
         </div>
-        <div class="dev-select-group" id="drawer-pos-switcher" style="margin-left: auto;">
+        <div class="dev-select-group" id="drawer-pos-switcher">
             Drawer:
             <button class="dev-pos-btn" data-pos="top-left">TL</button>
             <button class="dev-pos-btn" data-pos="left-middle">LM</button>
@@ -55,97 +56,15 @@
         </div>
     </div>
 
-    <!-- ─── MAP ─── -->
     <div id="map"></div>
 
-    <!-- ══════════════════════ LAYOUT 1 ══════════════════════ -->
-
-    <!-- Top bar: data-layer chips -->
-    <div id="l1-top" class="l1-only">
-        <div id="l1-layer-strip"></div>
-    </div>
-
-    <!-- Bottom bar: basemap + opacity -->
-    <div id="l1-bottom" class="l1-only">
-        <div id="l1-basemap-area"></div>
-    </div>
-
-    <!-- Floating bottom-right: search + location (above bottom bar) -->
-    <div id="l1-fab" class="l1-only">
-        <button class="fab" id="l1-loc-btn" title="My location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="12" cy="12" r="7" />
-                <circle cx="12" cy="12" r="3" />
-                <line x1="12" y1="2" x2="12" y2="5" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-                <line x1="2" y1="12" x2="5" y2="12" />
-                <line x1="19" y1="12" x2="22" y2="12" />
-            </svg>
-        </button>
-        <button class="fab" id="l1-search-btn" title="Search location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-        </button>
-    </div>
-
-    <!-- ══════════════════════ LAYOUT 2 ══════════════════════ -->
-
-    <!-- Bottom bar: data-layer chips + engine switcher -->
-    <div id="l2-bottom" class="l2-only">
-        <div id="l2-layer-strip"></div>
-        <div id="l2-engine-row"></div>
-    </div>
-
-    <!-- Floating (above bottom bar, right): basemap, search, location -->
-    <div id="l2-fab" class="l2-only">
-        <button class="fab" id="l2-loc-btn" title="My location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="12" cy="12" r="7" />
-                <circle cx="12" cy="12" r="3" />
-                <line x1="12" y1="2" x2="12" y2="5" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-                <line x1="2" y1="12" x2="5" y2="12" />
-                <line x1="19" y1="12" x2="22" y2="12" />
-            </svg>
-        </button>
-        <button class="fab" id="l2-search-btn" title="Search location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-        </button>
-        <button class="fab fab--primary" id="l2-basemap-btn" title="Map settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-        </button>
-    </div>
-
-    <!-- L2 basemap popup (anchored above the basemap FAB) -->
-    <div id="l2-basemap-popup" class="fab-popup"></div>
-
-    <!-- ══════════════════════ LAYOUT 4 ══════════════════════ -->
-
-    <!-- Bottom bar: L2-derived layer strip, hidden on desktop -->
-    <div id="l4-bottom" class="l4-only">
+    <div id="l4-bottom">
         <div id="l4-layer-strip"></div>
-        <div id="l4-engine-row"></div>
     </div>
 
-    <!-- Floating action buttons: L2-derived, with separate settings drawer button -->
-    <div id="l4-fab" class="l4-only">
+    <div id="l4-fab">
         <button class="fab" id="l4-loc-btn" title="My location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="7" />
                 <circle cx="12" cy="12" r="3" />
                 <line x1="12" y1="2" x2="12" y2="5" />
@@ -155,23 +74,19 @@
             </svg>
         </button>
         <button class="fab" id="l4-search-btn" title="Search location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
         </button>
         <button class="fab fab--primary" id="l4-settings-btn" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3" />
-                <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
         </button>
         <button class="fab fab--primary" id="l4-basemap-btn" title="Basemap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6" />
                 <line x1="9" y1="3" x2="9" y2="18" />
                 <line x1="15" y1="6" x2="15" y2="21" />
@@ -181,12 +96,11 @@
 
     <div id="l4-basemap-popup" class="fab-popup"></div>
 
-    <div id="l4-drawer" class="l4-only main-drawer">
+    <div id="l4-drawer" class="main-drawer">
         <div class="drawer-header">
             <h2>Settings</h2>
             <button id="l4-drawer-close" class="icon-btn" title="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -194,69 +108,14 @@
         </div>
         <div class="drawer-body" id="l4-drawer-body"></div>
     </div>
-    <div id="l4-backdrop" class="l4-only drawer-backdrop"></div>
+    <div id="l4-backdrop" class="drawer-backdrop"></div>
 
-    <!-- ══════════════════════ LAYOUT 3 ══════════════════════ -->
-
-    <!-- Floating layer pills (left side) -->
-    <div id="l3-layers" class="l3-only"></div>
-
-    <!-- Floating action buttons (bottom-right) -->
-    <div id="l3-fabs" class="l3-only">
-        <button class="fab fab--primary" id="l3-settings-btn" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-        </button>
-        <button class="fab" id="l3-loc-btn" title="My location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="12" cy="12" r="7" />
-                <circle cx="12" cy="12" r="3" />
-                <line x1="12" y1="2" x2="12" y2="5" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-                <line x1="2" y1="12" x2="5" y2="12" />
-                <line x1="19" y1="12" x2="22" y2="12" />
-            </svg>
-        </button>
-        <button class="fab" id="l3-search-btn" title="Search location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-        </button>
-    </div>
-
-    <!-- L3 Settings drawer -->
-    <div id="l3-drawer" class="l3-only">
-        <div class="drawer-header">
-            <h2>Settings</h2>
-            <button id="l3-drawer-close" class="icon-btn" title="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            </button>
-        </div>
-        <div class="drawer-body" id="l3-drawer-body"></div>
-    </div>
-    <div id="l3-backdrop" class="l3-only drawer-backdrop"></div>
-
-    <!-- ══════════════════════ SHARED SHEETS ══════════════════════ -->
-
-    <!-- Color scheme bottom sheet (L1 + L2) -->
     <div id="color-sheet" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <div class="sheet-header">
             <span id="color-sheet-title">Color Scheme</span>
             <button id="color-sheet-close" class="icon-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -266,13 +125,11 @@
     </div>
     <div id="color-sheet-backdrop" class="sheet-backdrop"></div>
 
-    <!-- Search popup -->
     <div id="search-sheet" class="search-popup">
         <div class="sheet-header">
             <span>Search Location</span>
             <button id="search-sheet-close" class="icon-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -280,14 +137,13 @@
         </div>
         <div class="sheet-body">
             <div class="search-input-row">
-                <input id="search-input" type="text" placeholder="Search location…" autocomplete="off" />
+                <input id="search-input" type="text" placeholder="Search location..." autocomplete="off" />
                 <button id="search-go" class="search-go-btn">Go</button>
             </div>
             <ul id="search-results" class="search-results"></ul>
         </div>
     </div>
     <div id="search-sheet-backdrop" class="sheet-backdrop"></div>
-
 </body>
 
 </html>
