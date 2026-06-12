@@ -2,10 +2,12 @@
 //  SHARED.JS — State, helpers, layout builders
 // ─────────────────────────────────────────────
 
-window.boundsSet = false;
-
 // ─── COLORMAP HELPERS ───
 
+/**
+ * Converts a CSS hex colour string (e.g. '#ff0000') to an [r, g, b, 255] RGBA array
+ * suitable for use as a TileJSON colormap entry.
+ */
 function hexToRgba(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -13,15 +15,23 @@ function hexToRgba(hex) {
     return [r, g, b, 255];
 }
 
+/**
+ * Builds a CSS linear-gradient string from a named COLORMAP_PRESETS entry.
+ * Reverses the colour order when reverse is true.
+ */
 function buildGradient(preset, reverse) {
     let colors = [...COLORMAP_PRESETS[preset]];
     if (reverse) colors = [...colors].reverse();
     return `linear-gradient(to right, ${colors.join(', ')})`;
 }
 
+/**
+ * Combines all visible layers into a single colormap JSON string
+ * to be sent as a query parameter to the tile server.
+ */
 function getCombinedColormapJson() {
     const cmap = {};
-    layerState.forEach(layer => {
+    layerState.forEach(function(layer) {
         if (!layer.visible) return;
         if (layer.type === 'overlay') return;
         if (layer.type === 'solid') {
@@ -35,6 +45,10 @@ function getCombinedColormapJson() {
     return JSON.stringify(cmap);
 }
 
+/**
+ * Triggers a full data layer refresh on the active map engine
+ * using the current layer visibility and colormap settings.
+ */
 function refreshDataLayer() {
     if (mapEngine) mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
 }
@@ -45,17 +59,19 @@ let activeEngine = localStorage.getItem('map-engine') || 'leaflet';
 let mapEngine = null;
 let _l4PopupHandlerAttached = false;
 
-function getNavControlPos() {
-    return { leaflet: 'topleft', maplibre: 'top-left' };
-}
-
+/**
+ * Switches the active map engine to newKey ('leaflet' or 'maplibre').
+ * Preserves the current center and zoom, destroys the old engine,
+ * re-creates the map container element, and initialises the new engine.
+ */
 function switchEngine(newKey) {
     if (newKey === activeEngine && mapEngine) return;
 
-    let center = [13.3, 51.0], zoom = 8;
+    let center = DEFAULT_CENTER;
+    let zoom   = DEFAULT_ZOOM;
     if (mapEngine) {
         center = mapEngine.getCenter();
-        zoom = mapEngine.getZoom();
+        zoom   = mapEngine.getZoom();
         mapEngine.destroy();
     }
 
@@ -65,20 +81,21 @@ function switchEngine(newKey) {
     activeEngine = newKey;
     localStorage.setItem('map-engine', activeEngine);
 
-    const pos = getNavControlPos();
     const ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-    const cpos = activeEngine === 'leaflet' ? pos.leaflet : pos.maplibre;
-
     mapEngine = new ctor();
-    mapEngine.init('map', center, zoom, cpos).then(() => afterEngineInit(false));
+    mapEngine.init('map', center, zoom, NAV_CONTROL_POSITIONS[activeEngine])
+        .then(function() { afterEngineInit(false); });
 
-    document.querySelectorAll('.control-btn[data-engine]').forEach(btn =>
-        btn.classList.toggle('active', btn.dataset.engine === activeEngine)
-    );
+    document.querySelectorAll('.control-btn[data-engine]').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.engine === activeEngine);
+    });
 }
 
-
-function afterEngineInit(isFirstLoad = false) {
+/**
+ * Runs after every engine initialisation: applies the active basemap,
+ * opacity settings, overlay states, and on first load flies to the IP-geolocated position.
+ */
+function afterEngineInit(isFirstLoad) {
     mapEngine.switchBasemap(activeBasemapKey);
     mapEngine.updateBasemapOpacity(basemapOpacity);
     refreshDataLayer();
@@ -90,12 +107,11 @@ function afterEngineInit(isFirstLoad = false) {
     }
 
     if (isFirstLoad) {
-        getIpLocation().then(coords => {
+        getIpLocation().then(function(coords) {
             if (coords && mapEngine) {
-                setTimeout(() => {
+                setTimeout(function() {
                     if (mapEngine) {
-                        const locZoom = CONFIG.location_zoom !== undefined ? CONFIG.location_zoom : (CONFIG['location-zoom'] !== undefined ? CONFIG['location-zoom'] : 10);
-                        mapEngine.flyTo(coords, locZoom);
+                        mapEngine.flyTo(coords, CONFIG.location_zoom);
                     }
                 }, 1000);
             }
@@ -103,15 +119,23 @@ function afterEngineInit(isFirstLoad = false) {
     }
 }
 
+/**
+ * Marks the button matching the active engine as active and wires each button
+ * to call switchEngine when clicked.
+ */
 function initEngineBtns(container) {
-    container.querySelectorAll('.control-btn').forEach(btn => {
+    container.querySelectorAll('.control-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.engine === activeEngine);
-        btn.addEventListener('click', () => switchEngine(btn.dataset.engine));
+        btn.addEventListener('click', function() { switchEngine(btn.dataset.engine); });
     });
 }
 
 // ─── VISIBILITY SYNC ───
-// Called whenever a layer's visible flag changes — updates all live UI elements.
+
+/**
+ * Syncs all live UI elements (strip chip, drawer checkbox) to a layer's current
+ * visible state after it has been toggled programmatically.
+ */
 function syncLayerVisible(layer) {
     const l4Chip = document.getElementById(`l4-chip-${layer.id}`);
     if (l4Chip) {
@@ -127,6 +151,11 @@ function syncLayerVisible(layer) {
 }
 
 // ─── COLOR SYNC ───
+
+/**
+ * Updates the colour swatch or gradient bar in all live UI elements
+ * to reflect the layer's current preset and reverse setting.
+ */
 function syncLayerColor(layer) {
     if (layer.type === 'overlay') return;
     const chipColor = document.getElementById(`l4-chip-color-${layer.id}`);
@@ -136,32 +165,40 @@ function syncLayerColor(layer) {
         : layer.preset;
 }
 
+/**
+ * Repaints the gradient bar inside the drawer card for the given layer.
+ */
 function updateDrawerBar(layer) {
     const bar = document.getElementById(`dbar-${layer.id}`);
     if (bar) bar.style.background = buildGradient(layer.preset, layer.reverse);
 }
 
-// ─── TOGGLE WIDGET (no ID on checkbox — use container IDs for sync) ───
+// ─── BASEMAP BLOCK ───
 
-// ─── BASEMAP BLOCK (reusable) ───
-function buildBasemapBlock(el, opts = {}) {
+/**
+ * Renders a reusable basemap control block into the given element.
+ * Handles basemap toggle, basemap selector buttons, overlay buttons,
+ * basemap opacity slider, and optionally a data layer opacity slider.
+ */
+function buildBasemapBlock(el, opts) {
+    opts = opts || {};
     const uid = el.id || ('bm' + Math.random().toString(36).slice(2, 7));
 
-    const isEnabled = activeBasemapKey !== 'none';
-    const uiBaseKey = activeBasemapKey === 'none' ? 'osm' : activeBasemapKey;
+    const isEnabled  = activeBasemapKey !== 'none';
+    const uiBaseKey  = activeBasemapKey === 'none' ? 'osm' : activeBasemapKey;
 
     el.innerHTML = `
         <div class="bm-row">
-            <div class="bm-row-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="bm-row-label" style="display:flex;justify-content:space-between;align-items:center;">
                 <span>Basemap</span>
                 <label class="toggle">
                     <input type="checkbox" id="bm-toggle-${uid}" ${isEnabled ? 'checked' : ''} />
                     <span class="toggle-track"></span>
                 </label>
             </div>
-            <div class="control-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
-                <button class="control-btn${uiBaseKey === 'osm' ? ' active' : ''}" data-key="osm">OSM</button>
-                <button class="control-btn${uiBaseKey === 'satellite' ? ' active' : ''}" data-key="satellite">Satellite</button>
+            <div class="control-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity:0.5;pointer-events:none;' : ''}">
+                <button class="control-btn${uiBaseKey === 'osm'         ? ' active' : ''}" data-key="osm">OSM</button>
+                <button class="control-btn${uiBaseKey === 'satellite'   ? ' active' : ''}" data-key="satellite">Satellite</button>
                 <button class="control-btn${uiBaseKey === 'schummerung' ? ' active' : ''}" data-key="schummerung">Relief</button>
             </div>
             <div class="ctrl-row">
@@ -175,7 +212,7 @@ function buildBasemapBlock(el, opts = {}) {
         <div class="bm-row" style="margin-top:10px;">
             <div class="bm-row-label">Overlays</div>
             <div class="control-options" style="padding:0;">
-                <button class="control-btn${activeOverlays.hiking ? ' active' : ''}" data-overlay="hiking">Hiking</button>
+                <button class="control-btn${activeOverlays.hiking  ? ' active' : ''}" data-overlay="hiking">Hiking</button>
                 <button class="control-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
             </div>
         </div>
@@ -190,7 +227,7 @@ function buildBasemapBlock(el, opts = {}) {
         ` : ''}
     `;
 
-    document.getElementById(`bm-toggle-${uid}`).addEventListener('change', e => {
+    document.getElementById(`bm-toggle-${uid}`).addEventListener('change', function(e) {
         const enabled = e.target.checked;
         const optsDiv = document.getElementById(`bm-opts-${uid}`);
         if (enabled) {
@@ -198,9 +235,9 @@ function buildBasemapBlock(el, opts = {}) {
             optsDiv.style.pointerEvents = 'auto';
             if (activeBasemapKey === 'none') {
                 activeBasemapKey = 'osm';
-                el.querySelectorAll('.control-btn[data-key]').forEach(b =>
-                    b.classList.toggle('active', b.dataset.key === activeBasemapKey)
-                );
+                el.querySelectorAll('.control-btn[data-key]').forEach(function(b) {
+                    b.classList.toggle('active', b.dataset.key === activeBasemapKey);
+                });
             }
             if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
         } else {
@@ -210,39 +247,35 @@ function buildBasemapBlock(el, opts = {}) {
         }
     });
 
-    el.querySelectorAll('.control-btn[data-key]').forEach(btn => {
-        btn.addEventListener('click', () => {
+    el.querySelectorAll('.control-btn[data-key]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
             activeBasemapKey = btn.dataset.key;
             if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
-            el.querySelectorAll('.control-btn[data-key]').forEach(b =>
-                b.classList.toggle('active', b.dataset.key === activeBasemapKey)
-            );
+            el.querySelectorAll('.control-btn[data-key]').forEach(function(b) {
+                b.classList.toggle('active', b.dataset.key === activeBasemapKey);
+            });
         });
     });
 
-    el.querySelectorAll('button[data-overlay]').forEach(btn => {
-        btn.addEventListener('click', () => {
+    el.querySelectorAll('button[data-overlay]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
             const key = btn.dataset.overlay;
             activeOverlays[key] = !activeOverlays[key];
-
-            document.querySelectorAll(`button[data-overlay="${key}"]`).forEach(b => {
+            document.querySelectorAll(`button[data-overlay="${key}"]`).forEach(function(b) {
                 b.classList.toggle('active', activeOverlays[key]);
             });
-
-            if (mapEngine) {
-                mapEngine.toggleOverlay(key, activeOverlays[key]);
-            }
+            if (mapEngine) mapEngine.toggleOverlay(key, activeOverlays[key]);
         });
     });
 
-    document.getElementById(`bm-op-${uid}`).addEventListener('input', e => {
+    document.getElementById(`bm-op-${uid}`).addEventListener('input', function(e) {
         basemapOpacity = parseFloat(e.target.value);
         document.getElementById(`bm-op-val-${uid}`).textContent = `${Math.round(basemapOpacity * 100)}%`;
         if (mapEngine) mapEngine.updateBasemapOpacity(basemapOpacity);
     });
 
     if (opts.includeDataLayerOpacity) {
-        document.getElementById(`dl-op-${uid}`).addEventListener('input', e => {
+        document.getElementById(`dl-op-${uid}`).addEventListener('input', function(e) {
             dataLayerOpacity = parseFloat(e.target.value);
             document.getElementById(`dl-op-val-${uid}`).textContent = `${Math.round(dataLayerOpacity * 100)}%`;
             if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
@@ -250,59 +283,63 @@ function buildBasemapBlock(el, opts = {}) {
     }
 }
 
-// ─── VERTICAL CARD (L2 bottom bar) ───
+// ─── LAYER STRIP CARD ───
 
-// ─── LAYOUT 4 LAYER CARD ───
+/**
+ * Creates and returns a layer strip card DOM element for the given layer.
+ * The card acts as a toggle switch; category layers include a colour ramp
+ * that opens the colour sheet, solid layers expose a colour picker.
+ */
 function makeL4LayerCard(layer) {
-    const key = layer.id.toLowerCase();
+    const key  = layer.id.toLowerCase();
     const card = document.createElement('div');
     card.className = `control-btn layer-strip-card l4-layer-card l4-layer-card--${key}${layer.visible ? ' active' : ''}`;
-    card.id = `l4-chip-${layer.id}`;
-    card.tabIndex = 0;
+    card.id        = `l4-chip-${layer.id}`;
+    card.tabIndex  = 0;
     card.setAttribute('role', 'switch');
     card.setAttribute('aria-checked', String(layer.visible));
 
     const nameEl = document.createElement('span');
-    nameEl.className = 'layer-name';
+    nameEl.className   = 'layer-name';
     nameEl.textContent = layer.id;
     card.appendChild(nameEl);
 
     if (layer.type === 'category') {
         const ramp = document.createElement('div');
-        ramp.className = 'layer-strip-ramp';
-        ramp.id = `l4-chip-color-${layer.id}`;
+        ramp.className       = 'layer-strip-ramp';
+        ramp.id              = `l4-chip-color-${layer.id}`;
         ramp.style.background = buildGradient(layer.preset, layer.reverse);
-        ramp.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
+        ramp.addEventListener('click', function(e) { e.stopPropagation(); openColorSheet(layer); });
         card.appendChild(ramp);
     } else if (layer.type === 'solid') {
         const swatch = document.createElement('div');
-        swatch.className = 'layer-strip-solid-swatch';
-        swatch.id = `l4-chip-color-${layer.id}`;
+        swatch.className       = 'layer-strip-solid-swatch';
+        swatch.id              = `l4-chip-color-${layer.id}`;
         swatch.style.background = layer.preset;
 
         const picker = document.createElement('input');
-        picker.type = 'color';
-        picker.value = layer.preset;
+        picker.type     = 'color';
+        picker.value    = layer.preset;
         picker.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none;';
         card.appendChild(picker);
 
-        swatch.addEventListener('click', e => { e.stopPropagation(); picker.click(); });
-        picker.addEventListener('input', e => {
-            layer.preset = e.target.value;
+        swatch.addEventListener('click', function(e) { e.stopPropagation(); picker.click(); });
+        picker.addEventListener('input', function(e) {
+            layer.preset           = e.target.value;
             swatch.style.background = layer.preset;
             refreshDataLayer();
         });
         card.appendChild(swatch);
     }
 
-    const toggleLayer = () => {
+    function toggleLayer() {
         layer.visible = !layer.visible;
         syncLayerVisible(layer);
         refreshDataLayer();
-    };
+    }
 
     card.addEventListener('click', toggleLayer);
-    card.addEventListener('keydown', e => {
+    card.addEventListener('keydown', function(e) {
         if (e.key !== 'Enter' && e.key !== ' ') return;
         e.preventDefault();
         toggleLayer();
@@ -311,16 +348,20 @@ function makeL4LayerCard(layer) {
     return card;
 }
 
-// ─── STRIP CHIP (L1) ───
+// ─── COLOR SHEET ───
 
-// ─── COLOR SHEET (L1 + L2) ───
-
+/**
+ * Opens the colour scheme bottom sheet for the given layer,
+ * populating it with all available palettes and a reverse toggle.
+ */
 function openColorSheet(layer) {
     document.getElementById('color-sheet-title').textContent = layer.id;
     const body = document.getElementById('color-sheet-body');
 
     const schemeBtns = Object.keys(COLORMAP_PRESETS)
-        .map(k => `<button class="scheme-btn${k === layer.preset ? ' active' : ''}" data-scheme="${k}" title="${k}" style="background:${buildGradient(k, false)};"></button>`)
+        .map(function(k) {
+            return `<button class="scheme-btn${k === layer.preset ? ' active' : ''}" data-scheme="${k}" title="${k}" style="background:${buildGradient(k, false)};"></button>`;
+        })
         .join('');
 
     body.innerHTML = `
@@ -332,10 +373,10 @@ function openColorSheet(layer) {
         <div class="color-sheet-preview" id="cs-preview" style="background:${buildGradient(layer.preset, layer.reverse)};height:14px;border-radius:4px;border:1px solid var(--border);margin-top:8px;transition:background var(--transition);"></div>
     `;
 
-    body.querySelectorAll('.scheme-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+    body.querySelectorAll('.scheme-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
             layer.preset = btn.dataset.scheme;
-            body.querySelectorAll('.scheme-btn').forEach(b => b.classList.remove('active'));
+            body.querySelectorAll('.scheme-btn').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
             document.getElementById('cs-preview').style.background = buildGradient(layer.preset, layer.reverse);
             syncLayerColor(layer);
@@ -344,7 +385,7 @@ function openColorSheet(layer) {
         });
     });
 
-    document.getElementById('cs-rev').addEventListener('click', () => {
+    document.getElementById('cs-rev').addEventListener('click', function() {
         layer.reverse = !layer.reverse;
         document.getElementById('cs-rev').classList.toggle('active', layer.reverse);
         document.getElementById('cs-preview').style.background = buildGradient(layer.preset, layer.reverse);
@@ -357,6 +398,9 @@ function openColorSheet(layer) {
     document.getElementById('color-sheet-backdrop').classList.add('open');
 }
 
+/**
+ * Closes the colour scheme bottom sheet.
+ */
 function closeColorSheet() {
     document.getElementById('color-sheet').classList.remove('open');
     document.getElementById('color-sheet-backdrop').classList.remove('open');
@@ -364,20 +408,35 @@ function closeColorSheet() {
 
 // ─── SEARCH SHEET ───
 
+/**
+ * Opens the location search popup and focuses the input field.
+ */
 function openSearchSheet() {
     document.getElementById('search-sheet').classList.add('open');
     document.getElementById('search-sheet-backdrop').classList.add('open');
-    setTimeout(() => document.getElementById('search-input').focus(), 180);
+    setTimeout(function() { document.getElementById('search-input').focus(); }, 180);
 }
 
+/**
+ * Closes the location search popup.
+ */
 function closeSearchSheet() {
     document.getElementById('search-sheet').classList.remove('open');
     document.getElementById('search-sheet-backdrop').classList.remove('open');
 }
 
-async function doSearch(inputId = 'search-input', resultsId = 'search-results', opts = {}) {
+/**
+ * Queries the Nominatim geocoding API with the value from the given input element
+ * and renders results into the given list element.
+ * Clicking a result flies the map to that location.
+ */
+async function doSearch(inputId, resultsId, opts) {
+    inputId   = inputId   || 'search-input';
+    resultsId = resultsId || 'search-results';
+    opts      = opts      || {};
+
     const input = document.getElementById(inputId);
-    const list = document.getElementById(resultsId);
+    const list  = document.getElementById(resultsId);
     if (!input || !list) return;
 
     const q = input.value.trim();
@@ -395,50 +454,62 @@ async function doSearch(inputId = 'search-input', resultsId = 'search-results', 
             list.innerHTML = '<li class="result-empty">No results found.</li>';
             return;
         }
-        data.forEach(item => {
+        data.forEach(function(item) {
             const parts = item.display_name.split(',');
-            const li = document.createElement('li');
+            const li    = document.createElement('li');
             li.innerHTML = `<div class="result-name">${parts[0].trim()}</div>
-                <div class="result-detail">${parts.slice(1, 3).map(s => s.trim()).join(', ')}</div>`;
-            li.addEventListener('click', () => {
+                <div class="result-detail">${parts.slice(1, 3).map(function(s) { return s.trim(); }).join(', ')}</div>`;
+            li.addEventListener('click', function() {
                 if (mapEngine) mapEngine.flyTo([parseFloat(item.lon), parseFloat(item.lat)], 12);
                 if (opts.closeOnSelect) opts.closeOnSelect();
             });
             list.appendChild(li);
         });
-    } catch {
+    } catch (e) {
         list.innerHTML = '<li class="result-empty">Search failed.</li>';
     }
 }
 
+/**
+ * Attaches the close button and backdrop listeners for the search sheet,
+ * then wires up the main search input and button.
+ */
 function initSearch() {
     document.getElementById('search-sheet-close').addEventListener('click', closeSearchSheet);
     document.getElementById('search-sheet-backdrop').addEventListener('click', closeSearchSheet);
     bindSearchControls('search-input', 'search-go', 'search-results', { closeOnSelect: closeSearchSheet });
 }
 
-function bindSearchControls(inputId, buttonId, resultsId, opts = {}) {
-    const input = document.getElementById(inputId);
+/**
+ * Wires the Go button and Enter key on the given input to call doSearch.
+ */
+function bindSearchControls(inputId, buttonId, resultsId, opts) {
+    opts = opts || {};
+    const input  = document.getElementById(inputId);
     const button = document.getElementById(buttonId);
     if (!input || !button) return;
 
-    button.addEventListener('click', () => doSearch(inputId, resultsId, opts));
-    input.addEventListener('keydown', e => {
+    button.addEventListener('click', function() { doSearch(inputId, resultsId, opts); });
+    input.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') doSearch(inputId, resultsId, opts);
     });
 }
 
+/**
+ * Wires a button element to open the search sheet when clicked.
+ */
 function bindSearchBtn(id) {
     const btn = document.getElementById(id);
     if (btn) btn.onclick = openSearchSheet;
 }
 
-// ════════════════════════════════════════════════
-//  LAYOUT BUILDERS
-// ════════════════════════════════════════════════
+// ─── LAYOUT 4 ───
 
+/**
+ * Clears all dynamic content from the Layout 4 layer strip, basemap popup, and drawer body.
+ */
 function clearLayout4() {
-    ['l4-layer-strip', 'l4-basemap-popup', 'l4-drawer-body'].forEach(id => {
+    ['l4-layer-strip', 'l4-basemap-popup', 'l4-drawer-body'].forEach(function(id) {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '';
     });
@@ -447,22 +518,15 @@ function clearLayout4() {
     document.getElementById('l4-backdrop')?.classList.remove('open');
 }
 
-// ── Layout 1 ──
-
-
-// ── Layout 2 ──
-
-// Vertical layer cards — one per layer, all fit in one row inside the strip
-// Toggle popup on config FAB click
-
-// ── Layout 4 ──
-
+/**
+ * Builds the full Layout 4 UI: layer strip chips, basemap popup with engine switcher,
+ * settings drawer, FAB button bindings, and the bottom-bar height CSS variable.
+ */
 function buildLayout4() {
     clearLayout4();
 
     const strip = document.getElementById('l4-layer-strip');
-
-    layerState.forEach(layer => strip.appendChild(makeL4LayerCard(layer)));
+    layerState.forEach(function(layer) { strip.appendChild(makeL4LayerCard(layer)); });
 
     const popup = document.getElementById('l4-basemap-popup');
     popup.innerHTML = '';
@@ -471,22 +535,21 @@ function buildLayout4() {
     popupHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
 
     const engLabel = document.createElement('div');
-    engLabel.className = 'bm-row-label';
+    engLabel.className    = 'bm-row-label';
     engLabel.style.margin = '0';
-    engLabel.textContent = 'Map Engine';
+    engLabel.textContent  = 'Map Engine';
 
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'icon-btn';
-    closeBtn.title = 'Close';
+    closeBtn.className   = 'icon-btn';
+    closeBtn.title       = 'Close';
     closeBtn.style.padding = '2px';
-    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.cursor  = 'pointer';
     closeBtn.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-    `;
-    closeBtn.onclick = (e) => {
+        </svg>`;
+    closeBtn.onclick = function(e) {
         e.stopPropagation();
         popup.classList.remove('open');
     };
@@ -496,13 +559,12 @@ function buildLayout4() {
     popup.appendChild(popupHeader);
 
     const engWrap = document.createElement('div');
-    engWrap.className = 'control-options';
-    engWrap.style.padding = '0';
+    engWrap.className        = 'control-options';
+    engWrap.style.padding    = '0';
     engWrap.style.marginBottom = '12px';
     engWrap.innerHTML = `
         <button class="control-btn" data-engine="leaflet">Leaflet</button>
-        <button class="control-btn" data-engine="maplibre">MapLibre</button>
-    `;
+        <button class="control-btn" data-engine="maplibre">MapLibre</button>`;
     popup.appendChild(engWrap);
     initEngineBtns(engWrap);
 
@@ -515,17 +577,18 @@ function buildLayout4() {
     popup.appendChild(bmBlock);
     buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
 
-    const bmBtn = document.getElementById('l4-basemap-btn');
+    const bmBtn      = document.getElementById('l4-basemap-btn');
     const settingsBtn = document.getElementById('l4-settings-btn');
 
-    bmBtn.onclick = e => {
+    bmBtn.onclick = function(e) {
         e.stopPropagation();
         closeLayout4Drawer();
         popup.classList.toggle('open');
     };
+
     if (!_l4PopupHandlerAttached) {
         _l4PopupHandlerAttached = true;
-        document.addEventListener('click', e => {
+        document.addEventListener('click', function(e) {
             const p = document.getElementById('l4-basemap-popup');
             const b = document.getElementById('l4-basemap-btn');
             if (p && b && !p.contains(e.target) && e.target !== b) {
@@ -536,9 +599,9 @@ function buildLayout4() {
 
     buildDrawerBody(document.getElementById('l4-drawer-body'), { includeLocationTools: true });
 
-    settingsBtn.onclick = () => {
+    settingsBtn.onclick = function() {
         popup.classList.remove('open');
-        const drawer = document.getElementById('l4-drawer');
+        const drawer   = document.getElementById('l4-drawer');
         const backdrop = document.getElementById('l4-backdrop');
         if (drawer.classList.contains('open')) {
             drawer.classList.remove('open');
@@ -548,48 +611,59 @@ function buildLayout4() {
             backdrop.classList.add('open');
         }
     };
+
     document.getElementById('l4-drawer-close').onclick = closeLayout4Drawer;
-    document.getElementById('l4-backdrop').onclick = closeLayout4Drawer;
+    document.getElementById('l4-backdrop').onclick     = closeLayout4Drawer;
 
     bindSearchBtn('l4-search-btn');
     bindLocBtn('l4-loc-btn');
 
-    requestAnimationFrame(() => {
+    requestAnimationFrame(function() {
         const h = document.getElementById('l4-bottom')?.offsetHeight;
         if (h) document.documentElement.style.setProperty('--l4-bottom-h', `${h}px`);
     });
 }
 
+/**
+ * Closes the Layout 4 settings drawer and its backdrop.
+ */
 function closeLayout4Drawer() {
     document.getElementById('l4-drawer').classList.remove('open');
     document.getElementById('l4-backdrop').classList.remove('open');
 }
 
-// ── Drawer body (L3 settings) ──
+// ─── DRAWER BODY ───
 
-function buildDrawerBody(container, opts = {}) {
+/**
+ * Populates the settings drawer with data layer cards, data layer opacity slider,
+ * map engine switcher, basemap block, and optionally location tools.
+ */
+function buildDrawerBody(container, opts) {
+    opts = opts || {};
     container.innerHTML = '';
 
     addSectionLabel(container, 'Data Layers');
 
-    layerState.forEach(layer => {
+    layerState.forEach(function(layer) {
         const card = document.createElement('div');
         card.className = `layer-card${layer.visible ? '' : ' inactive'}`;
 
-        let headerControls = '', dropdownHtml = '';
+        let headerControls = '';
+        let dropdownHtml   = '';
+
         if (layer.type === 'category') {
             const schemeBtns = Object.keys(COLORMAP_PRESETS)
-                .map(k => `<button class="scheme-btn${k === layer.preset ? ' active' : ''}" data-scheme="${k}" style="background:${buildGradient(k, false)};"></button>`)
+                .map(function(k) {
+                    return `<button class="scheme-btn${k === layer.preset ? ' active' : ''}" data-scheme="${k}" style="background:${buildGradient(k, false)};"></button>`;
+                })
                 .join('');
             headerControls = `
                 <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="drev-${layer.id}">&#x21C4;</button>
-                <div class="scheme-bar-btn" id="dbar-${layer.id}" style="background:${buildGradient(layer.preset, layer.reverse)};"></div>
-            `;
+                <div class="scheme-bar-btn" id="dbar-${layer.id}" style="background:${buildGradient(layer.preset, layer.reverse)};"></div>`;
             dropdownHtml = `
                 <div class="scheme-dropdown" id="ddrop-${layer.id}">
                     <div class="scheme-grid" id="dschemes-${layer.id}">${schemeBtns}</div>
-                </div>
-            `;
+                </div>`;
         } else if (layer.type === 'solid') {
             headerControls = `<input type="color" id="dcol-${layer.id}" value="${layer.preset}" class="header-color-picker" />`;
         }
@@ -603,11 +677,10 @@ function buildDrawerBody(container, opts = {}) {
                 <span class="layer-name">${layer.id}</span>
                 ${headerControls}
             </div>
-            ${dropdownHtml}
-        `;
+            ${dropdownHtml}`;
         container.appendChild(card);
 
-        document.getElementById(`dvis-${layer.id}`).addEventListener('change', e => {
+        document.getElementById(`dvis-${layer.id}`).addEventListener('change', function(e) {
             layer.visible = e.target.checked;
             card.classList.toggle('inactive', !layer.visible);
             syncLayerVisible(layer);
@@ -619,19 +692,19 @@ function buildDrawerBody(container, opts = {}) {
         });
 
         if (layer.type === 'category') {
-            document.getElementById(`dbar-${layer.id}`).addEventListener('click', e => {
+            document.getElementById(`dbar-${layer.id}`).addEventListener('click', function(e) {
                 e.stopPropagation();
-                document.querySelectorAll('.scheme-dropdown.open').forEach(d => {
+                document.querySelectorAll('.scheme-dropdown.open').forEach(function(d) {
                     if (d.id !== `ddrop-${layer.id}`) d.classList.remove('open');
                 });
                 document.getElementById(`ddrop-${layer.id}`).classList.toggle('open');
             });
 
-            document.getElementById(`dschemes-${layer.id}`).querySelectorAll('.scheme-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
+            document.getElementById(`dschemes-${layer.id}`).querySelectorAll('.scheme-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
                     layer.preset = btn.dataset.scheme;
                     document.getElementById(`dschemes-${layer.id}`).querySelectorAll('.scheme-btn')
-                        .forEach(b => b.classList.remove('active'));
+                        .forEach(function(b) { b.classList.remove('active'); });
                     btn.classList.add('active');
                     document.getElementById(`dbar-${layer.id}`).style.background = buildGradient(layer.preset, layer.reverse);
                     syncLayerColor(layer);
@@ -640,7 +713,7 @@ function buildDrawerBody(container, opts = {}) {
                 });
             });
 
-            document.getElementById(`drev-${layer.id}`).addEventListener('click', e => {
+            document.getElementById(`drev-${layer.id}`).addEventListener('click', function(e) {
                 e.stopPropagation();
                 layer.reverse = !layer.reverse;
                 document.getElementById(`drev-${layer.id}`).classList.toggle('active', layer.reverse);
@@ -649,7 +722,7 @@ function buildDrawerBody(container, opts = {}) {
                 refreshDataLayer();
             });
         } else if (layer.type === 'solid') {
-            document.getElementById(`dcol-${layer.id}`).addEventListener('input', e => {
+            document.getElementById(`dcol-${layer.id}`).addEventListener('input', function(e) {
                 layer.preset = e.target.value;
                 syncLayerColor(layer);
                 refreshDataLayer();
@@ -657,8 +730,6 @@ function buildDrawerBody(container, opts = {}) {
         }
     });
 
-
-    // Data Layer Opacity
     addSectionLabel(container, 'Data Layer Opacity');
     const opDiv = document.createElement('div');
     opDiv.style.padding = '2px 4px 8px';
@@ -669,34 +740,31 @@ function buildDrawerBody(container, opts = {}) {
                 <span class="val" id="drawer-dl-val">${Math.round(dataLayerOpacity * 100)}%</span>
             </div>
             <input type="range" id="drawer-dl-opacity" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
-        </div>
-    `;
+        </div>`;
     container.appendChild(opDiv);
-    document.getElementById('drawer-dl-opacity').addEventListener('input', e => {
+
+    document.getElementById('drawer-dl-opacity').addEventListener('input', function(e) {
         dataLayerOpacity = parseFloat(e.target.value);
         document.getElementById('drawer-dl-val').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
         if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
     });
 
-    // Map Engine
     addSectionLabel(container, 'Map Engine');
     const engWrap = document.createElement('div');
-    engWrap.className = 'control-card';
+    engWrap.className    = 'control-card';
     engWrap.style.padding = '10px 12px';
     engWrap.innerHTML = `
         <div class="control-options" style="padding:0;">
             <button class="control-btn" data-engine="leaflet">Leaflet</button>
             <button class="control-btn" data-engine="maplibre">MapLibre</button>
-        </div>
-    `;
+        </div>`;
     container.appendChild(engWrap);
     initEngineBtns(engWrap);
 
-    // Basemap
     addSectionLabel(container, 'Basemap');
     const bmWrap = document.createElement('div');
-    bmWrap.className = 'control-card';
-    bmWrap.id = 'drawer-bm-area';
+    bmWrap.className    = 'control-card';
+    bmWrap.id           = 'drawer-bm-area';
     bmWrap.style.padding = '10px 12px';
     container.appendChild(bmWrap);
     buildBasemapBlock(bmWrap);
@@ -704,6 +772,10 @@ function buildDrawerBody(container, opts = {}) {
     if (opts.includeLocationTools) appendDrawerLocationTools(container);
 }
 
+/**
+ * Appends an inline location search input and a "My location" button
+ * to the given drawer container element.
+ */
 function appendDrawerLocationTools(container) {
     const section = document.createElement('div');
     section.className = 'drawer-location-section';
@@ -722,17 +794,22 @@ function appendDrawerLocationTools(container) {
         <button id="drawer-loc-btn" class="drawer-action-btn" type="button">
             ${getMyLocationIconSvg()}
             <span>My location</span>
-        </button>
-    `;
+        </button>`;
     section.appendChild(locWrap);
 
     bindSearchControls('drawer-search-input', 'drawer-search-go', 'drawer-search-results');
     bindLocBtn('drawer-loc-btn');
 }
 
+// ─── FAB SHIFT ───
+
+/**
+ * Adds or removes the 'fab-shifted' body class to shift the FAB upward
+ * when the settings drawer overlaps it on wide viewports.
+ */
 function updateFabShift() {
     const drawer = document.getElementById('l4-drawer');
-    const fab = document.getElementById('l4-fab');
+    const fab    = document.getElementById('l4-fab');
     if (!drawer || !fab) return;
 
     if (window.innerWidth < 769) {
@@ -740,18 +817,16 @@ function updateFabShift() {
         return;
     }
 
-    const isOpen = drawer.classList.contains('open');
-    const pos = drawer.dataset.pos || 'right-middle';
+    const isOpen    = drawer.classList.contains('open');
+    const pos       = drawer.dataset.pos || 'right-middle';
     const isOnRight = !pos.includes('left');
 
     if (isOpen && isOnRight) {
-        const fabHeight = fab.offsetHeight || 200;
+        const fabHeight  = fab.offsetHeight || 200;
         const drawerRect = drawer.getBoundingClientRect();
-
         const spaceBelow = window.innerHeight - drawerRect.bottom;
-        const neededSpace = fabHeight + 24;
 
-        if (spaceBelow < neededSpace) {
+        if (spaceBelow < fabHeight + 24) {
             document.body.classList.add('fab-shifted');
             return;
         }
@@ -759,30 +834,37 @@ function updateFabShift() {
     document.body.classList.remove('fab-shifted');
 }
 
+// ─── HELPERS ───
+
+/**
+ * Appends a section label div with the given text to the parent element.
+ */
 function addSectionLabel(parent, text) {
     const div = document.createElement('div');
-    div.className = 'section-label';
+    div.className   = 'section-label';
     div.textContent = text;
     parent.appendChild(div);
 }
 
-// ─── LAYOUT SWITCHER ───
-
-
 // ─── THEME SWITCHER ───
 
+/**
+ * Reads the saved theme from localStorage, applies it, and wires the dev-bar
+ * theme buttons to switch and persist the active theme.
+ */
 function initThemeSwitcher() {
-    const buttons = document.querySelectorAll('.dev-theme-btn');
-    const themes = [...buttons].map(btn => btn.dataset.theme);
-    const saved = localStorage.getItem('map-theme');
+    const buttons    = document.querySelectorAll('.dev-theme-btn');
+    const themes     = Array.from(buttons).map(function(btn) { return btn.dataset.theme; });
+    const saved      = localStorage.getItem('map-theme');
     const activeTheme = themes.includes(saved) ? saved : 'glass';
+
     document.getElementById('theme-link').href = `themes/theme_${activeTheme}.css`;
     localStorage.setItem('map-theme', activeTheme);
 
-    buttons.forEach(btn => {
+    buttons.forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.theme === activeTheme);
-        btn.addEventListener('click', () => {
-            buttons.forEach(b => b.classList.remove('active'));
+        btn.addEventListener('click', function() {
+            buttons.forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
             const t = btn.dataset.theme;
             document.getElementById('theme-link').href = `themes/theme_${t}.css`;
@@ -793,7 +875,7 @@ function initThemeSwitcher() {
 
 // ─── STARTUP ───
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     buildLayout4();
     initThemeSwitcher();
 
@@ -803,31 +885,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const drawer = document.getElementById('l4-drawer');
     if (drawer) {
-        const observer = new MutationObserver(() => {
-            updateFabShift();
-        });
+        const observer = new MutationObserver(function() { updateFabShift(); });
         observer.observe(drawer, { attributes: true, attributeFilter: ['class', 'data-pos'] });
     }
+
     window.addEventListener('resize', updateFabShift);
     requestAnimationFrame(updateFabShift);
 
-    // Shared sheet init
     document.getElementById('color-sheet-close').addEventListener('click', closeColorSheet);
     document.getElementById('color-sheet-backdrop').addEventListener('click', closeColorSheet);
     initSearch();
 
-    // Start map engine
-    const pos = getNavControlPos();
-    const ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-    const cpos = activeEngine === 'leaflet' ? pos.leaflet : pos.maplibre;
+    mapEngine = activeEngine === 'leaflet' ? new LeafletEngine() : new MapLibreEngine();
+    mapEngine.init('map', DEFAULT_CENTER, DEFAULT_ZOOM, NAV_CONTROL_POSITIONS[activeEngine])
+        .then(function() { afterEngineInit(true); });
 
-    mapEngine = new ctor();
-    mapEngine.init('map', [13.3, 51.0], 8, cpos).then(() => afterEngineInit(true));
-
-    window.addEventListener('resize', () => {
-        requestAnimationFrame(() => {
-            const h4 = document.getElementById('l4-bottom')?.offsetHeight;
-            if (h4) document.documentElement.style.setProperty('--l4-bottom-h', `${h4}px`);
+    window.addEventListener('resize', function() {
+        requestAnimationFrame(function() {
+            const h = document.getElementById('l4-bottom')?.offsetHeight;
+            if (h) document.documentElement.style.setProperty('--l4-bottom-h', `${h}px`);
         });
     });
 });

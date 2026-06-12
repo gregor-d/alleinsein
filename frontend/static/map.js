@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-//  LEAFLET_MAP.JS — Leaflet-specific map engine
+//  MAP.JS — Leaflet and MapLibre map engine implementations
 // ─────────────────────────────────────────────
 
 class LeafletEngine {
@@ -8,58 +8,61 @@ class LeafletEngine {
         this.basemapLayer = null;
         this.dataLayer = null;
         this.maskLayer = null;
-        this.boundsSet = false;
         this.overlays = {};
     }
 
+    /**
+     * Initialises the Leaflet map inside the given container, sets the initial view,
+     * adds zoom and scale controls, and loads the Germany mask GeoJSON overlay.
+     * Returns a Promise that resolves once the map is ready.
+     */
     init(containerId, center, zoom, zoomPos = 'topleft') {
-        return new Promise((resolve) => {
-            // center is [lng, lat], Leaflet setView expects [lat, lng]
+        const self = this;
+        return new Promise(function(resolve) {
             const latlng = [center[1], center[0]];
 
-            const minZoomSetting = CONFIG.minimal_zoom !== undefined ? CONFIG.minimal_zoom : (CONFIG['minimal-zoom'] !== undefined ? CONFIG['minimal-zoom'] : undefined);
-            const mapOptions = {
-                zoomControl: false
-            };
-            if (minZoomSetting !== undefined) {
-                mapOptions.minZoom = minZoomSetting;
-            }
+            self.map = L.map(containerId, {
+                zoomControl: false,
+                minZoom: CONFIG.minimal_zoom
+            }).setView(latlng, zoom);
 
-            this.map = L.map(containerId, mapOptions).setView(latlng, zoom);
+            L.control.zoom({ position: zoomPos }).addTo(self.map);
+            L.control.scale({ position: 'bottomleft', imperial: false }).addTo(self.map);
 
-            L.control.zoom({ position: zoomPos }).addTo(this.map);
-            L.control.scale({ position: 'bottomleft', imperial: false }).addTo(this.map);
-
-            // Load Germany mask
             fetch('germany-mask.geojson')
-                .then(res => res.json())
-                .then(data => {
-                    if (!this.map) return;
-                    this.maskLayer = L.geoJSON(data, {
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (!self.map) return;
+                    self.maskLayer = L.geoJSON(data, {
                         style: {
                             stroke: false,
-                            fillColor: CONFIG.mask_color || '#111111',
-                            fillOpacity: CONFIG.mask_opacity !== undefined ? CONFIG.mask_opacity : 0.45,
+                            fillColor: CONFIG.mask_color,
+                            fillOpacity: CONFIG.mask_opacity,
                             interactive: false
                         }
-                    }).addTo(this.map);
-                    // Ensure data layer stays on top if it's already loaded
-                    if (this.dataLayer) {
-                        this.dataLayer.bringToFront();
+                    }).addTo(self.map);
+                    if (self.dataLayer) {
+                        self.dataLayer.bringToFront();
                     }
                 })
-                .catch(err => console.error("Error loading Leaflet mask:", err));
+                .catch(function(err) { console.error('Error loading Leaflet mask:', err); });
 
             resolve();
         });
     }
 
+    /**
+     * Smoothly flies the map to the given [lng, lat] coordinate at the specified zoom level.
+     */
     flyTo(lngLat, zoom) {
         if (this.map) {
             this.map.flyTo([lngLat[1], lngLat[0]], zoom, { duration: 1.2 });
         }
     }
 
+    /**
+     * Removes all overlay layers and destroys the Leaflet map instance.
+     */
     destroy() {
         if (this.map) {
             for (const id in this.overlays) {
@@ -75,8 +78,12 @@ class LeafletEngine {
         this.overlays = {};
     }
 
+    /**
+     * Fetches TileJSON for the given colormap and updates the raster data layer.
+     * Creates the layer on the first call; updates the tile URL on subsequent calls.
+     * Removes the layer entirely when the colormap is empty.
+     */
     async updateDataLayer(colormapJson, opacity) {
-        // If no layers are visible, remove the data layer entirely
         if (colormapJson === '{}') {
             if (this.dataLayer) {
                 this.map.removeLayer(this.dataLayer);
@@ -94,14 +101,13 @@ class LeafletEngine {
 
             if (!tj.tiles || tj.tiles.length === 0) return;
 
-            // Fit map to raster bounds on first load
-            if (!window.boundsSet && tj.bounds) {
+            if (!boundsSet && tj.bounds) {
                 const [west, south, east, north] = tj.bounds;
                 this.map.fitBounds([[south, west], [north, east]]);
-                window.boundsSet = true;
+                boundsSet = true;
             }
 
-            let tileUrl = tj.tiles[0];
+            const tileUrl = tj.tiles[0];
 
             if (!this.dataLayer) {
                 this.dataLayer = L.tileLayer(tileUrl, {
@@ -120,62 +126,65 @@ class LeafletEngine {
                 this.dataLayer.setOpacity(opacity);
             }
 
-            // Bring overlays to front
             for (const id in this.overlays) {
                 if (this.map.hasLayer(this.overlays[id])) {
                     this.overlays[id].bringToFront();
                 }
             }
         } catch (e) {
-            console.error("Error fetching TileJSON in Leaflet:", e);
+            console.error('Error fetching TileJSON in Leaflet:', e);
         }
     }
 
+    /**
+     * Updates the opacity of the data layer without re-fetching tiles.
+     */
     updateDataLayerOpacity(opacity) {
         if (this.dataLayer) {
             this.dataLayer.setOpacity(opacity);
         }
     }
 
+    /**
+     * Replaces the current basemap with the layer identified by key.
+     * Pass 'none' to remove the basemap entirely.
+     * Restores mask and data layer z-order after swapping.
+     */
     switchBasemap(key) {
         if (this.basemapLayer) {
             this.map.removeLayer(this.basemapLayer);
             this.basemapLayer = null;
         }
 
-        if (key !== 'none') {
-            const def = BASEMAPS[key];
-            if (def.type === 'wms') {
-                this.basemapLayer = L.tileLayer.wms(def.url, def.options).addTo(this.map);
-            } else {
-                this.basemapLayer = L.tileLayer(def.url, def.options).addTo(this.map);
-            }
-            this.basemapLayer.setOpacity(basemapOpacity);
+        if (key === 'none') return;
 
-            // Re-add mask and data layer on top in correct order
-            if (this.maskLayer) {
-                this.maskLayer.bringToFront();
-            }
-            if (this.dataLayer) {
-                this.dataLayer.bringToFront();
-            }
+        const def = BASEMAPS[key];
+        if (def.type === 'wms') {
+            this.basemapLayer = L.tileLayer.wms(def.url, def.options).addTo(this.map);
+        } else {
+            this.basemapLayer = L.tileLayer(def.url, def.options).addTo(this.map);
+        }
+        this.basemapLayer.setOpacity(basemapOpacity);
 
-            // Bring overlays to front
-            for (const id in this.overlays) {
-                if (this.map.hasLayer(this.overlays[id])) {
-                    this.overlays[id].bringToFront();
-                }
+        if (this.maskLayer) this.maskLayer.bringToFront();
+        if (this.dataLayer) this.dataLayer.bringToFront();
+
+        for (const id in this.overlays) {
+            if (this.map.hasLayer(this.overlays[id])) {
+                this.overlays[id].bringToFront();
             }
         }
     }
 
+    /**
+     * Shows or hides a named overlay tile layer (e.g. 'hiking', 'cycling').
+     */
     toggleOverlay(id, visible) {
         if (!this.map) return;
         const key = id.toLowerCase();
         if (visible) {
             const def = BASEMAPS[key];
             if (!def) return;
-
             if (!this.overlays[key]) {
                 this.overlays[key] = L.tileLayer(def.url, def.options);
             }
@@ -190,44 +199,57 @@ class LeafletEngine {
         }
     }
 
+    /**
+     * Sets the opacity of the active basemap tile layer.
+     */
     updateBasemapOpacity(opacity) {
         if (this.basemapLayer) {
             this.basemapLayer.setOpacity(opacity);
         }
     }
 
+    /**
+     * Returns the current map center as [lng, lat].
+     */
     getCenter() {
-        if (!this.map) return [13.3, 51.0];
+        if (!this.map) return DEFAULT_CENTER;
         const c = this.map.getCenter();
-        return [c.lng, c.lat]; // Return [lng, lat]
+        return [c.lng, c.lat];
     }
 
+    /**
+     * Returns the current zoom level.
+     */
     getZoom() {
-        if (!this.map) return 10;
+        if (!this.map) return DEFAULT_ZOOM;
         return this.map.getZoom();
     }
 }
 
-// Expose globally
 window.LeafletEngine = LeafletEngine;
 
 
 // ─────────────────────────────────────────────
-//  MAPLIBRE_MAP.JS — MapLibre-specific map engine
+//  MapLibre engine
 // ─────────────────────────────────────────────
 
 class MapLibreEngine {
     constructor() {
         this.map = null;
-        this.boundsSet = false;
         this.debounceTimer = null;
     }
 
+    /**
+     * Initialises MapLibre GL with pre-defined basemap sources and layers (all hidden),
+     * adds navigation, attribution and scale controls, and loads the Germany mask GeoJSON.
+     * Returns a Promise that resolves once the map style has loaded.
+     */
     init(containerId, center, zoom, navPos = 'top-left') {
+        const self = this;
         this._navPos = navPos;
-        return new Promise((resolve) => {
-            const minZoomSetting = CONFIG.minimal_zoom !== undefined ? CONFIG.minimal_zoom : (CONFIG['minimal-zoom'] !== undefined ? CONFIG['minimal-zoom'] : undefined);
-            const mapOptions = {
+
+        return new Promise(function(resolve) {
+            self.map = new maplibregl.Map({
                 container: containerId,
                 style: {
                     version: 8,
@@ -261,88 +283,70 @@ class MapLibreEngine {
                             id: 'basemap-osm-layer',
                             type: 'raster',
                             source: 'basemap-osm',
-                            layout: {
-                                visibility: 'none'
-                            },
-                            paint: {
-                                'raster-opacity': 1.0
-                            }
+                            layout: { visibility: 'none' },
+                            paint: { 'raster-opacity': 1.0 }
                         },
                         {
                             id: 'basemap-satellite-layer',
                             type: 'raster',
                             source: 'basemap-satellite',
-                            layout: {
-                                visibility: 'none'
-                            },
-                            paint: {
-                                'raster-opacity': 1.0
-                            }
+                            layout: { visibility: 'none' },
+                            paint: { 'raster-opacity': 1.0 }
                         },
                         {
                             id: 'basemap-schummerung-layer',
                             type: 'raster',
                             source: 'basemap-schummerung',
-                            layout: {
-                                visibility: 'none'
-                            },
-                            paint: {
-                                'raster-opacity': 1.0
-                            }
+                            layout: { visibility: 'none' },
+                            paint: { 'raster-opacity': 1.0 }
                         }
                     ]
                 },
-                center: center, // MapLibre center format is [lng, lat]
+                center: center,
                 zoom: zoom - 1,
-                attributionControl: false
-            };
-            if (minZoomSetting !== undefined) {
-                mapOptions.minZoom = minZoomSetting - 1;
-            }
-            this.map = new maplibregl.Map(mapOptions);
+                attributionControl: false,
+                minZoom: CONFIG.minimal_zoom - 1
+            });
 
-            this.map.addControl(new maplibregl.NavigationControl({
-                showCompass: false
-            }), this._navPos || 'top-left');
+            self.map.addControl(
+                new maplibregl.NavigationControl({ showCompass: false }),
+                self._navPos
+            );
+            self.map.addControl(
+                new maplibregl.AttributionControl({ compact: false }),
+                'bottom-right'
+            );
+            self.map.addControl(
+                new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }),
+                'bottom-left'
+            );
 
-            // Add attribution control bottom-right
-            this.map.addControl(new maplibregl.AttributionControl({
-                compact: false
-            }), 'bottom-right');
-
-            // Add scale control bottom-left
-            this.map.addControl(new maplibregl.ScaleControl({
-                maxWidth: 80,
-                unit: 'metric'
-            }), 'bottom-left');
-
-            this.map.on('load', () => {
-                // Fetch and add Germany mask layer
+            self.map.on('load', function() {
                 fetch('germany-mask.geojson')
-                    .then(res => res.json())
-                    .then(data => {
-                        if (!this.map) return;
-                        this.map.addSource('germany-mask-source', {
-                            type: 'geojson',
-                            data: data
-                        });
-                        this.map.addLayer({
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (!self.map) return;
+                        self.map.addSource('germany-mask-source', { type: 'geojson', data: data });
+                        self.map.addLayer({
                             id: 'germany-mask-layer',
                             type: 'fill',
                             source: 'germany-mask-source',
                             paint: {
-                                'fill-color': CONFIG.mask_color || '#111111',
-                                'fill-opacity': CONFIG.mask_opacity !== undefined ? CONFIG.mask_opacity : 0.45
+                                'fill-color': CONFIG.mask_color,
+                                'fill-opacity': CONFIG.mask_opacity
                             }
-                        }, this.map.getLayer('data-layer') ? 'data-layer' : undefined);
+                        }, self.map.getLayer('data-layer') ? 'data-layer' : undefined);
                     })
-                    .catch(err => console.error("Error loading MapLibre mask:", err));
+                    .catch(function(err) { console.error('Error loading MapLibre mask:', err); });
 
                 resolve();
             });
         });
     }
 
+    /**
+     * Cancels any pending debounce timer and removes the MapLibre map instance.
+     */
     destroy() {
         clearTimeout(this.debounceTimer);
         if (this.map) {
@@ -351,23 +355,24 @@ class MapLibreEngine {
         }
     }
 
+    /**
+     * Debounces and applies a colormap update to the raster data source.
+     * Creates the source and layer on the first call; updates the tile URL on subsequent calls.
+     * Removes the layer entirely when the colormap is empty.
+     */
     updateDataLayer(colormapJson, opacity) {
         if (!this.map || !this.map.isStyleLoaded()) return;
 
         clearTimeout(this.debounceTimer);
 
-        // If no layers are visible, remove the data layer entirely
         if (colormapJson === '{}') {
-            if (this.map.getLayer('data-layer')) {
-                this.map.removeLayer('data-layer');
-            }
-            if (this.map.getSource('data-source')) {
-                this.map.removeSource('data-source');
-            }
+            if (this.map.getLayer('data-layer'))   this.map.removeLayer('data-layer');
+            if (this.map.getSource('data-source')) this.map.removeSource('data-source');
             return;
         }
 
-        this.debounceTimer = setTimeout(async () => {
+        const self = this;
+        this.debounceTimer = setTimeout(async function() {
             TILE_JSON_URL.searchParams.set('raster', CONFIG.raster_name);
             TILE_JSON_URL.searchParams.set('colormap', colormapJson);
 
@@ -377,17 +382,16 @@ class MapLibreEngine {
 
                 if (!tj.tiles || tj.tiles.length === 0) return;
 
-                // Fit map to raster bounds on first load
-                if (!window.boundsSet && tj.bounds) {
+                if (!boundsSet && tj.bounds) {
                     const [west, south, east, north] = tj.bounds;
-                    this.map.fitBounds([[west, south], [east, north]], { padding: 20 });
-                    window.boundsSet = true;
+                    self.map.fitBounds([[west, south], [east, north]], { padding: 20 });
+                    boundsSet = true;
                 }
 
-                let tileUrl = tj.tiles[0];
+                const tileUrl = tj.tiles[0];
 
-                if (!this.map.getSource('data-source')) {
-                    this.map.addSource('data-source', {
+                if (!self.map.getSource('data-source')) {
+                    self.map.addSource('data-source', {
                         type: 'raster',
                         tiles: [tileUrl],
                         tileSize: 512,
@@ -395,41 +399,48 @@ class MapLibreEngine {
                         maxzoom: tj.maxzoom || 12
                     });
 
-                    let beforeId = undefined;
-                    const layers = this.map.getStyle().layers;
+                    let beforeId;
+                    const layers = self.map.getStyle().layers;
                     if (layers) {
-                        const firstOverlay = layers.find(l => l.id.startsWith('overlay-layer-'));
-                        if (firstOverlay) {
-                            beforeId = firstOverlay.id;
-                        }
+                        const firstOverlay = layers.find(function(l) {
+                            return l.id.startsWith('overlay-layer-');
+                        });
+                        if (firstOverlay) beforeId = firstOverlay.id;
                     }
 
-                    this.map.addLayer({
+                    self.map.addLayer({
                         id: 'data-layer',
                         type: 'raster',
                         source: 'data-source',
                         paint: {
                             'raster-opacity': opacity,
-                            'raster-fade-duration': 0, // disables style fade-in transition
-                            'raster-resampling': 'nearest' // prevents interpolation between classes
+                            'raster-fade-duration': 0,
+                            'raster-resampling': 'nearest'
                         }
                     }, beforeId);
                 } else {
-                    this.map.getSource('data-source').setTiles([tileUrl]);
-                    this.map.setPaintProperty('data-layer', 'raster-opacity', opacity);
+                    self.map.getSource('data-source').setTiles([tileUrl]);
+                    self.map.setPaintProperty('data-layer', 'raster-opacity', opacity);
                 }
             } catch (e) {
-                console.error("Error fetching TileJSON in MapLibre:", e);
+                console.error('Error fetching TileJSON in MapLibre:', e);
             }
         }, 50);
     }
 
+    /**
+     * Updates the raster-opacity of the data layer without re-fetching tiles.
+     */
     updateDataLayerOpacity(opacity) {
         if (this.map && this.map.getLayer('data-layer')) {
             this.map.setPaintProperty('data-layer', 'raster-opacity', opacity);
         }
     }
 
+    /**
+     * Shows the basemap layer identified by key and hides all others.
+     * Pass 'none' to hide every basemap layer.
+     */
     switchBasemap(key) {
         if (!this.map) return;
         if (this.map.getLayer('basemap-osm-layer')) {
@@ -443,6 +454,9 @@ class MapLibreEngine {
         }
     }
 
+    /**
+     * Sets the raster-opacity of all basemap layers simultaneously.
+     */
     updateBasemapOpacity(opacity) {
         if (!this.map) return;
         if (this.map.getLayer('basemap-osm-layer')) {
@@ -456,16 +470,18 @@ class MapLibreEngine {
         }
     }
 
+    /**
+     * Adds or removes a named overlay raster source and layer (e.g. 'hiking', 'cycling').
+     */
     toggleOverlay(id, visible) {
         if (!this.map) return;
-        const key = id.toLowerCase();
+        const key      = id.toLowerCase();
         const sourceId = `overlay-source-${key}`;
-        const layerId = `overlay-layer-${key}`;
+        const layerId  = `overlay-layer-${key}`;
 
         if (visible) {
             const def = BASEMAPS[key];
             if (!def) return;
-
             if (!this.map.getSource(sourceId)) {
                 this.map.addSource(sourceId, {
                     type: 'raster',
@@ -480,38 +496,40 @@ class MapLibreEngine {
                     id: layerId,
                     type: 'raster',
                     source: sourceId,
-                    paint: {
-                        'raster-opacity': 1.0
-                    }
-                }); // added to the very top
+                    paint: { 'raster-opacity': 1.0 }
+                });
             }
         } else {
-            if (this.map.getLayer(layerId)) {
-                this.map.removeLayer(layerId);
-            }
-            if (this.map.getSource(sourceId)) {
-                this.map.removeSource(sourceId);
-            }
+            if (this.map.getLayer(layerId))   this.map.removeLayer(layerId);
+            if (this.map.getSource(sourceId)) this.map.removeSource(sourceId);
         }
     }
 
+    /**
+     * Smoothly flies the map to the given [lng, lat] coordinate at the specified zoom level.
+     */
     flyTo(lngLat, zoom) {
         if (this.map) {
             this.map.flyTo({ center: lngLat, zoom: zoom - 1, duration: 1200, essential: true });
         }
     }
 
+    /**
+     * Returns the current map center as [lng, lat].
+     */
     getCenter() {
-        if (!this.map) return [13.3, 51.0];
+        if (!this.map) return DEFAULT_CENTER;
         const c = this.map.getCenter();
-        return [c.lng, c.lat]; // MapLibre format [lng, lat]
+        return [c.lng, c.lat];
     }
 
+    /**
+     * Returns the current zoom level, adjusted for the MapLibre-to-Leaflet zoom offset.
+     */
     getZoom() {
-        if (!this.map) return 14;
+        if (!this.map) return DEFAULT_ZOOM;
         return this.map.getZoom() + 1;
     }
 }
 
-// Expose globally
 window.MapLibreEngine = MapLibreEngine;
