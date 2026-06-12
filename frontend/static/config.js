@@ -9,7 +9,7 @@ const CONFIG = {
     mask_opacity: 0.45,
     mask_color: '#111111',
     minimal_zoom: 6,
-    location_zoom: 14
+    location_zoom: 12
 };
 
 // Default map view used when no stored position is available.
