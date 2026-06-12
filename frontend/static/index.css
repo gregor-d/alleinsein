@@ -493,7 +493,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 
 /* ── LAYOUT VISIBILITY ── */
-/* attribution follows the mobile bottom strip by default */
+/* Map footer controls follow the mobile bottom strip by default */
+.leaflet-bottom.leaflet-left,
+.maplibregl-ctrl-bottom-left,
 .leaflet-bottom.leaflet-right,
 .maplibregl-ctrl-bottom-right {
     bottom: calc(var(--bottom-bar-h) + 6px) !important;
@@ -605,6 +607,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+#settings-btn {
+    position: fixed;
+    top: calc(var(--dev-bar-h) + 12px);
+    right: 12px;
+    z-index: 350;
 }
 
 /* Basemap popup — appears to the left of the basemap FAB button */
@@ -781,6 +790,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     }
     body.fab-shifted #basemap-popup {
         right: calc(var(--drawer-w) + 12px + 44px + 10px);
+    }
+
+    .leaflet-bottom.leaflet-left,
+    .maplibregl-ctrl-bottom-left {
+        bottom: 6px !important;
     }
 
     .leaflet-bottom.leaflet-right,
