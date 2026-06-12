@@ -300,8 +300,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 /* Colorbar preview */
 
-/* ── BASEMAP SWITCHER ── */
-.basemap-card {
+/* ── CONTROL SWITCHER ── */
+.control-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -311,17 +311,17 @@ input[type="range"]::-webkit-slider-thumb:hover {
     color: var(--text-card-hi, var(--text-hi));
 }
 
-.basemap-card:hover {
+.control-card:hover {
     box-shadow: var(--shadow-card-hover);
 }
 
-.basemap-options {
+.control-options {
     display: flex;
     gap: 6px;
     padding: 8px 12px;
 }
 
-.basemap-btn {
+.control-btn {
     flex: 1;
     padding: 7px 0;
     font-family: inherit;
@@ -333,18 +333,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
     background: var(--bg-deep);
     color: var(--text-card-mid, var(--text-mid));
     cursor: pointer;
-    transition: background var(--transition), color var(--transition), border-color var(--transition);
+    opacity: 0.45;
+    transition: background var(--transition), color var(--transition), border-color var(--transition), opacity var(--transition);
 }
 
-.basemap-btn:hover {
+.control-btn:hover {
     background: var(--bg-hover);
     color: var(--text-card-hi, var(--text-hi));
 }
 
-.basemap-btn.active {
+.control-btn.active {
     background: var(--accent-dim);
     border-color: var(--accent);
     color: var(--accent);
+    opacity: 1;
 }
 
 /* Panel footer */
@@ -524,22 +526,36 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Engine row is kept in DOM for clearing but never shown */
 /* Vertical layer card — one per layer, all fit in one row */
 .layer-strip-card {
-    flex: 1;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
     gap: 4px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
     padding: 6px 5px 5px;
     min-width: 0;
-    cursor: pointer;
-    transition: border-color var(--transition), opacity var(--transition);
+    min-height: 62px;
 }
-.layer-strip-card:hover { border-color: var(--border-hi); }
-.layer-strip-card.inactive { opacity: 0.45; }
+
+.layer-strip-card::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-card-lo, var(--text-lo));
+    opacity: 0.75;
+    pointer-events: none;
+    transform: scale(1);
+    transform-origin: center;
+}
+
+.layer-strip-card.active::after {
+    background: var(--accent);
+    opacity: 1;
+}
 
 .layer-strip-card .toggle {
     flex-shrink: 0;
@@ -605,91 +621,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
     display: none;
 }
 .fab-popup.open { display: block; }
-
-/* Layout 4 layer strip icons */
-.l4-layer-card {
-    min-height: 62px;
-}
-
-.l4-layer-card.inactive .layer-strip-ramp,
-.l4-layer-card.inactive .layer-strip-solid-swatch {
-    opacity: 1;
-}
-
-.l4-layer-card .l4-layer-status {
-    position: relative;
-    width: 20px;
-    height: 20px;
-    display: grid;
-    place-items: center;
-    color: var(--text-mid);
-    flex-shrink: 0;
-}
-
-.l4-layer-card:not(.inactive) .l4-layer-status {
-    color: var(--accent);
-}
-
-.l4-layer-status svg {
-    width: 20px;
-    height: 20px;
-    stroke: currentColor;
-}
-
-.l4-status-nature::before,
-.l4-status-farm::before,
-.l4-status-water::before {
-    content: '';
-    width: 14px;
-    height: 14px;
-    border: 2px solid currentColor;
-    border-radius: 50%;
-    box-sizing: border-box;
-}
-
-.l4-layer-card--nature.inactive .l4-status-nature::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 2px;
-    background: currentColor;
-    border-radius: 999px;
-    transform: rotate(-45deg);
-}
-
-.l4-layer-card--farm:not(.inactive) .l4-status-farm::after {
-    content: '';
-    position: absolute;
-    width: 7px;
-    height: 7px;
-    background: currentColor;
-    border-radius: 50%;
-}
-
-.l4-layer-card--farm.inactive .layer-name {
-    text-decoration: line-through;
-    text-decoration-thickness: 2px;
-    text-decoration-color: currentColor;
-}
-
-.l4-layer-card--urban .l4-status-urban .state-off,
-.l4-layer-card--parks .l4-status-parks .state-off {
-    display: none;
-}
-
-.l4-layer-card--urban.inactive .l4-status-urban .state-on,
-.l4-layer-card--parks.inactive .l4-status-parks .state-on {
-    display: none;
-}
-
-.l4-layer-card--urban.inactive .l4-status-urban .state-off,
-.l4-layer-card--parks.inactive .l4-status-parks .state-off {
-    display: block;
-}
-
-.l4-layer-card--water:not(.inactive) .l4-status-water::before {
-    background: currentColor;
-}
 
 /* Settings drawer */
 #l4-drawer {
@@ -1009,7 +940,7 @@ body:has(#l4-drawer.open) #l4-settings-btn {
     transition: background var(--transition);
 }
 
-/* ── Basemap row (reused in L1 bottom, L2 popup, L3 drawer) ── */
+/* ── Control option row (reused in popups and drawers) ── */
 .bm-row {
     display: flex;
     flex-direction: column;
@@ -1023,7 +954,7 @@ body:has(#l4-drawer.open) #l4-settings-btn {
     color: var(--text-lo);
     padding: 2px 0;
 }
-.bm-row .basemap-options {
+.bm-row .control-options {
     padding: 0;
 }
 
