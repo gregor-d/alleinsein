@@ -39,7 +39,11 @@ function getCombinedColormapJson() {
         } else {
             let colors = [...COLORMAP_PRESETS[layer.preset]];
             if (layer.reverse) colors.reverse();
-            for (let i = 0; i < 9; i++) cmap[layer.start + i] = hexToRgba(colors[i]);
+            if (hotspotMode) {
+                cmap[layer.start] = hexToRgba(colors[0]);
+            } else {
+                for (let i = 0; i < 9; i++) cmap[layer.start + i] = hexToRgba(colors[i]);
+            }
         }
     });
     return JSON.stringify(cmap);
@@ -372,6 +376,78 @@ function makeL4LayerCard(layer) {
     return card;
 }
 
+// ─── HOTSPOT CHIP ───
+
+const _flameSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`;
+
+function makeHotspotChip() {
+    const card = document.createElement('div');
+    card.className = `control-btn layer-strip-card layer-chip layer-chip--hotspot${hotspotMode ? ' active' : ''}`;
+    card.id = 'hotspot-chip';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'switch');
+    card.setAttribute('aria-checked', String(hotspotMode));
+    card.title = 'Hotspot — show top values only';
+
+    const top = document.createElement('div');
+    top.className = 'layer-strip-card-top';
+    const iconEl = document.createElement('span');
+    iconEl.className = 'hotspot-icon';
+    iconEl.innerHTML = _flameSvg;
+    top.appendChild(iconEl);
+    const nameEl = document.createElement('span');
+    nameEl.className   = 'layer-name';
+    nameEl.textContent = 'Hotspot';
+    top.appendChild(nameEl);
+    card.appendChild(top);
+
+    const divider = document.createElement('div');
+    divider.className = 'layer-strip-divider';
+    card.appendChild(divider);
+
+    const bottom = document.createElement('div');
+    bottom.className = 'layer-strip-card-bottom layer-strip-card-bottom--hotspot';
+    bottom.innerHTML = `
+        <div class="hotspot-toggle-row">
+            <span class="hotspot-side-label hotspot-no-label">NO</span>
+            <label class="toggle hotspot-chip-toggle" style="pointer-events:none;">
+                <input type="checkbox" id="hotspot-chip-input" ${hotspotMode ? 'checked' : ''} style="pointer-events:none;" />
+                <span class="toggle-track"></span>
+            </label>
+            <span class="hotspot-side-label hotspot-top-label">TOP</span>
+        </div>`;
+    card.appendChild(bottom);
+
+    function toggleHotspot() {
+        hotspotMode = !hotspotMode;
+        syncHotspotMode();
+        refreshDataLayer();
+    }
+
+    card.addEventListener('click', toggleHotspot);
+    card.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        toggleHotspot();
+    });
+
+    return card;
+}
+
+function syncHotspotMode() {
+    const chip = document.getElementById('hotspot-chip');
+    if (chip) {
+        chip.classList.toggle('active', hotspotMode);
+        chip.setAttribute('aria-checked', String(hotspotMode));
+    }
+    const chipInput = document.getElementById('hotspot-chip-input');
+    if (chipInput) chipInput.checked = hotspotMode;
+    const drawerCard = document.getElementById('drawer-hotspot-card');
+    if (drawerCard) drawerCard.classList.toggle('active', hotspotMode);
+    const drawerToggle = document.getElementById('drawer-hotspot-toggle');
+    if (drawerToggle) drawerToggle.checked = hotspotMode;
+}
+
 // ─── COLOR SHEET ───
 
 /**
@@ -585,7 +661,11 @@ function buildLayout4() {
 
     const strip = document.getElementById('layer-strip');
 
-    layerState.forEach(layer => strip.appendChild(makeL4LayerCard(layer)));
+    layerState.forEach(function(layer) {
+        if (layer.id === 'Water') return;
+        strip.appendChild(makeL4LayerCard(layer));
+    });
+    strip.appendChild(makeHotspotChip());
 
     const popup = document.getElementById('basemap-popup');
     popup.innerHTML = '';
@@ -698,6 +778,27 @@ function closeLayout4Drawer() {
 function buildDrawerBody(container, opts) {
     opts = opts || {};
     container.innerHTML = '';
+
+    addSectionLabel(container, 'Hotspot Mode');
+    const hotspotCard = document.createElement('div');
+    hotspotCard.className = `layer-card${hotspotMode ? ' active' : ''}`;
+    hotspotCard.id = 'drawer-hotspot-card';
+    hotspotCard.innerHTML = `
+        <div class="layer-header">
+            <label class="toggle">
+                <input type="checkbox" id="drawer-hotspot-toggle" ${hotspotMode ? 'checked' : ''} />
+                <span class="toggle-track"></span>
+            </label>
+            <span class="hotspot-icon" style="display:flex;align-items:center;flex-shrink:0;">${_flameSvg}</span>
+            <span class="layer-name">Hotspot</span>
+            <span style="font-size:10px;color:var(--text-lo);flex-shrink:0;white-space:nowrap;">Top values only</span>
+        </div>`;
+    container.appendChild(hotspotCard);
+    document.getElementById('drawer-hotspot-toggle').addEventListener('change', function(e) {
+        hotspotMode = e.target.checked;
+        syncHotspotMode();
+        refreshDataLayer();
+    });
 
     addSectionLabel(container, 'Data Layers');
 
