@@ -1,6 +1,6 @@
 :root {
     --bg-deep: #0f1117;
-    --bg-panel-active: rgba(15, 17, 23, 1);
+    --bg-button-active: rgba(15, 17, 23, 1);
     --bg-button-inactive: rgba(15, 17, 23, 0.7);
     --bg-card: #1a1d27;
     --bg-hover: rgba(255, 255, 255, 0.13);

@@ -1,7 +1,7 @@
 /* Theme: Forest Earth */
 :root {
     --bg-deep:           #f0ede5;
-    --bg-panel-active: rgba(240, 237, 229, 1);
+    --bg-button-active: rgba(240, 237, 229, 1);
     --bg-button-inactive: rgba(240, 237, 229, 0.7);
     --bg-card:           #e8e3d8;
     --bg-hover:          #ddd6c8;

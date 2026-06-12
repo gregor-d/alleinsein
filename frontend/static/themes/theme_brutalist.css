@@ -1,7 +1,7 @@
 /* Theme: Neo-Brutalist — hard edges, stark contrast, offset shadows */
 :root {
     --bg-deep:           #ffffff;
-    --bg-panel-active: rgba(255, 255, 255, 1);
+    --bg-button-active: rgba(255, 255, 255, 1);
     --bg-button-inactive: rgba(255, 255, 255, 0.7);
     --bg-card:           #f0f0f0;
     --bg-hover:          #e0e0e0;
