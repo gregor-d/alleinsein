@@ -23,9 +23,15 @@
     --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
     --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.5);
     --radius: 12px;
-    --panel-w: 340px;
     --transition: 0.18s cubic-bezier(.4, 0, .2, 1);
 }
+
+:root {
+    --dev-bar-h: 36px;
+    --bottom-bar-h: 78px;
+    --drawer-w: 280px;
+}
+
 
 html,
 body {
@@ -203,7 +209,6 @@ body {
     align-items: center;
     font-size: 11px;
     color: var(--text-card-mid, var(--text-mid));
-    font-weight: 500;
     letter-spacing: 0.03em;
     text-transform: uppercase;
 }
@@ -424,11 +429,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
    LAYOUT SYSTEM
 ═══════════════════════════════════════════════ */
 
-:root {
-    --dev-bar-h: 36px;
-    --bottom-bar-h: 78px;
-    --drawer-w: 320px;
-}
 
 /* ── DEV BAR ── */
 #dev-bar {
@@ -553,8 +553,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Divider between top and bottom halves */
 .layer-strip-divider {
     height: 1px;
-    background: var(--border);
+    background: var(--border-hi);
     flex-shrink: 0;
+    margin-right: 5px;
+    margin-left: 5px;
 }
 
 /* Bottom half: ramp or swatch */
@@ -721,7 +723,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     top: var(--dev-bar-h);
     right: 0;
     bottom: 0;
-    width: min(320px, 88vw);
+    width: min(var(--drawer-w), 88vw);
     z-index: 600;
     background: color-mix(in srgb, var(--bg-deep) 94%, transparent);
     backdrop-filter: blur(24px) saturate(160%);

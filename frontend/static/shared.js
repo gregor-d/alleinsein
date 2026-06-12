@@ -221,7 +221,7 @@ function buildBasemapBlock(el, opts) {
             </div>
             <div class="ctrl-row">
                 <div class="ctrl-label">
-                    <span>Basemap Opacity</span>
+                    <span>Opacity</span>
                     <span class="val" id="bm-op-val-${uid}">${Math.round(basemapOpacity * 100)}%</span>
                 </div>
                 <input type="range" id="bm-op-${uid}" min="0" max="1" step="0.01" value="${basemapOpacity}" />
@@ -902,7 +902,6 @@ function buildDrawerBody(container, opts) {
         }
     });
 
-    addSectionLabel(container, 'Data Layer Opacity');
     const opDiv = document.createElement('div');
     opDiv.style.padding = '2px 4px 8px';
     opDiv.innerHTML = `
@@ -921,11 +920,13 @@ function buildDrawerBody(container, opts) {
         if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
     });
 
-    addSectionLabel(container, 'Map Engine');
+    addSectionLabel(container, 'Backend');
     const engWrap = document.createElement('div');
     engWrap.className    = 'control-card';
     engWrap.style.padding = '10px 12px';
     engWrap.innerHTML = `
+            <div class="bm-row-label" style="margin-bottom:10px;">Map Engine</div>
+    
         <div class="control-options" style="padding:0;">
             <button class="control-btn" data-engine="leaflet">Leaflet</button>
             <button class="control-btn" data-engine="maplibre">MapLibre</button>
@@ -933,7 +934,6 @@ function buildDrawerBody(container, opts) {
     container.appendChild(engWrap);
     initEngineBtns(engWrap);
 
-    addSectionLabel(container, 'Basemap');
     const bmWrap = document.createElement('div');
     bmWrap.className    = 'control-card';
     bmWrap.id           = 'drawer-bm-area';
