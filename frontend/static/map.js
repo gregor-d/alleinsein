@@ -304,17 +304,12 @@ class MapLibreEngine {
                 },
                 center: center,
                 zoom: zoom - 1,
-                attributionControl: false,
                 minZoom: CONFIG.minimal_zoom - 1
             });
 
             self.map.addControl(
-                new maplibregl.NavigationControl({ showCompass: false }),
+                new maplibregl.NavigationControl({ showCompass: true }),
                 self._navPos
-            );
-            self.map.addControl(
-                new maplibregl.AttributionControl({ compact: false }),
-                'bottom-right'
             );
             self.map.addControl(
                 new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }),
