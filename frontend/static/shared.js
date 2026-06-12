@@ -285,10 +285,14 @@ function buildBasemapBlock(el, opts) {
 
 // ─── LAYER STRIP CARD ───
 
+const _eyeOpenSvg = `<svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const _eyeOffSvg  = `<svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
 /**
  * Creates and returns a layer strip card DOM element for the given layer.
- * The card acts as a toggle switch; category layers include a colour ramp
- * that opens the colour sheet, solid layers expose a colour picker.
+ * Top half: name + eye icon (click = toggle visibility).
+ * Divider.
+ * Bottom half: colour ramp (click = open colour sheet) or solid swatch.
  */
 function makeL4LayerCard(layer) {
     const key  = layer.id.toLowerCase();
@@ -299,10 +303,29 @@ function makeL4LayerCard(layer) {
     card.setAttribute('role', 'switch');
     card.setAttribute('aria-checked', String(layer.visible));
 
+    // Top half — name + eye icon
+    const top = document.createElement('div');
+    top.className = 'layer-strip-card-top';
+
+    const eyeEl = document.createElement('span');
+    eyeEl.className = 'layer-chip-eye';
+    eyeEl.innerHTML = _eyeOpenSvg + _eyeOffSvg;
+    top.appendChild(eyeEl);
+
     const nameEl = document.createElement('span');
     nameEl.className   = 'layer-name';
     nameEl.textContent = layer.id;
-    card.appendChild(nameEl);
+    top.appendChild(nameEl);
+    card.appendChild(top);
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'layer-strip-divider';
+    card.appendChild(divider);
+
+    // Bottom half — ramp / swatch
+    const bottom = document.createElement('div');
+    bottom.className = 'layer-strip-card-bottom';
 
     if (layer.type === 'category') {
         const ramp = document.createElement('div');
@@ -310,7 +333,7 @@ function makeL4LayerCard(layer) {
         ramp.id = `layer-chip-color-${layer.id}`;
         ramp.style.background = buildGradient(layer.preset, layer.reverse);
         ramp.addEventListener('click', function(e) { e.stopPropagation(); openColorSheet(layer); });
-        card.appendChild(ramp);
+        bottom.appendChild(ramp);
     } else if (layer.type === 'solid') {
         const swatch = document.createElement('div');
         swatch.className = 'layer-strip-solid-swatch';
@@ -329,8 +352,9 @@ function makeL4LayerCard(layer) {
             swatch.style.background = layer.preset;
             refreshDataLayer();
         });
-        card.appendChild(swatch);
+        bottom.appendChild(swatch);
     }
+    card.appendChild(bottom);
 
     function toggleLayer() {
         layer.visible = !layer.visible;
@@ -351,12 +375,29 @@ function makeL4LayerCard(layer) {
 // ─── COLOR SHEET ───
 
 /**
- * Opens the colour scheme bottom sheet for the given layer,
- * populating it with all available palettes and a reverse toggle.
+ * Opens the colour scheme bottom sheet for the given layer.
+ * Header row mirrors the drawer layer-header (toggle · name · gradient bar · reverse · close).
+ * Body contains the palette grid and data-layer opacity slider.
+ * No backdrop — the map remains fully interactive behind the sheet.
  */
 function openColorSheet(layer) {
-    document.getElementById('color-sheet-title').textContent = layer.id;
-    const body = document.getElementById('color-sheet-body');
+    const header = document.getElementById('color-sheet-header');
+    const body   = document.getElementById('color-sheet-body');
+
+    header.innerHTML = `
+        <label class="toggle">
+            <input type="checkbox" id="cs-vis" ${layer.visible ? 'checked' : ''} />
+            <span class="toggle-track"></span>
+        </label>
+        <span class="layer-name">${layer.id}</span>
+        <div class="color-sheet-gradient-bar" id="cs-bar" style="background:${buildGradient(layer.preset, layer.reverse)};"></div>
+        <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="cs-rev">&#x21C4;</button>
+        <button class="icon-btn" id="cs-close" title="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>`;
 
     const schemeBtns = Object.keys(COLORMAP_PRESETS)
         .map(function(k) {
@@ -365,37 +406,55 @@ function openColorSheet(layer) {
         .join('');
 
     body.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-lo);">Palette</span>
-            <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="cs-rev">&#x21C4; Reverse</button>
-        </div>
         <div class="color-sheet-scheme-grid">${schemeBtns}</div>
-        <div class="color-sheet-preview" id="cs-preview" style="background:${buildGradient(layer.preset, layer.reverse)};height:14px;border-radius:4px;border:1px solid var(--border);margin-top:8px;transition:background var(--transition);"></div>
-    `;
+        <div class="ctrl-row" style="margin-top:12px;">
+            <div class="ctrl-label">
+                <span>Data Layer Opacity</span>
+                <span class="val" id="cs-op-val">${Math.round(dataLayerOpacity * 100)}%</span>
+            </div>
+            <input type="range" id="cs-op-slider" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
+        </div>`;
+
+    document.getElementById('cs-close').addEventListener('click', closeColorSheet);
+
+    document.getElementById('cs-vis').addEventListener('change', function(e) {
+        layer.visible = e.target.checked;
+        syncLayerVisible(layer);
+        if (layer.type === 'overlay') {
+            if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
+        } else {
+            refreshDataLayer();
+        }
+    });
+
+    document.getElementById('cs-rev').addEventListener('click', function() {
+        layer.reverse = !layer.reverse;
+        document.getElementById('cs-rev').classList.toggle('active', layer.reverse);
+        document.getElementById('cs-bar').style.background = buildGradient(layer.preset, layer.reverse);
+        syncLayerColor(layer);
+        updateDrawerBar(layer);
+        refreshDataLayer();
+    });
 
     body.querySelectorAll('.scheme-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             layer.preset = btn.dataset.scheme;
             body.querySelectorAll('.scheme-btn').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
-            document.getElementById('cs-preview').style.background = buildGradient(layer.preset, layer.reverse);
+            document.getElementById('cs-bar').style.background = buildGradient(layer.preset, layer.reverse);
             syncLayerColor(layer);
             updateDrawerBar(layer);
             refreshDataLayer();
         });
     });
 
-    document.getElementById('cs-rev').addEventListener('click', function() {
-        layer.reverse = !layer.reverse;
-        document.getElementById('cs-rev').classList.toggle('active', layer.reverse);
-        document.getElementById('cs-preview').style.background = buildGradient(layer.preset, layer.reverse);
-        syncLayerColor(layer);
-        updateDrawerBar(layer);
-        refreshDataLayer();
+    document.getElementById('cs-op-slider').addEventListener('input', function(e) {
+        dataLayerOpacity = parseFloat(e.target.value);
+        document.getElementById('cs-op-val').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
+        if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
     });
 
     document.getElementById('color-sheet').classList.add('open');
-    document.getElementById('color-sheet-backdrop').classList.add('open');
 }
 
 /**
@@ -403,7 +462,6 @@ function openColorSheet(layer) {
  */
 function closeColorSheet() {
     document.getElementById('color-sheet').classList.remove('open');
-    document.getElementById('color-sheet-backdrop').classList.remove('open');
 }
 
 // ─── SEARCH SHEET ───
@@ -891,8 +949,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', updateFabShift);
     requestAnimationFrame(updateFabShift);
 
-    document.getElementById('color-sheet-close').addEventListener('click', closeColorSheet);
-    document.getElementById('color-sheet-backdrop').addEventListener('click', closeColorSheet);
     initSearch();
 
     mapEngine = activeEngine === 'leaflet' ? new LeafletEngine() : new MapLibreEngine();

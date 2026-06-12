@@ -529,46 +529,68 @@ input[type="range"]::-webkit-slider-thumb:hover {
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 4px;
-    padding: 6px 5px 5px;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
     min-width: 72px;
     min-height: 62px;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
-.layer-strip-card::after {
-    content: '';
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--text-card-lo, var(--text-lo));
-    opacity: 0.75;
-    pointer-events: none;
-    transform: scale(1);
-    transform-origin: center;
+/* Top half: name + eye icon */
+.layer-strip-card-top {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 5px;
 }
 
-.layer-strip-card.active::after {
-    background: var(--accent);
-    opacity: 1;
-}
-
-.layer-strip-card .toggle {
+/* Divider between top and bottom halves */
+.layer-strip-divider {
+    height: 1px;
+    background: var(--border);
     flex-shrink: 0;
 }
 
+/* Bottom half: ramp or swatch */
+.layer-strip-card-bottom {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 4px 5px;
+}
+
+/* Eye icon */
+.layer-chip-eye {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.layer-chip-eye svg {
+    width: 12px;
+    height: 12px;
+    stroke: var(--text-card-lo, var(--text-lo));
+    transition: stroke var(--transition);
+}
+.layer-strip-card.active .layer-chip-eye svg {
+    stroke: var(--accent);
+}
+.layer-chip-eye .eye-open { display: none; }
+.layer-chip-eye .eye-off  { display: block; }
+.layer-strip-card.active .layer-chip-eye .eye-open { display: block; }
+.layer-strip-card.active .layer-chip-eye .eye-off  { display: none; }
+
 .layer-strip-card .layer-name {
+    flex: 0 1 auto;
+    min-width: 0;
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
     text-align: center;
     color: var(--text-hi);
 }
@@ -925,21 +947,30 @@ body:has(#settings-drawer.open) #settings-btn {
 .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
 
 /* ── Color sheet contents ── */
+#color-sheet-header {
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+#color-sheet-header .layer-name {
+    flex: 0 0 auto;
+}
+.color-sheet-gradient-bar {
+    flex: 1;
+    height: 14px;
+    min-width: 40px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    transition: background var(--transition);
+}
+
 .color-sheet-scheme-grid {
     display: flex;
     gap: 4px;
-    margin: 10px 0 6px;
+    margin: 0 0 6px;
 }
 .color-sheet-scheme-grid .scheme-btn {
     flex: 1;
     height: 18px;
-}
-.color-sheet-preview {
-    height: 12px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    margin-top: 4px;
-    transition: background var(--transition);
 }
 
 /* ── Control option row (reused in popups and drawers) ── */
