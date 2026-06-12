@@ -1,7 +1,7 @@
 /* Theme: Forest Earth */
 :root {
     --bg-deep:           #f0ede5;
-    --bg-panel:          rgba(240, 237, 229, 0.93);
+    --bg-button-active:          rgba(240, 237, 229, 0.93);
     --bg-card:           #e8e3d8;
     --bg-hover:          #ddd6c8;
     --border:            #c4b9a0;
@@ -13,8 +13,8 @@
     --accent2:           #b05a00;
     --accent-dim:        rgba(45, 122, 55, 0.13);
     --accent-glow:       rgba(45, 122, 55, 0.40);
-    --shadow-card:       0 1px 4px rgba(28,18,9,0.10);
-    --shadow-card-hover: 0 4px 16px rgba(28,18,9,0.18);
+    --box-shadow:       0 1px 4px rgba(28,18,9,0.10);
+    --box-shadow-hover: 0 4px 16px rgba(28,18,9,0.18);
     --radius:            10px;
     --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

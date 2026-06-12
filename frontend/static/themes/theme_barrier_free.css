@@ -2,7 +2,7 @@
 /* Cyan + orange: distinguishable for deuteranopia, protanopia, and typical vision */
 :root {
     --bg-deep:           #111418;
-    --bg-panel:          rgba(17, 20, 24, 0.93);
+    --bg-button-active:          rgba(17, 20, 24, 0.93);
     --bg-card:           #1c2128;
     --bg-hover:          #272e38;
     --border:            #2d3540;
@@ -14,8 +14,8 @@
     --accent2:           #ee7733;
     --accent-dim:        rgba(51, 187, 238, 0.14);
     --accent-glow:       rgba(51, 187, 238, 0.48);
-    --shadow-card:       0 1px 4px rgba(0,0,0,0.45);
-    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.56);
+    --box-shadow:       0 1px 4px rgba(0,0,0,0.45);
+    --box-shadow-hover: 0 4px 16px rgba(0,0,0,0.56);
     --radius:            12px;
     --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

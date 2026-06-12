@@ -1,7 +1,7 @@
 /* Theme: Nordic Light */
 :root {
     --bg-deep:           #eceff4;
-    --bg-panel:          rgba(236, 239, 244, 0.93);
+    --bg-button-active:          rgba(236, 239, 244, 0.93);
     --bg-card:           #e5e9f0;
     --bg-hover:          #d8dee9;
     --border:            #cad0dc;
@@ -13,8 +13,8 @@
     --accent2:           #b48ead;
     --accent-dim:        rgba(94, 129, 172, 0.15);
     --accent-glow:       rgba(94, 129, 172, 0.42);
-    --shadow-card:       0 1px 4px rgba(46,52,64,0.10);
-    --shadow-card-hover: 0 4px 16px rgba(46,52,64,0.18);
+    --box-shadow:       0 1px 4px rgba(46,52,64,0.10);
+    --box-shadow-hover: 0 4px 16px rgba(46,52,64,0.18);
     --radius:            12px;
     --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

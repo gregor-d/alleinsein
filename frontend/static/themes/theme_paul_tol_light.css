@@ -2,7 +2,7 @@
 /* Blue #4477aa + purple-rose #aa3377: work across deuteranopia, protanopia, and typical vision */
 :root {
     --bg-deep:           #f8f6f4;
-    --bg-panel:          rgba(248, 246, 244, 0.94);
+    --bg-button-active:          rgba(248, 246, 244, 0.94);
     --bg-card:           #f0ecea;
     --bg-hover:          #e6e0dc;
     --border:            #d0c8c2;
@@ -14,8 +14,8 @@
     --accent2:           #aa3377;
     --accent-dim:        rgba(68, 119, 170, 0.14);
     --accent-glow:       rgba(68, 119, 170, 0.40);
-    --shadow-card:       0 1px 4px rgba(26,18,24,0.08);
-    --shadow-card-hover: 0 4px 16px rgba(26,18,24,0.15);
+    --box-shadow:       0 1px 4px rgba(26,18,24,0.08);
+    --box-shadow-hover: 0 4px 16px rgba(26,18,24,0.15);
     --radius:            12px;
     --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

@@ -1,7 +1,7 @@
 /* Theme: Corporate */
 :root {
     --bg-deep:           #f5f7fa;
-    --bg-panel:          rgba(245, 247, 250, 0.96);
+    --bg-button-active:          rgba(245, 247, 250, 0.96);
     --bg-card:           #ffffff;
     --bg-hover:          #eef1f6;
     --border:            #dde1e8;
@@ -13,8 +13,8 @@
     --accent2:           #805ad5;
     --accent-dim:        rgba(49, 130, 206, 0.12);
     --accent-glow:       rgba(49, 130, 206, 0.38);
-    --shadow-card:       0 1px 4px rgba(26,32,44,0.08);
-    --shadow-card-hover: 0 4px 16px rgba(26,32,44,0.14);
+    --box-shadow:       0 1px 4px rgba(26,32,44,0.08);
+    --box-shadow-hover: 0 4px 16px rgba(26,32,44,0.14);
     --radius:            8px;
     --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

@@ -21,13 +21,12 @@
     --accent2: #ff79c6;
     --accent-dim: rgba(189, 147, 249, 0.15);
     --accent-glow: rgba(189, 147, 249, 0.5);
-    --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.4);
-    --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
     --radius: 12px;
     --transition: 0.18s cubic-bezier(.4, 0, .2, 1);
     --dev-bar-h: 36px;
     --bottom-bar-h: 78px;
-    --drawer-w: 280px;
+    --drawer-w: 270px;
 }
 
 
@@ -65,16 +64,9 @@ body {
 /* ── LAYER CARD ── */
 .layer-card {
     background: var(--bg-card);
-    border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: var(--shadow-card);
-    transition: border-color var(--transition), box-shadow var(--transition);
-    color: var(--text-hi);
-}
-
-.layer-card:hover {
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: var(--box-shadow);
 }
 
 .layer-card.inactive {
@@ -87,11 +79,6 @@ body {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    transition: background var(--transition);
-}
-
-.layer-header:hover {
-    background: var(--bg-hover);
 }
 
 .layer-name {
@@ -108,6 +95,7 @@ body {
     flex-shrink: 0;
     cursor: pointer;
 }
+
 
 /* Expand the clickable area */
 .toggle::before {
@@ -152,20 +140,24 @@ body {
     transform: translateX(16px);
 }
 
+.toggle:hover .toggle-track {
+    background:  var(--accent);
+}
+
 /* Scheme bar button in header */
 .scheme-bar-btn {
     flex: 1;
-    height: 14px;
+    height: 16px;
     min-width: 40px;
     border-radius: 4px;
-    border: 1px solid var(--border);
+    /* padding:1px; */
+    border: 2px outset var(--bg-deep);
     cursor: pointer;
-    transition: box-shadow var(--transition), border-color var(--transition);
+    /* transition: box-shadow var(--transition), border-color var(--transition); */
 }
 
 .scheme-bar-btn:hover {
     border-color: var(--accent);
-    box-shadow: 0 0 8px var(--accent-glow);
 }
 
 /* Scheme dropdown */
@@ -181,14 +173,21 @@ body {
 
 /* Header color picker for solid layers */
 .header-color-picker {
-    width: 32px;
+    width: 42px;
     height: 22px;
-    background: transparent;
-    border: 1px solid var(--border-hi);
-    border-radius: 4px;
-    padding: 1px;
+    border: 2px outset var(--border-hi);
+    border-radius: 6px;
+    padding: 0px;
     cursor: pointer;
-    flex-shrink: 0;
+    flex-shrink: 0;    
+    background: var(--bg-button-inactive);
+}
+
+
+
+
+.header-color-picker:hover {
+    border-color: var(--accent);
 }
 
 /* Control rows */
@@ -248,34 +247,45 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .scheme-btn {
     flex: 1;
     height: 14px;
-    border-radius: 3px;
-    border: 1.5px solid transparent;
+    border-radius: 4px;
+    border: 2px outset var(--border);
     cursor: pointer;
-    transition: border-color var(--transition), box-shadow var(--transition), transform 0.1s;
     outline: none;
-    opacity: 0.7;
 }
 
 .scheme-btn:hover {
-    opacity: 1;
-    transform: scaleY(1.4);
-    box-shadow: 0 0 8px rgba(189, 147, 249, 0.25);
+  border-color: var(--accent);
 }
 
 .scheme-btn.active {
-    opacity: 1;
-    border-color: #fff;
+    opacity: 0.4;
+    border: 3px inset var(--border-hi);
 }
+
+
+
+/* Scheme dropdown */
+.scheme-dropdown {
+    display: none;
+    padding: 6px 12px 8px;
+    border-top: 1px solid var(--border);
+}
+
+.scheme-dropdown.open {
+    display: block;
+}
+
+
 
 
 /* Reverse button */
 .btn-reverse {
-   background: var(--bg-button-inactive);
-    border: 1px outset var(--border-hi);
+    background: var(--bg-button-inactive);
+    border: 2px outset var(--border-hi);
     border-radius: 6px;
     color: var(--text-mid);
     cursor: pointer;
-    padding: 3px 7px;
+    padding: 2px 6px;
     font-size: 13px;
     display: flex;
     align-items: center;
@@ -303,14 +313,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--box-shadow);
     transition: box-shadow var(--transition);
     color: var(--text-hi);
 }
 
-.control-card:hover {
-    box-shadow: var(--shadow-card-hover);
-}
 
 .control-options {
     display: flex;
@@ -320,14 +327,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .control-btn {
     flex: 1;
-    padding: 7px 0;
+    padding: 6px 0;
     font-family: inherit;
     font-size: 11px;
     font-weight: 600;
     text-align: center;
     border-color: var(--border-hi);
     border-style: outset;
-    border-width: 1px;
+    border-width: 2px;
     border-radius: 8px;
     background: var(--bg-button-inactive);
     color: var(--text-mid);
@@ -614,7 +621,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-size: 8px;
     font-weight: 700;
     letter-spacing: 0.06em;
-    transition: color var(--transition);
     flex-shrink: 0;
 }
 .hotspot-no-label  { color: var(--text-lo); }
@@ -686,7 +692,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border-radius: var(--radius);
     padding: 12px 14px;
     min-width: 210px;
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: var(--box-shadow);
     display: none;
 }
 .fab-popup.open { display: block; }
@@ -716,7 +722,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     max-height: calc(100vh - var(--dev-bar-h) - 12px);
     max-height: calc(100dvh - var(--dev-bar-h) - 12px);
     border: 1px solid var(--border-hi);
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: var(--box-shadow);
     overflow: hidden;
 }
 
@@ -890,7 +896,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--box-shadow);
     transition: background var(--transition), border-color var(--transition), transform 0.1s, color var(--transition);
     flex-shrink: 0;
 }
@@ -1050,7 +1056,7 @@ body:has(#settings-drawer.open) #settings-btn {
     background: var(--bg-card);
     border: 1px solid var(--border-hi);
     border-radius: 10px;
-    box-shadow: var(--shadow-card-hover);
+    box-shadow: var(--box-shadow);
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, -48%) scale(0.96);
@@ -1090,11 +1096,11 @@ body:has(#settings-drawer.open) #settings-btn {
 
 
 .search-go-btn {
-    padding: 9px 16px;
+    padding: 8px 15px;
     background: var(--bg-button-inactive);
      border-color: var(--border-hi);
     border-style: outset;
-    border-width: 1px;
+    border-width: 2px;
     border-radius: 8px;
     color: var(--text-hi);
     cursor: pointer;
@@ -1206,5 +1212,5 @@ body:has(#settings-drawer.open) #settings-btn {
 .maplibregl-ctrl-scale {
     font-size: 10px !important;
     font-weight: 600 !important;
-    box-shadow: var(--shadow-card) !important;
+    box-shadow: var(--box-shadow) !important;
 }

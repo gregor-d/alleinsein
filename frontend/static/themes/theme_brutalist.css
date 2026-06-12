@@ -1,7 +1,7 @@
 /* Theme: Neo-Brutalist — hard edges, stark contrast, offset shadows */
 :root {
     --bg-deep:           #ffffff;
-    --bg-panel:          rgba(255, 255, 255, 0.98);
+    --bg-button-active:          rgba(255, 255, 255, 0.98);
     --bg-card:           #f0f0f0;
     --bg-hover:          #e0e0e0;
     --border:            #000000;
@@ -13,8 +13,8 @@
     --accent2:           #0022ff;
     --accent-dim:        rgba(255, 34, 0, 0.10);
     --accent-glow:       rgba(255, 34, 0, 0.30);
-    --shadow-card:       3px 3px 0 #000000;
-    --shadow-card-hover: 5px 5px 0 #000000;
+    --box-shadow:       3px 3px 0 #000000;
+    --box-shadow-hover: 5px 5px 0 #000000;
     --radius:            0px;
     --transition:        0.10s linear;
 }

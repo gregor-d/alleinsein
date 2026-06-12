@@ -2,7 +2,7 @@
 /* No hue at all; shape and contrast carry all meaning */
 :root {
     --bg-deep:           #ffffff;
-    --bg-panel:          rgba(255, 255, 255, 0.98);
+    --bg-button-active:          rgba(255, 255, 255, 0.98);
     --bg-card:           #eeeeee;
     --bg-hover:          #dddddd;
     --border:            #bbbbbb;
@@ -14,8 +14,8 @@
     --accent2:           #555555;
     --accent-dim:        rgba(0, 0, 0, 0.10);
     --accent-glow:       rgba(0, 0, 0, 0.32);
-    --shadow-card:       0 1px 4px rgba(0,0,0,0.12);
-    --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.22);
+    --box-shadow:       0 1px 4px rgba(0,0,0,0.12);
+    --box-shadow-hover: 0 4px 16px rgba(0,0,0,0.22);
     --radius:            12px;
     --transition:        0.18s cubic-bezier(.4,0,.2,1);
 }

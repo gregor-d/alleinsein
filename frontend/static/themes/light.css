@@ -1,8 +1,8 @@
 :root {
     --bg-primary: #eef2f7;
     --bg-secondary: #ffffff;
-    --bg-panel: rgba(255, 255, 255, 0.90);
-    --bg-panel-solid: #ffffff;
+    --bg-button-active: rgba(255, 255, 255, 0.90);
+    --bg-button-active-solid: #ffffff;
     --text-primary: #111827;
     --text-secondary: #6b7280;
     --text-muted: #a0aec0;

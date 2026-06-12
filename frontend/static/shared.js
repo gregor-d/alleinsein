@@ -198,8 +198,7 @@ function updateDrawerBar(layer) {
  * Handles basemap toggle, basemap selector buttons, overlay buttons,
  * basemap opacity slider, and optionally a data layer opacity slider.
  */
-function buildBasemapBlock(el, opts) {
-    opts = opts || {};
+function buildBasemapBlock(el) {
     const uid = el.id || ('bm' + Math.random().toString(36).slice(2, 7));
 
     const isEnabled  = activeBasemapKey !== 'none';
@@ -227,22 +226,6 @@ function buildBasemapBlock(el, opts) {
                 <input type="range" id="bm-op-${uid}" min="0" max="1" step="0.01" value="${basemapOpacity}" />
             </div>
         </div>
-        <div class="bm-row" style="margin-top:10px;">
-            <div class="bm-row-label">Overlays</div>
-            <div class="control-options" style="padding:0;">
-                <button class="control-btn${activeOverlays.hiking  ? ' active' : ''}" data-overlay="hiking">Hiking</button>
-                <button class="control-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
-            </div>
-        </div>
-        ${opts.includeDataLayerOpacity ? `
-        <div class="ctrl-row" style="margin-top:10px;">
-            <div class="ctrl-label">
-                <span>Data Layer Opacity</span>
-                <span class="val" id="dl-op-val-${uid}">${Math.round(dataLayerOpacity * 100)}%</span>
-            </div>
-            <input type="range" id="dl-op-${uid}" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
-        </div>
-        ` : ''}
     `;
 
     document.getElementById(`bm-toggle-${uid}`).addEventListener('change', function(e) {
@@ -275,16 +258,6 @@ function buildBasemapBlock(el, opts) {
         });
     });
 
-    el.querySelectorAll('button[data-overlay]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const key = btn.dataset.overlay;
-            activeOverlays[key] = !activeOverlays[key];
-            document.querySelectorAll(`button[data-overlay="${key}"]`).forEach(function(b) {
-                b.classList.toggle('active', activeOverlays[key]);
-            });
-            if (mapEngine) mapEngine.toggleOverlay(key, activeOverlays[key]);
-        });
-    });
 
     document.getElementById(`bm-op-${uid}`).addEventListener('input', function(e) {
         basemapOpacity = parseFloat(e.target.value);
@@ -292,13 +265,7 @@ function buildBasemapBlock(el, opts) {
         if (mapEngine) mapEngine.updateBasemapOpacity(basemapOpacity);
     });
 
-    if (opts.includeDataLayerOpacity) {
-        document.getElementById(`dl-op-${uid}`).addEventListener('input', function(e) {
-            dataLayerOpacity = parseFloat(e.target.value);
-            document.getElementById(`dl-op-val-${uid}`).textContent = `${Math.round(dataLayerOpacity * 100)}%`;
-            if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
-        });
-    }
+
 }
 
 // ─── LAYER STRIP CARD ───
@@ -729,7 +696,39 @@ function buildLayout4() {
     bmBlock.id = 'bm-inner';
     popup.appendChild(bmBlock);
     
-    buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
+    buildBasemapBlock(bmBlock);
+
+    const ovDiv = document.createElement("div")
+    ovDiv.innerHTML = `
+            <div class="bm-row">
+            <div class="bm-row-label">Overlays</div>
+            <div class="control-options" style="padding:0;">
+                <button class="control-btn${activeOverlays.hiking  ? ' active' : ''}" data-overlay="hiking">Hiking</button>
+                <button class="control-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
+            </div>
+        </div>
+        </div>`
+    ovDiv.style.cssText ='border-top:1px solid var(--border);margin-top:14px; padding-top:6px';
+    popup.appendChild(ovDiv);
+
+    const opDiv = document.createElement('div');
+    opDiv.innerHTML = `
+        <div class="ctrl-row">
+            <div class="ctrl-label">
+                <span>DATA LAYER OPACITY</span>
+                <span class="val" id="drawer-dl-val2">${Math.round(dataLayerOpacity * 100)}%</span>
+            </div>
+            <input type="range" id="drawer-dl-opacity2" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
+        </div>`;
+    opDiv.style.cssText = 'border-top:1px solid var(--border);margin-top:12px; padding-top:10px';
+    popup.appendChild(opDiv);
+
+    document.getElementById('drawer-dl-opacity2').addEventListener('input', function(e) {
+        dataLayerOpacity = parseFloat(e.target.value);
+        document.getElementById('drawer-dl-val2').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
+        if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
+    });
+
 
     const bmBtn = document.getElementById('basemap-btn');
     const settingsBtn = document.getElementById('settings-btn');
@@ -831,8 +830,9 @@ function buildDrawerBody(container, opts) {
                 })
                 .join('');
             headerControls = `
-                <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="drev-${layer.id}">&#x21C4;</button>
-                <div class="scheme-bar-btn" id="dbar-${layer.id}" style="background:${buildGradient(layer.preset, layer.reverse)};"></div>`;
+            <div class="scheme-bar-btn" id="dbar-${layer.id}" style="background:${buildGradient(layer.preset, layer.reverse)};"></div>
+            <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="drev-${layer.id}">&#x21C4;</button>
+            `;
             dropdownHtml = `
                 <div class="scheme-dropdown" id="ddrop-${layer.id}">
                     <div class="scheme-grid" id="dschemes-${layer.id}">${schemeBtns}</div>
@@ -941,6 +941,21 @@ function buildDrawerBody(container, opts) {
     bmWrap.style.padding = '10px 12px';
     container.appendChild(bmWrap);
     buildBasemapBlock(bmWrap);
+
+    const ovDiv = document.createElement("div")
+    
+    ovDiv.className    = 'control-card';
+    ovDiv.style.padding = '10px 12px';
+    ovDiv.innerHTML = `
+            <div class="bm-row-label" style="margin-bottom:10px;">Overlays</div>
+            <div class="control-options" style="padding:0;">
+                <button class="control-btn${activeOverlays.hiking  ? ' active' : ''}" data-overlay="hiking">Hiking</button>
+                <button class="control-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
+            </div>
+        </div>
+        </div>`
+    container.appendChild(ovDiv);
+
 
     if (opts.includeLocationTools) appendDrawerLocationTools(container);
 }
@@ -1077,4 +1092,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (h4) document.documentElement.style.setProperty('--bottom-bar-h', `${h4}px`);
         });
     });
+
+    
+    document.querySelectorAll('button[data-overlay]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const key = btn.dataset.overlay;
+            activeOverlays[key] = !activeOverlays[key];
+            document.querySelectorAll(`button[data-overlay="${key}"]`).forEach(function(b) {
+                b.classList.toggle('active', activeOverlays[key]);
+            });
+            if (mapEngine) mapEngine.toggleOverlay(key, activeOverlays[key]);
+        });
+    });
+
+    
 });
