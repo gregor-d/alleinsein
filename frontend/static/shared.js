@@ -72,7 +72,7 @@ function switchEngine(newKey) {
     mapEngine = new ctor();
     mapEngine.init('map', center, zoom, cpos).then(() => afterEngineInit(false));
 
-    document.querySelectorAll('.basemap-btn[data-engine]').forEach(btn =>
+    document.querySelectorAll('.control-btn[data-engine]').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.engine === activeEngine)
     );
 }
@@ -104,7 +104,7 @@ function afterEngineInit(isFirstLoad = false) {
 }
 
 function initEngineBtns(container) {
-    container.querySelectorAll('.basemap-btn').forEach(btn => {
+    container.querySelectorAll('.control-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.engine === activeEngine);
         btn.addEventListener('click', () => switchEngine(btn.dataset.engine));
     });
@@ -115,7 +115,7 @@ function initEngineBtns(container) {
 function syncLayerVisible(layer) {
     const l4Chip = document.getElementById(`l4-chip-${layer.id}`);
     if (l4Chip) {
-        l4Chip.classList.toggle('inactive', !layer.visible);
+        l4Chip.classList.toggle('active', layer.visible);
         l4Chip.setAttribute('aria-checked', String(layer.visible));
     }
     const dcb = document.getElementById(`dvis-${layer.id}`);
@@ -159,10 +159,10 @@ function buildBasemapBlock(el, opts = {}) {
                     <span class="toggle-track"></span>
                 </label>
             </div>
-            <div class="basemap-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
-                <button class="basemap-btn${uiBaseKey === 'osm' ? ' active' : ''}" data-key="osm">OSM</button>
-                <button class="basemap-btn${uiBaseKey === 'satellite' ? ' active' : ''}" data-key="satellite">Satellite</button>
-                <button class="basemap-btn${uiBaseKey === 'schummerung' ? ' active' : ''}" data-key="schummerung">Relief</button>
+            <div class="control-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity: 0.5; pointer-events: none;' : ''}">
+                <button class="control-btn${uiBaseKey === 'osm' ? ' active' : ''}" data-key="osm">OSM</button>
+                <button class="control-btn${uiBaseKey === 'satellite' ? ' active' : ''}" data-key="satellite">Satellite</button>
+                <button class="control-btn${uiBaseKey === 'schummerung' ? ' active' : ''}" data-key="schummerung">Relief</button>
             </div>
             <div class="ctrl-row">
                 <div class="ctrl-label">
@@ -174,9 +174,9 @@ function buildBasemapBlock(el, opts = {}) {
         </div>
         <div class="bm-row" style="margin-top:10px;">
             <div class="bm-row-label">Overlays</div>
-            <div class="basemap-options" style="padding:0;">
-                <button class="basemap-btn${activeOverlays.hiking ? ' active' : ''}" data-overlay="hiking">Hiking</button>
-                <button class="basemap-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
+            <div class="control-options" style="padding:0;">
+                <button class="control-btn${activeOverlays.hiking ? ' active' : ''}" data-overlay="hiking">Hiking</button>
+                <button class="control-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
             </div>
         </div>
         ${opts.includeDataLayerOpacity ? `
@@ -198,7 +198,7 @@ function buildBasemapBlock(el, opts = {}) {
             optsDiv.style.pointerEvents = 'auto';
             if (activeBasemapKey === 'none') {
                 activeBasemapKey = 'osm';
-                el.querySelectorAll('.basemap-btn[data-key]').forEach(b =>
+                el.querySelectorAll('.control-btn[data-key]').forEach(b =>
                     b.classList.toggle('active', b.dataset.key === activeBasemapKey)
                 );
             }
@@ -210,11 +210,11 @@ function buildBasemapBlock(el, opts = {}) {
         }
     });
 
-    el.querySelectorAll('.basemap-btn[data-key]').forEach(btn => {
+    el.querySelectorAll('.control-btn[data-key]').forEach(btn => {
         btn.addEventListener('click', () => {
             activeBasemapKey = btn.dataset.key;
             if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
-            el.querySelectorAll('.basemap-btn[data-key]').forEach(b =>
+            el.querySelectorAll('.control-btn[data-key]').forEach(b =>
                 b.classList.toggle('active', b.dataset.key === activeBasemapKey)
             );
         });
@@ -252,20 +252,15 @@ function buildBasemapBlock(el, opts = {}) {
 
 // ─── VERTICAL CARD (L2 bottom bar) ───
 
-// ─── LAYOUT 4 LAYER CARD (L2 base with per-layer status icons) ───
+// ─── LAYOUT 4 LAYER CARD ───
 function makeL4LayerCard(layer) {
     const key = layer.id.toLowerCase();
     const card = document.createElement('div');
-    card.className = `layer-strip-card l4-layer-card l4-layer-card--${key}${layer.visible ? '' : ' inactive'}`;
+    card.className = `control-btn layer-strip-card l4-layer-card l4-layer-card--${key}${layer.visible ? ' active' : ''}`;
     card.id = `l4-chip-${layer.id}`;
     card.tabIndex = 0;
     card.setAttribute('role', 'switch');
     card.setAttribute('aria-checked', String(layer.visible));
-
-    const status = document.createElement('span');
-    status.className = `l4-layer-status l4-status-${key}`;
-    status.innerHTML = getL4LayerStatusMarkup(key);
-    card.appendChild(status);
 
     const nameEl = document.createElement('span');
     nameEl.className = 'layer-name';
@@ -314,37 +309,6 @@ function makeL4LayerCard(layer) {
     });
 
     return card;
-}
-
-function getL4LayerStatusMarkup(key) {
-    if (key === 'parks') {
-        return `
-            <svg class="state-on" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/>
-                <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <svg class="state-off" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4"/>
-                <path d="M9.9 4.4A10.4 10.4 0 0 1 12 4c6.5 0 10 8 10 8a18.8 18.8 0 0 1-3.1 4.2"/>
-                <path d="M6.6 6.6C3.7 8.5 2 12 2 12a18.6 18.6 0 0 0 7.4 6.1A10.8 10.8 0 0 0 12 18c.7 0 1.4-.1 2.1-.3"/>
-                <line x1="3" y1="3" x2="21" y2="21"/>
-            </svg>
-        `;
-    }
-
-    if (key === 'urban') {
-        return `
-            <svg class="state-on" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            <svg class="state-off" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-        `;
-    }
-
-    return '';
 }
 
 // ─── STRIP CHIP (L1) ───
@@ -532,12 +496,12 @@ function buildLayout4() {
     popup.appendChild(popupHeader);
 
     const engWrap = document.createElement('div');
-    engWrap.className = 'basemap-options';
+    engWrap.className = 'control-options';
     engWrap.style.padding = '0';
     engWrap.style.marginBottom = '12px';
     engWrap.innerHTML = `
-        <button class="basemap-btn" data-engine="leaflet">Leaflet</button>
-        <button class="basemap-btn" data-engine="maplibre">MapLibre</button>
+        <button class="control-btn" data-engine="leaflet">Leaflet</button>
+        <button class="control-btn" data-engine="maplibre">MapLibre</button>
     `;
     popup.appendChild(engWrap);
     initEngineBtns(engWrap);
@@ -717,12 +681,12 @@ function buildDrawerBody(container, opts = {}) {
     // Map Engine
     addSectionLabel(container, 'Map Engine');
     const engWrap = document.createElement('div');
-    engWrap.className = 'basemap-card';
+    engWrap.className = 'control-card';
     engWrap.style.padding = '10px 12px';
     engWrap.innerHTML = `
-        <div class="basemap-options" style="padding:0;">
-            <button class="basemap-btn" data-engine="leaflet">Leaflet</button>
-            <button class="basemap-btn" data-engine="maplibre">MapLibre</button>
+        <div class="control-options" style="padding:0;">
+            <button class="control-btn" data-engine="leaflet">Leaflet</button>
+            <button class="control-btn" data-engine="maplibre">MapLibre</button>
         </div>
     `;
     container.appendChild(engWrap);
@@ -731,7 +695,7 @@ function buildDrawerBody(container, opts = {}) {
     // Basemap
     addSectionLabel(container, 'Basemap');
     const bmWrap = document.createElement('div');
-    bmWrap.className = 'basemap-card';
+    bmWrap.className = 'control-card';
     bmWrap.id = 'drawer-bm-area';
     bmWrap.style.padding = '10px 12px';
     container.appendChild(bmWrap);
@@ -748,7 +712,7 @@ function appendDrawerLocationTools(container) {
     addSectionLabel(section, 'Location');
 
     const locWrap = document.createElement('div');
-    locWrap.className = 'basemap-card drawer-location-card';
+    locWrap.className = 'control-card drawer-location-card';
     locWrap.innerHTML = `
         <div class="search-input-row drawer-search-row">
             <input id="drawer-search-input" type="text" placeholder="Search location…" autocomplete="off" />
