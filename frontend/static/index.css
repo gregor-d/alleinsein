@@ -57,7 +57,7 @@ body {
 
 /* ── SECTION LABEL ── */
 .section-label {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -210,7 +210,6 @@ body {
     font-size: 11px;
     color: var(--text-card-mid, var(--text-mid));
     letter-spacing: 0.03em;
-    text-transform: uppercase;
 }
 
 .ctrl-label span.val {
@@ -826,11 +825,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.05em;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-mid)
 }
 
 .drawer-body {
@@ -1067,17 +1062,6 @@ body:has(#settings-drawer.open) #settings-btn {
 .bm-row .control-options {
     padding: 0;
 }
-
-/* ── Section label (drawer + sheets) ── */
-.section-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-lo);
-    padding: 6px 4px 2px;
-}
-
 /* ── Search sheet ── */
 .search-popup {
     position: fixed;
