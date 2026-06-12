@@ -1,7 +1,7 @@
 // dev-drawer.js
 document.addEventListener('DOMContentLoaded', () => {
     const buttons = document.querySelectorAll('.dev-pos-btn');
-    const drawer = document.getElementById('l4-drawer');
+    const drawer = document.getElementById('settings-drawer');
     
     // Set default position
     let currentPos = 'right-middle';

@@ -43,7 +43,7 @@ function refreshDataLayer() {
 
 let activeEngine = localStorage.getItem('map-engine') || 'leaflet';
 let mapEngine = null;
-let _l4PopupHandlerAttached = false;
+let _popupHandlerAttached = false;
 
 function getNavControlPos() {
     return { leaflet: 'topleft', maplibre: 'top-left' };
@@ -113,10 +113,10 @@ function initEngineBtns(container) {
 // ─── VISIBILITY SYNC ───
 // Called whenever a layer's visible flag changes — updates all live UI elements.
 function syncLayerVisible(layer) {
-    const l4Chip = document.getElementById(`l4-chip-${layer.id}`);
-    if (l4Chip) {
-        l4Chip.classList.toggle('active', layer.visible);
-        l4Chip.setAttribute('aria-checked', String(layer.visible));
+    const layerChip = document.getElementById(`layer-chip-${layer.id}`);
+    if (layerChip) {
+        layerChip.classList.toggle('active', layer.visible);
+        layerChip.setAttribute('aria-checked', String(layer.visible));
     }
     const dcb = document.getElementById(`dvis-${layer.id}`);
     if (dcb) {
@@ -129,7 +129,7 @@ function syncLayerVisible(layer) {
 // ─── COLOR SYNC ───
 function syncLayerColor(layer) {
     if (layer.type === 'overlay') return;
-    const chipColor = document.getElementById(`l4-chip-color-${layer.id}`);
+    const chipColor = document.getElementById(`layer-chip-color-${layer.id}`);
     if (!chipColor) return;
     chipColor.style.background = layer.type === 'category'
         ? buildGradient(layer.preset, layer.reverse)
@@ -256,8 +256,8 @@ function buildBasemapBlock(el, opts = {}) {
 function makeL4LayerCard(layer) {
     const key = layer.id.toLowerCase();
     const card = document.createElement('div');
-    card.className = `control-btn layer-strip-card l4-layer-card l4-layer-card--${key}${layer.visible ? ' active' : ''}`;
-    card.id = `l4-chip-${layer.id}`;
+    card.className = `control-btn layer-strip-card layer-chip layer-chip--${key}${layer.visible ? ' active' : ''}`;
+    card.id = `layer-chip-${layer.id}`;
     card.tabIndex = 0;
     card.setAttribute('role', 'switch');
     card.setAttribute('aria-checked', String(layer.visible));
@@ -270,14 +270,14 @@ function makeL4LayerCard(layer) {
     if (layer.type === 'category') {
         const ramp = document.createElement('div');
         ramp.className = 'layer-strip-ramp';
-        ramp.id = `l4-chip-color-${layer.id}`;
+        ramp.id = `layer-chip-color-${layer.id}`;
         ramp.style.background = buildGradient(layer.preset, layer.reverse);
         ramp.addEventListener('click', e => { e.stopPropagation(); openColorSheet(layer); });
         card.appendChild(ramp);
     } else if (layer.type === 'solid') {
         const swatch = document.createElement('div');
         swatch.className = 'layer-strip-solid-swatch';
-        swatch.id = `l4-chip-color-${layer.id}`;
+        swatch.id = `layer-chip-color-${layer.id}`;
         swatch.style.background = layer.preset;
 
         const picker = document.createElement('input');
@@ -438,13 +438,13 @@ function bindSearchBtn(id) {
 // ════════════════════════════════════════════════
 
 function clearLayout4() {
-    ['l4-layer-strip', 'l4-basemap-popup', 'l4-drawer-body'].forEach(id => {
+    ['layer-strip', 'basemap-popup', 'drawer-body'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '';
     });
-    document.getElementById('l4-basemap-popup')?.classList.remove('open');
-    document.getElementById('l4-drawer')?.classList.remove('open');
-    document.getElementById('l4-backdrop')?.classList.remove('open');
+    document.getElementById('basemap-popup')?.classList.remove('open');
+    document.getElementById('settings-drawer')?.classList.remove('open');
+    document.getElementById('settings-backdrop')?.classList.remove('open');
 }
 
 // ── Layout 1 ──
@@ -460,11 +460,11 @@ function clearLayout4() {
 function buildLayout4() {
     clearLayout4();
 
-    const strip = document.getElementById('l4-layer-strip');
+    const strip = document.getElementById('layer-strip');
 
     layerState.forEach(layer => strip.appendChild(makeL4LayerCard(layer)));
 
-    const popup = document.getElementById('l4-basemap-popup');
+    const popup = document.getElementById('basemap-popup');
     popup.innerHTML = '';
 
     const popupHeader = document.createElement('div');
@@ -511,35 +511,35 @@ function buildLayout4() {
     popup.appendChild(divider);
 
     const bmBlock = document.createElement('div');
-    bmBlock.id = 'l4-bm-inner';
+    bmBlock.id = 'bm-inner';
     popup.appendChild(bmBlock);
     buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
 
-    const bmBtn = document.getElementById('l4-basemap-btn');
-    const settingsBtn = document.getElementById('l4-settings-btn');
+    const bmBtn = document.getElementById('basemap-btn');
+    const settingsBtn = document.getElementById('settings-btn');
 
     bmBtn.onclick = e => {
         e.stopPropagation();
         closeLayout4Drawer();
         popup.classList.toggle('open');
     };
-    if (!_l4PopupHandlerAttached) {
-        _l4PopupHandlerAttached = true;
+    if (!_popupHandlerAttached) {
+        _popupHandlerAttached = true;
         document.addEventListener('click', e => {
-            const p = document.getElementById('l4-basemap-popup');
-            const b = document.getElementById('l4-basemap-btn');
+            const p = document.getElementById('basemap-popup');
+            const b = document.getElementById('basemap-btn');
             if (p && b && !p.contains(e.target) && e.target !== b) {
                 p.classList.remove('open');
             }
         });
     }
 
-    buildDrawerBody(document.getElementById('l4-drawer-body'), { includeLocationTools: true });
+    buildDrawerBody(document.getElementById('drawer-body'), { includeLocationTools: true });
 
     settingsBtn.onclick = () => {
         popup.classList.remove('open');
-        const drawer = document.getElementById('l4-drawer');
-        const backdrop = document.getElementById('l4-backdrop');
+        const drawer = document.getElementById('settings-drawer');
+        const backdrop = document.getElementById('settings-backdrop');
         if (drawer.classList.contains('open')) {
             drawer.classList.remove('open');
             backdrop.classList.remove('open');
@@ -548,21 +548,21 @@ function buildLayout4() {
             backdrop.classList.add('open');
         }
     };
-    document.getElementById('l4-drawer-close').onclick = closeLayout4Drawer;
-    document.getElementById('l4-backdrop').onclick = closeLayout4Drawer;
+    document.getElementById('drawer-close').onclick = closeLayout4Drawer;
+    document.getElementById('settings-backdrop').onclick = closeLayout4Drawer;
 
-    bindSearchBtn('l4-search-btn');
-    bindLocBtn('l4-loc-btn');
+    bindSearchBtn('search-btn');
+    bindLocBtn('loc-btn');
 
     requestAnimationFrame(() => {
-        const h = document.getElementById('l4-bottom')?.offsetHeight;
-        if (h) document.documentElement.style.setProperty('--l4-bottom-h', `${h}px`);
+        const h = document.getElementById('bottom-bar')?.offsetHeight;
+        if (h) document.documentElement.style.setProperty('--bottom-bar-h', `${h}px`);
     });
 }
 
 function closeLayout4Drawer() {
-    document.getElementById('l4-drawer').classList.remove('open');
-    document.getElementById('l4-backdrop').classList.remove('open');
+    document.getElementById('settings-drawer').classList.remove('open');
+    document.getElementById('settings-backdrop').classList.remove('open');
 }
 
 // ── Drawer body (L3 settings) ──
@@ -731,8 +731,8 @@ function appendDrawerLocationTools(container) {
 }
 
 function updateFabShift() {
-    const drawer = document.getElementById('l4-drawer');
-    const fab = document.getElementById('l4-fab');
+    const drawer = document.getElementById('settings-drawer');
+    const fab = document.getElementById('fab-group');
     if (!drawer || !fab) return;
 
     if (window.innerWidth < 769) {
@@ -798,10 +798,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initThemeSwitcher();
 
     if (window.innerWidth >= 769) {
-        document.getElementById('l4-drawer').classList.add('open');
+        document.getElementById('settings-drawer').classList.add('open');
     }
 
-    const drawer = document.getElementById('l4-drawer');
+    const drawer = document.getElementById('settings-drawer');
     if (drawer) {
         const observer = new MutationObserver(() => {
             updateFabShift();
@@ -826,8 +826,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         requestAnimationFrame(() => {
-            const h4 = document.getElementById('l4-bottom')?.offsetHeight;
-            if (h4) document.documentElement.style.setProperty('--l4-bottom-h', `${h4}px`);
+            const h4 = document.getElementById('bottom-bar')?.offsetHeight;
+            if (h4) document.documentElement.style.setProperty('--bottom-bar-h', `${h4}px`);
         });
     });
 });
