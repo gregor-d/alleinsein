@@ -3,7 +3,7 @@
     /* Used by: page background, dev bar blend, drawer/search dark surfaces, back of toogle */
     --bg-deep:        #0d1117;                  
     /* Used by: bottom bar, map attribution, scale controls */
-    --bg-button-active:       rgba(22, 27, 34, 1);       
+    --bg-panel-active: rgba(22, 27, 34, 1);
     --bg-button-inactive: rgba(22, 27, 34, 0.7);
     /* Used by: cards, dev theme buttons, map controls, popups, sheets, FABs */
     --bg-card:        #21262d;                      

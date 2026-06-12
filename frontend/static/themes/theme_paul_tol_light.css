@@ -2,7 +2,8 @@
 /* Blue #4477aa + purple-rose #aa3377: work across deuteranopia, protanopia, and typical vision */
 :root {
     --bg-deep:           #f8f6f4;
-    --bg-button-active:          rgba(248, 246, 244, 0.94);
+    --bg-panel-active: rgba(248, 246, 244, 1);
+    --bg-button-inactive: rgba(248, 246, 244, 0.7);
     --bg-card:           #f0ecea;
     --bg-hover:          #e6e0dc;
     --border:            #d0c8c2;

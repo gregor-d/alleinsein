@@ -2,7 +2,8 @@
 /* Dark blue + amber: highly distinct, never confused across the two most common deficiency types */
 :root {
     --bg-deep:           #f5f3ee;
-    --bg-button-active:          rgba(245, 243, 238, 0.94);
+    --bg-panel-active: rgba(245, 243, 238, 1);
+    --bg-button-inactive: rgba(245, 243, 238, 0.7);
     --bg-card:           #ede9df;
     --bg-hover:          #e0dace;
     --border:            #c8c0b0;

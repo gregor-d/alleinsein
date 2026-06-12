@@ -1,7 +1,8 @@
 /* Theme: Nordic Light */
 :root {
     --bg-deep:           #eceff4;
-    --bg-button-active:          rgba(236, 239, 244, 0.93);
+    --bg-panel-active: rgba(236, 239, 244, 1);
+    --bg-button-inactive: rgba(236, 239, 244, 0.7);
     --bg-card:           #e5e9f0;
     --bg-hover:          #d8dee9;
     --border:            #cad0dc;
