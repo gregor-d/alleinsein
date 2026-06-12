@@ -17,12 +17,26 @@ function hexToRgba(hex) {
 
 /**
  * Builds a CSS linear-gradient string from a named COLORMAP_PRESETS entry.
- * Reverses the colour order when reverse is true.
+ * Reverses the colour order when reverse is true. First color makes up 20 percent
  */
 function buildGradient(preset, reverse) {
     let colors = [...COLORMAP_PRESETS[preset]];
     if (reverse) colors = [...colors].reverse();
-    return `linear-gradient(to right, ${colors.join(', ')})`;
+
+    if (colors.length <= 1) {
+        const color = colors[0] || 'transparent';
+        return `linear-gradient(to right, ${color} 0%, ${color} 100%)`;
+    }
+
+    const firstColorWidth = 20;
+    const stops = [`${colors[0]} 0%`, `${colors[0]} ${firstColorWidth}%`];
+
+    const step = (100 - firstColorWidth) / (colors.length - 1);
+    colors.forEach(function(color, index) {
+        stops.push(`${color} ${firstColorWidth + step * index}%`);
+    });
+
+    return `linear-gradient(to left, ${stops.join(', ')})`;
 }
 
 /**
