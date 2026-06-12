@@ -1,0 +1,25 @@
+:root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d27;
+    --bg-panel: rgba(15, 17, 23, 0.88);
+    --bg-panel-solid: #1a1d27;
+    --text-primary: #f1f3f9;
+    --text-secondary: #8b92a8;
+    --text-muted: #525870;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --accent-fg: #ffffff;
+    --border: rgba(99, 102, 241, 0.22);
+    --border-solid: #2a2e3f;
+    --btn-bg: rgba(255, 255, 255, 0.07);
+    --btn-hover: rgba(255, 255, 255, 0.13);
+    --toggle-off: #2d3148;
+    --toggle-on: #6366f1;
+    --shadow: 0 4px 28px rgba(0, 0, 0, 0.65);
+    --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.45);
+    --radius: 14px;
+    --radius-sm: 9px;
+    --backdrop: blur(20px) saturate(180%);
+    --dev-bar-bg: #111318;
+    --dev-bar-border: #1e2130;
+}
