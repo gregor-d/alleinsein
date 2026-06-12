@@ -728,6 +728,7 @@ function buildLayout4() {
     const bmBlock = document.createElement('div');
     bmBlock.id = 'bm-inner';
     popup.appendChild(bmBlock);
+    
     buildBasemapBlock(bmBlock, { includeDataLayerOpacity: true });
 
     const bmBtn = document.getElementById('basemap-btn');

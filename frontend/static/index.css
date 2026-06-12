@@ -70,7 +70,7 @@ body {
     overflow: hidden;
     box-shadow: var(--shadow-card);
     transition: border-color var(--transition), box-shadow var(--transition);
-    color: var(--text-card-hi, var(--text-hi));
+    color: var(--text-hi);
 }
 
 .layer-card:hover {
@@ -106,6 +106,7 @@ body {
     width: 34px;
     height: 18px;
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 /* Expand the clickable area */
@@ -128,10 +129,8 @@ body {
 .toggle-track {
     position: absolute;
     inset: 0;
-    background: #484f58;
+    background: var(--bg-deep);
     border-radius: 18px;
-    transition: background var(--transition);
-    cursor: pointer;
 }
 
 .toggle-track::after {
@@ -143,7 +142,6 @@ body {
     height: 14px;
     background: #fff;
     border-radius: 50%;
-    transition: transform var(--transition);
 }
 
 .toggle input:checked+.toggle-track {
@@ -205,12 +203,12 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 11px;
-    color: var(--text-card-mid, var(--text-mid));
+    color: var(--text-mid);
     letter-spacing: 0.03em;
 }
 
 .ctrl-label span.val {
-    color: var(--text-card-hi, var(--text-hi));
+    color: var(--text-hi);
     font-variant-numeric: tabular-nums;
 }
 
@@ -269,12 +267,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border-color: #fff;
 }
 
+
 /* Reverse button */
 .btn-reverse {
-    background: var(--bg-card);
-    border: 1px solid var(--text-card-lo, var(--border-hi));
+   background: var(--bg-button-inactive);
+    border: 1px outset var(--border-hi);
     border-radius: 6px;
-    color: var(--text-card-mid, var(--text-mid));
+    color: var(--text-mid);
     cursor: pointer;
     padding: 3px 7px;
     font-size: 13px;
@@ -282,17 +281,16 @@ input[type="range"]::-webkit-slider-thumb:hover {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 .btn-reverse:hover {
     background: var(--bg-hover);
-    color: var(--text-card-hi, var(--text-hi));
+    color: var(--text-hi);
     border-color: var(--accent);
 }
 
 .btn-reverse.active {
-    background: var(--accent-dim);
+    background: var(--bg-button-active);
     border-color: var(--accent);
     color: var(--accent);
 }
@@ -307,7 +305,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
     overflow: hidden;
     box-shadow: var(--shadow-card);
     transition: box-shadow var(--transition);
-    color: var(--text-card-hi, var(--text-hi));
+    color: var(--text-hi);
 }
 
 .control-card:hover {
@@ -327,22 +325,23 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-size: 11px;
     font-weight: 600;
     text-align: center;
-    /* border: 1px solid var(--text-card-lo, var(--border-hi)); */
-    border-color: var(--text-card-lo, var(--border-hi)); 
+    border-color: var(--border-hi);
+    border-style: outset;
+    border-width: 1px;
     border-radius: 8px;
     background: var(--bg-button-inactive);
-    color: var(--text-card-mid, var(--text-mid));
+    color: var(--text-mid);
     cursor: pointer;
-    /* opacity: 0.6; */
-    /* transition: background var(--transition), color var(--transition), border-color var(--transition), opacity var(--transition); */
 }
 
 .control-btn:hover {
     background: var(--bg-hover);
-    color: var(--text-card-hi, var(--text-hi));
+    color: var(--text-hi);    
+    border-color: var(--accent);
 }
 
-.control-btn.active {
+.control-btn.active {    
+    border-style: inset;
     background: var(--bg-button-active);
     border-color: var(--accent);
     color: var(--accent);
@@ -551,7 +550,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .layer-chip-eye svg {
     width: 12px;
     height: 12px;
-    stroke: var(--text-card-lo, var(--text-lo));
+    stroke: var(--text-lo);
     transition: stroke var(--transition);
 }
 .layer-strip-card.active .layer-chip-eye svg {
@@ -571,7 +570,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .hotspot-icon svg {
     width: 12px;
     height: 12px;
-    stroke: var(--text-card-lo, var(--text-lo));
+    stroke: var(--text-lo);
     transition: stroke var(--transition);
 }
 @keyframes hotspot-pulse {
@@ -1087,19 +1086,28 @@ body:has(#settings-drawer.open) #settings-btn {
     transition: border-color var(--transition);
 }
 .search-input-row input:focus { border-color: var(--accent); }
+
+
+
 .search-go-btn {
     padding: 9px 16px;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
+    background: var(--bg-button-inactive);
+     border-color: var(--border-hi);
+    border-style: outset;
+    border-width: 1px;
     border-radius: 8px;
-    color: var(--accent);
+    color: var(--text-hi);
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
     font-family: inherit;
     transition: background var(--transition), color var(--transition);
 }
-.search-go-btn:hover { background: var(--accent); color: var(--bg-deep); }
+.search-go-btn:hover { background: var(--bg-hover); color: var(--text-hi); 
+    border-color: var(--accent); }
+
+
+
 .search-results { list-style: none; display: flex; flex-direction: column; gap: 5px; }
 .search-results li {
     padding: 10px 12px;
@@ -1146,6 +1154,7 @@ body:has(#settings-drawer.open) #settings-btn {
     display: none;
 }
 
+
 .drawer-action-btn {
     width: 100%;
     display: flex;
@@ -1153,15 +1162,16 @@ body:has(#settings-drawer.open) #settings-btn {
     justify-content: center;
     gap: 8px;
     padding: 9px 12px;
-    background: color-mix(in srgb, var(--bg-button-inactive) 78%, transparent);
-    border: 1px solid var(--border-hi);
+    background: var(--bg-button-inactive);
+    border-color: var(--border-hi);
+    border-style: outset;
+    border-width: 2px;
     border-radius: 8px;
     color: var(--text-hi);
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
     font-family: inherit;
-    transition: border-color var(--transition), color var(--transition), background var(--transition);
 }
 
 .drawer-action-btn svg {
@@ -1172,9 +1182,9 @@ body:has(#settings-drawer.open) #settings-btn {
 
 .drawer-action-btn:hover,
 .drawer-action-btn.active {
-    background: var(--accent-dim);
+    background: var(--bg-hover);
+    color: var(--text-hi);    
     border-color: var(--accent);
-    color: var(--accent);
 }
 
 .layer-strip-overlay-indicator {
