@@ -8,7 +8,8 @@
 
 :root {
     --bg-deep: #0d1117;
-    --bg-panel: rgba(22, 27, 34, 0.119);
+    --bg-button-active: rgba(22, 27, 34, 0.96);
+    --bg-button-inactive: rgba(22, 27, 34, 0.488);
     --bg-card: #21262d;
     --bg-hover: #30363d;
     --border: #30363d;
@@ -24,13 +25,11 @@
     --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.5);
     --radius: 12px;
     --transition: 0.18s cubic-bezier(.4, 0, .2, 1);
-}
-
-:root {
     --dev-bar-h: 36px;
     --bottom-bar-h: 78px;
     --drawer-w: 280px;
 }
+
 
 
 html,
@@ -52,8 +51,6 @@ body {
     right: 0;
     bottom: 0;
 }
-
-/* (old panel removed — layouts handle their own containers) */
 
 /* ── SECTION LABEL ── */
 .section-label {
@@ -81,7 +78,7 @@ body {
 }
 
 .layer-card.inactive {
-    opacity: 0.55;
+    opacity: 0.7;
 }
 
 .layer-header {
@@ -330,13 +327,14 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-size: 11px;
     font-weight: 600;
     text-align: center;
-    border: 1px solid var(--text-card-lo, var(--border-hi));
+    /* border: 1px solid var(--text-card-lo, var(--border-hi)); */
+    border-color: var(--text-card-lo, var(--border-hi)); 
     border-radius: 8px;
-    background: var(--bg-deep);
+    background: var(--bg-button-inactive);
     color: var(--text-card-mid, var(--text-mid));
     cursor: pointer;
-    opacity: 0.45;
-    transition: background var(--transition), color var(--transition), border-color var(--transition), opacity var(--transition);
+    /* opacity: 0.6; */
+    /* transition: background var(--transition), color var(--transition), border-color var(--transition), opacity var(--transition); */
 }
 
 .control-btn:hover {
@@ -345,7 +343,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .control-btn.active {
-    background: var(--accent-dim);
+    background: var(--bg-button-active);
     border-color: var(--accent);
     color: var(--accent);
     opacity: 1;
@@ -360,8 +358,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .leaflet-control-zoom a {
     background-color: var(--bg-card) !important;
     color: var(--text-hi) !important;
-    border-color: var(--border) !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
 }
 
 .leaflet-control-zoom a:hover {
@@ -369,11 +365,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .leaflet-control-attribution {
-    background: var(--bg-panel) !important;
-    opacity: 0.9;
+    background:  #00000045 !important;
     color: var(--text-lo) !important;
-    font-size: 10px !important;
-    transition: background var(--transition), color var(--transition);
 }
 
 .leaflet-control-attribution a {
@@ -383,21 +376,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
 /* Fix MapLibre control colors for dark mode */
 .maplibregl-ctrl-group {
     background-color: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
 }
 
 .maplibregl-ctrl-group button {
-    background-color: transparent !important;
-    width: 29px !important;
-    height: 29px !important;
-    border: none !important;
-    outline: none !important;
     cursor: pointer !important;
-}
-
-.maplibregl-ctrl-group button:not(:last-child) {
-    border-bottom: 1px solid var(--border) !important;
 }
 
 .maplibregl-ctrl-group button:hover {
@@ -409,15 +391,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
     filter: invert(1) brightness(1.2);
 }
 
-.maplibregl-ctrl-attrib {
-    background: var(--bg-panel) !important;
-    opacity: 0.9;
+.maplibregl-ctrl-attrib { 
+    background:  #00000045 !important;
     color: var(--text-lo) !important;
-    font-size: 10px !important;
-    border-radius: 4px;
-    padding: 2px 6px !important;
-    margin: 10px !important;
-    border: 1px solid var(--border) !important;
 }
 
 .maplibregl-ctrl-attrib a {
@@ -505,10 +481,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 200;
-    background: color-mix(in srgb, var(--bg-panel) 90%, transparent);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border-top: 1px solid var(--border);
+    background: transparent;
+    /* backdrop-filter: blur(20px) saturate(160%); */
+    /* -webkit-backdrop-filter: blur(20px) saturate(160%); */
+    /* border-top: 1px solid var(--border); */
     display: flex;
     flex-direction: column;
 }
@@ -1177,7 +1153,7 @@ body:has(#settings-drawer.open) #settings-btn {
     justify-content: center;
     gap: 8px;
     padding: 9px 12px;
-    background: color-mix(in srgb, var(--bg-deep) 78%, transparent);
+    background: color-mix(in srgb, var(--bg-button-inactive) 78%, transparent);
     border: 1px solid var(--border-hi);
     border-radius: 8px;
     color: var(--text-hi);
@@ -1218,15 +1194,7 @@ body:has(#settings-drawer.open) #settings-btn {
 /* Custom scale control dark mode styling */
 .leaflet-control-scale-line,
 .maplibregl-ctrl-scale {
-    background: var(--bg-panel) !important;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid var(--border-hi) !important;
-    border-top: none !important;
-    color: var(--text-hi) !important;
     font-size: 10px !important;
     font-weight: 600 !important;
-    font-family: inherit !important;
     box-shadow: var(--shadow-card) !important;
-    padding: 2px 5px !important;
 }
