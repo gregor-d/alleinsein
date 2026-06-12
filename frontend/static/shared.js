@@ -282,7 +282,7 @@ const _eyeOffSvg  = `<svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke
 function makeL4LayerCard(layer) {
     const key  = layer.id.toLowerCase();
     const card = document.createElement('div');
-    card.className = `control-btn layer-strip-card layer-chip layer-chip--${key}${layer.visible ? ' active' : ''}`;
+    card.className = `layer-strip-card layer-chip--${key}${layer.visible ? ' active' : ''}`;
     card.id = `layer-chip-${layer.id}`;
     card.tabIndex = 0;
     card.setAttribute('role', 'switch');
@@ -363,7 +363,7 @@ const _flameSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 
 function makeHotspotChip() {
     const card = document.createElement('div');
-    card.className = `control-btn layer-strip-card layer-chip layer-chip--hotspot${hotspotMode ? ' active' : ''}`;
+    card.className = `layer-strip-card layer-chip--hotspot${hotspotMode ? ' active' : ''}`;
     card.id = 'hotspot-chip';
     card.tabIndex = 0;
     card.setAttribute('role', 'switch');
@@ -382,9 +382,7 @@ function makeHotspotChip() {
     top.appendChild(nameEl);
     card.appendChild(top);
 
-    const divider = document.createElement('div');
-    divider.className = 'layer-strip-divider';
-    card.appendChild(divider);
+
 
     const bottom = document.createElement('div');
     bottom.className = 'layer-strip-card-bottom layer-strip-card-bottom--hotspot';

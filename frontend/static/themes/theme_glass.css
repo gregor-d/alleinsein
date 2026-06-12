@@ -4,7 +4,7 @@
     --bg-deep:        #0d1117;                  
     /* Used by: bottom bar, map attribution, scale controls */
     --bg-panel-active: rgba(22, 27, 34, 1);
-    --bg-button-inactive: rgba(22, 27, 34, 0.7);
+    --bg-button-inactive: rgba(22, 27, 34, 0.8);
     /* Used by: cards, dev theme buttons, map controls, popups, sheets, FABs */
     --bg-card:        #21262d;                      
     /* Used by: hover states for buttons, cards, map controls, search results */
