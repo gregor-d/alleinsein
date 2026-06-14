@@ -1047,7 +1047,8 @@ function initThemeSwitcher() {
     const buttons    = document.querySelectorAll('.dev-theme-btn');
     const themes     = Array.from(buttons).map(function(btn) { return btn.dataset.theme; });
     const saved      = localStorage.getItem('map-theme');
-    const activeTheme = themes.includes(saved) ? saved : 'glass';
+    const systemDefault = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'brutalist';
+    const activeTheme = themes.includes(saved) ? saved : systemDefault;
 
     document.getElementById('theme-link').href = `themes/theme_${activeTheme}.css`;
     localStorage.setItem('map-theme', activeTheme);

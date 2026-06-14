@@ -18,9 +18,10 @@
     <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css" />
     <script>
         (function () {
-            const themes = ['glass', 'nordic_light', 'brutalist', 'forest', 'corporate', 'barrier_free', 'paul_tol_light', 'achromatopsia', 'amber_blue'];
+            const themes = ['brutalist', 'dark'];
             const saved = localStorage.getItem('map-theme');
-            const t = themes.includes(saved) ? saved : 'glass';
+            const systemDefault = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'brutalist';
+            const t = themes.includes(saved) ? saved : systemDefault;
             localStorage.setItem('map-theme', t);
             document.getElementById('theme-link').href = `themes/theme_${t}.css`;
         })();
@@ -33,32 +34,6 @@
 </head>
 
 <body>
-    <div id="dev-bar">
-        <span class="dev-label">DEV</span>
-        <div class="dev-select-group" id="theme-switcher">
-            <button class="dev-theme-btn" data-theme="glass">Glass</button>
-            <button class="dev-theme-btn" data-theme="nordic_light">Nordic Light</button>
-            <button class="dev-theme-btn" data-theme="brutalist">Neo-Brutalist</button>
-            <button class="dev-theme-btn" data-theme="forest">Forest</button>
-            <button class="dev-theme-btn" data-theme="corporate">Corporate</button>
-            <button class="dev-theme-btn" data-theme="barrier_free">Barrier-Free</button>
-            <button class="dev-theme-btn" data-theme="paul_tol_light">Paul Tol</button>
-            <button class="dev-theme-btn" data-theme="achromatopsia">Achromatopsia</button>
-            <button class="dev-theme-btn" data-theme="amber_blue">Amber/Blue</button>
-            <button class="dev-theme-btn" data-theme="dark">dark</button>
-            <button class="dev-theme-btn" data-theme="light">light</button>
-        </div>
-        <div class="dev-select-group" id="drawer-pos-switcher">
-            Drawer:
-            <button class="dev-pos-btn" data-pos="top-left">TL</button>
-            <button class="dev-pos-btn" data-pos="left-middle">LM</button>
-            <button class="dev-pos-btn" data-pos="left-bottom">LB</button>
-            <button class="dev-pos-btn" data-pos="top-right">TR</button>
-            <button class="dev-pos-btn active" data-pos="right-middle">RM</button>
-            <button class="dev-pos-btn" data-pos="right-bottom">RB</button>
-        </div>
-    </div>
-
     <div id="map"></div>
 
     <div id="bottom-bar">
@@ -96,8 +71,23 @@
 
     <div id="settings-drawer">
         <div class="drawer-header">
-            <h2>Alleinseinkarte.de</h2>
-            <button id="drawer-close" class="icon-btn" title="Close">
+            <div class="drawer-header-group drawer-header-group--inline">
+                <span class="drawer-header-label">Theme</span>
+                <div class="drawer-theme-group">
+                    <button class="dev-theme-btn" data-theme="brutalist">Light</button>
+                    <button class="dev-theme-btn" data-theme="dark">Dark</button>
+                </div>
+            </div>
+            <div class="drawer-header-group drawer-pos-group">
+                <span class="drawer-header-label">Position</span>
+                <div class="pos-picker">
+                    <button class="pos-dot" data-pos="top-left"     title="Top left"></button>
+                    <button class="pos-dot" data-pos="top-right"    title="Top right"></button>
+                    <button class="pos-dot" data-pos="left-bottom"  title="Bottom left"></button>
+                    <button class="pos-dot" data-pos="right-bottom" title="Bottom right"></button>
+                </div>
+            </div>
+            <button id="drawer-close" class="icon-btn" style="margin-left:auto;" title="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />

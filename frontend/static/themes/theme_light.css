@@ -1,20 +1,22 @@
+/* Theme: Neo-Brutalist — hard edges, stark contrast, offset shadows */
 :root {
-    --bg-deep: #eef2f7;
+    --bg-deep:           #ffffff;
     --bg-button-active: rgba(255, 255, 255, 1);
     --bg-button-inactive: rgba(255, 255, 255, 0.7);
-    --bg-card: #ffffff;
-    --bg-hover: rgba(0, 0, 0, 0.10);
-    --border: #e5e7eb;
-    --border-hi: #a0aec0;
-    --text-hi: #111827;
-    --text-mid: #6b7280;
-    --text-lo: #a0aec0;
+    --bg-card:           #f0f0f0;
+    --bg-hover:          #e0e0e0;
+    --border:            #000000;
+    --border-hi:         #000000;
+    --text-hi:           #000000;
+    --text-mid:          #333333;
+    --text-lo:           #666666;
     --accent: #4f46e5;
-    --accent2: #6366f1;
-    --accent-dim: rgba(79, 70, 229, 0.12);
-    --accent-glow: rgba(79, 70, 229, 0.38);
-    --box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    --box-shadow-hover: 0 4px 28px rgba(0, 0, 0, 0.12);
-    --radius: 14px;
-    --transition: 0.18s cubic-bezier(.4,0,.2,1);
+    --accent2: #cb63f1;
+    --accent-dim:        rgba(255, 34, 0, 0.10);
+    --accent-glow:       rgba(255, 34, 0, 0.30);
+    --box-shadow:       3px 3px 0 #000000;
+    --box-shadow-hover: -1px -1px 0 #000000;
+    --radius: 5px;
+    --transition:        0.10s linear;
+    --bg-toggle-inactive: #0d1117;
 }
