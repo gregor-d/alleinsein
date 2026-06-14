@@ -753,12 +753,15 @@ function buildLayout4() {
         popup.classList.remove('open');
         const drawer = document.getElementById('settings-drawer');
         const backdrop = document.getElementById('settings-backdrop');
+        const bottomBar = document.getElementById('bottom-bar');
         if (drawer.classList.contains('open')) {
             drawer.classList.remove('open');
             backdrop.classList.remove('open');
+            if (bottomBar) bottomBar.style.display = '';
         } else {
             drawer.classList.add('open');
             backdrop.classList.add('open');
+            if (bottomBar) bottomBar.style.display = 'none';
         }
     };
     document.getElementById('drawer-close').onclick = closeLayout4Drawer;
@@ -779,6 +782,8 @@ function buildLayout4() {
 function closeLayout4Drawer() {
     document.getElementById('settings-drawer').classList.remove('open');
     document.getElementById('settings-backdrop').classList.remove('open');
+    const bottomBar = document.getElementById('bottom-bar');
+    if (bottomBar) bottomBar.style.display = '';
 }
 
 // ─── DRAWER BODY ───
