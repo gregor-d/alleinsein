@@ -384,18 +384,6 @@ function makeHotspotChip() {
 
 
 
-    const bottom = document.createElement('div');
-    bottom.className = 'layer-strip-card-bottom layer-strip-card-bottom--hotspot';
-    bottom.innerHTML = `
-        <div class="hotspot-toggle-row">
-            <span class="hotspot-side-label hotspot-no-label">NO</span>
-            <label class="toggle hotspot-chip-toggle" style="pointer-events:none;">
-                <input type="checkbox" id="hotspot-chip-input" ${hotspotMode ? 'checked' : ''} style="pointer-events:none;" />
-                <span class="toggle-track"></span>
-            </label>
-            <span class="hotspot-side-label hotspot-top-label">TOP</span>
-        </div>`;
-    card.appendChild(bottom);
 
     function toggleHotspot() {
         hotspotMode = !hotspotMode;
@@ -419,8 +407,6 @@ function syncHotspotMode() {
         chip.classList.toggle('active', hotspotMode);
         chip.setAttribute('aria-checked', String(hotspotMode));
     }
-    const chipInput = document.getElementById('hotspot-chip-input');
-    if (chipInput) chipInput.checked = hotspotMode;
     const drawerCard = document.getElementById('drawer-hotspot-card');
     if (drawerCard) drawerCard.classList.toggle('active', hotspotMode);
     const drawerToggle = document.getElementById('drawer-hotspot-toggle');
