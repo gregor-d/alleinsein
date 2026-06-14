@@ -773,6 +773,14 @@ function buildLayout4() {
     requestAnimationFrame(() => {
         const h = document.getElementById('bottom-bar')?.offsetHeight;
         if (h) document.documentElement.style.setProperty('--bottom-bar-h', `${h}px`);
+
+        // if (window.innerWidth >= 769) {
+        //     const drawer = document.getElementById('settings-drawer');
+        //     if (drawer) {
+        //         drawer.classList.add('open');
+        //         updateFabShift();
+        //     }
+        // }
     });
 }
 
