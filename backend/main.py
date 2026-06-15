@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # If present, load .env; real environment variables override .env values (e.g. docker or export)
     model_config = SettingsConfigDict(
         env_prefix="APP_",
-        env_file=".env",
+        env_file=APP_DIR / ".env",
         extra="ignore",
         dotenv_filtering="only_existing",
     )

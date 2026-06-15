@@ -33,7 +33,7 @@ for port in 5173 8000; do
   fi
 done
 
-setsid uv run uvicorn backend.main:app --port 8000 &
+setsid uv run uvicorn backend.main:app --port 8000 --reload &
 backend_pid="$!"
 
 echo "Waiting for backend to be ready..."

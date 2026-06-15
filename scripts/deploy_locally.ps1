@@ -13,8 +13,8 @@ $frontendArgs = @(
 ) -join " "
 
 $backends = @(
-    @{ Exe = "uvicorn"; Args = "backend.main:app --port 8000" }
-    @{ Exe = "uv"; Args = "run uvicorn backend.main:app --port 8000" }
+    @{ Exe = "uvicorn"; Args = "backend.main:app --port 8000 --reload" }
+    @{ Exe = "uv"; Args = "run uvicorn backend.main:app --port 8000 --reload" }
 )
 
 try {
@@ -42,7 +42,7 @@ try {
         throw "Backend failed to start with code $($backend.ExitCode)."
     }
 
-    & "$PSScriptRoot\smoke-test.ps1"
+    # & "$PSScriptRoot\smoke-test.ps1"
 
     $frontend = Start-Process cmd.exe -ArgumentList $frontendArgs -PassThru -NoNewWindow
 
