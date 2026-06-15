@@ -1,8 +1,14 @@
 import importlib
+from pathlib import Path
 import sys
+import tomllib
 
 import pytest
 from fastapi.testclient import TestClient
+
+from backend._version import __version__
+
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 APP_ENV_KEYS = [
     "APP_ENV",
@@ -34,6 +40,23 @@ def test_default_environment_is_prod():
 
     assert main.settings.env == "prod"
     assert main.settings.enable_docs is False
+
+
+def test_healthz_includes_project_version():
+    main = reload_main()
+
+    with TestClient(main.app, raise_server_exceptions=False) as client:
+        response = client.get("/healthz")
+
+    assert response.status_code == 200
+    assert response.json()["version"] == __version__
+
+
+def test_backend_version_matches_project_version():
+    with (PROJECT_DIR / "pyproject.toml").open("rb") as project_config:
+        project_version = tomllib.load(project_config)["project"]["version"]
+
+    assert __version__ == project_version
 
 
 @pytest.mark.parametrize(

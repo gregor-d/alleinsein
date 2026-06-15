@@ -30,5 +30,8 @@ fi
 echo "Creating virtual environment and installing dependencies with uv..."
 uv sync
 
+echo "Installing pre-commit hooks..."
+uv run pre-commit install --hook-type pre-commit --hook-type commit-msg
+
 echo "Enter virtual environment:"
 echo ".venv/bin/activate"
