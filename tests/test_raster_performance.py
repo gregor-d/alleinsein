@@ -27,7 +27,7 @@ TITILER_TILE_COUNT = max(1, int(os.getenv("TITILER_TILE_COUNT", "400")))
 TITILER_REQUEST_TIMEOUT = float(os.getenv("TITILER_REQUEST_TIMEOUT", "60"))
 BENCHMARK_RUNS = 2
 WARMUP_TILES = 50
-PROGRESS_INTERVAL = TITILER_TILE_COUNT/4
+PROGRESS_INTERVAL = max(1, TITILER_TILE_COUNT // 4)
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +61,9 @@ class RunResult:
 # ---------------------------------------------------------------------------
 # Tile generation
 # ---------------------------------------------------------------------------
-def generate_tiles(raster_path: Path, count: int, seed: int = 42) -> list[tuple[int, int, int]]:
+def generate_tiles(
+    raster_path: Path, count: int, seed: int = 42
+) -> list[tuple[int, int, int]]:
     """Generate deterministic tile coords inside the raster's centre 50% bounding box."""
     with rasterio.open(raster_path) as src:
         bounds, crs = src.bounds, src.crs
@@ -71,7 +73,12 @@ def generate_tiles(raster_path: Path, count: int, seed: int = 42) -> list[tuple[
         lng_min, lat_min = transformer.transform(bounds.left, bounds.bottom)
         lng_max, lat_max = transformer.transform(bounds.right, bounds.top)
     else:
-        lng_min, lat_min, lng_max, lat_max = bounds.left, bounds.bottom, bounds.right, bounds.top
+        lng_min, lat_min, lng_max, lat_max = (
+            bounds.left,
+            bounds.bottom,
+            bounds.right,
+            bounds.top,
+        )
 
     # 25% inset on each side → centre 50% avoids nodata border tiles (which return 404)
     cx, cy = (lng_min + lng_max) / 2, (lat_min + lat_max) / 2
@@ -103,7 +110,11 @@ _BAR_WIDTH = 28
 def _progress_bar(done: int, total: int, elapsed_s: float, avg_ms: float) -> str:
     pct = done / total if total else 0
     filled = int(_BAR_WIDTH * pct)
-    bar = "=" * filled + (">" if filled < _BAR_WIDTH else "") + " " * max(0, _BAR_WIDTH - filled - 1)
+    bar = (
+        "=" * filled
+        + (">" if filled < _BAR_WIDTH else "")
+        + " " * max(0, _BAR_WIDTH - filled - 1)
+    )
     est_left = (elapsed_s / done) * (total - done) if done > 0 else 0
     return f"  [{bar}] {done:>4}/{total}  avg={avg_ms:>5.0f}ms  ~{est_left:>4.0f}s left"
 
@@ -112,21 +123,41 @@ def _progress_bar(done: int, total: int, elapsed_s: float, avg_ms: float) -> str
 # Reporting
 # ---------------------------------------------------------------------------
 _COLS = [30, 4, 8, 8, 8, 8, 8, 8, 6, 6]
-_HDRS = ["File", "Run", "Avg ms", "Med ms", "P90 ms", "P95 ms", "Min ms", "Max ms", "RPS", "Fails"]
-_ROW = "| {:<30} | {:>4} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>6} | {:>6} |"
+_HDRS = [
+    "File",
+    "Run",
+    "Avg ms",
+    "Med ms",
+    "P90 ms",
+    "P95 ms",
+    "Min ms",
+    "Max ms",
+    "RPS",
+    "Fails",
+]
+_ROW = (
+    "| {:<30} | {:>4} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>8} | {:>6} | {:>6} |"
+)
 _SEP = "|-" + "-|-".join("-" * w for w in _COLS) + "-|"
 
 
 def _fmt_row(filename: str, run: str, s: dict[str, float], failures: int) -> str:
     return _ROW.format(
-        filename, run,
-        f"{s['avg']:.1f}", f"{s['med']:.1f}", f"{s['p90']:.1f}", f"{s['p95']:.1f}",
-        f"{s['min']:.1f}", f"{s['max']:.1f}", f"{s['rps']:.1f}", failures,
+        filename,
+        run,
+        f"{s['avg']:.1f}",
+        f"{s['med']:.1f}",
+        f"{s['p90']:.1f}",
+        f"{s['p95']:.1f}",
+        f"{s['min']:.1f}",
+        f"{s['max']:.1f}",
+        f"{s['rps']:.1f}",
+        failures,
     )
 
 
 def _print_header(label: str):
-    print(f"\n{'='*80}\n{label}\n{'='*80}", flush=True)
+    print(f"\n{'=' * 80}\n{label}\n{'=' * 80}", flush=True)
     print(_ROW.format(*_HDRS), flush=True)
     print(_SEP, flush=True)
 
@@ -159,7 +190,9 @@ def print_summary_report(results: list[RunResult], label: str):
             failures=sum(r.failures for r in runs),
             failure_examples=[],
         )
-        print(_fmt_row(filename, "ALL", combined.stats(), combined.failures), flush=True)
+        print(
+            _fmt_row(filename, "ALL", combined.stats(), combined.failures), flush=True
+        )
     print("=" * 80 + "\n", flush=True)
 
 
@@ -180,23 +213,36 @@ def external_titiler_is_ready(base_url: str) -> bool:
 AsyncRequestFn = Callable[[str, int, int, int], Awaitable[int]]
 
 
-async def run_benchmark(request_tile: AsyncRequestFn, label: str, concurrency: int) -> list[RunResult]:
+async def run_benchmark(
+    request_tile: AsyncRequestFn, label: str, concurrency: int
+) -> list[RunResult]:
     raster_dir = PROJECT_DIR / settings.raster_path
     assert raster_dir.exists(), f"Raster directory not found: {raster_dir}"
 
-    raster_files = sorted(raster_dir.glob("*.tif"))
-    assert raster_files, "No .tif files found in raster directory"
+    raster_files = sorted(
+        p
+        for p in raster_dir.glob("*.tif")
+        if p.stem.startswith(("gdal_", "rio_", "worst_"))
+    )
+    assert raster_files, (
+        "No benchmark .tif files found (expected names starting with gdal_, rio_, or worst_)"
+    )
 
-    print(f"\n\n{'='*80}", flush=True)
+    print(f"\n\n{'=' * 80}", flush=True)
     print(f"COG PERFORMANCE BENCHMARK — {label}", flush=True)
     print(f"  Rasters    : {', '.join(f.name for f in raster_files)}", flush=True)
-    print(f"  Tiles/file : {TITILER_TILE_COUNT}  |  Warm-up: {WARMUP_TILES}  |  Runs: {BENCHMARK_RUNS}  |  Concurrency: {concurrency}", flush=True)
+    print(
+        f"  Tiles/file : {TITILER_TILE_COUNT}  |  Warm-up: {WARMUP_TILES}  |  Runs: {BENCHMARK_RUNS}  |  Concurrency: {concurrency}",
+        flush=True,
+    )
     print("=" * 80, flush=True)
 
     semaphore = asyncio.Semaphore(concurrency)
     all_results: list[RunResult] = []
 
-    async def timed(filename: str, z: int, x: int, y: int) -> tuple[int, int, int, int, float, str | None]:
+    async def timed(
+        filename: str, z: int, x: int, y: int
+    ) -> tuple[int, int, int, int, float, str | None]:
         async with semaphore:
             t0 = time.perf_counter()
             try:
@@ -208,7 +254,9 @@ async def run_benchmark(request_tile: AsyncRequestFn, label: str, concurrency: i
 
     for run in range(1, BENCHMARK_RUNS + 1):
         order_label = "reversed" if run % 2 == 0 else "normal"
-        file_order = list(reversed(raster_files)) if run % 2 == 0 else list(raster_files)
+        file_order = (
+            list(reversed(raster_files)) if run % 2 == 0 else list(raster_files)
+        )
         print(f"\n--- Run {run}/{BENCHMARK_RUNS} ({order_label} order) ---", flush=True)
 
         for raster_file in file_order:
@@ -218,14 +266,19 @@ async def run_benchmark(request_tile: AsyncRequestFn, label: str, concurrency: i
 
             # warm-up: fire first WARMUP_TILES concurrently to open dataset and seed OS cache
             print(f"  [{filename}] warming up ({WARMUP_TILES} tiles)...", flush=True)
-            warmup_tasks = [asyncio.create_task(timed(filename, z, x, y)) for z, x, y in tiles[:WARMUP_TILES]]
+            warmup_tasks = [
+                asyncio.create_task(timed(filename, z, x, y))
+                for z, x, y in tiles[:WARMUP_TILES]
+            ]
             for coro in asyncio.as_completed(warmup_tasks):
                 _, _, _, code, _, err = await coro
                 if code != 200:
                     failures.append(f"warm-up {code}" + (f" ({err})" if err else ""))
 
             # benchmark
-            print(f"  [{filename}] benchmarking {TITILER_TILE_COUNT} tiles...", flush=True)
+            print(
+                f"  [{filename}] benchmarking {TITILER_TILE_COUNT} tiles...", flush=True
+            )
             latencies: list[float] = []
             tasks = [asyncio.create_task(timed(filename, z, x, y)) for z, x, y in tiles]
             total_start = time.perf_counter()
@@ -235,15 +288,21 @@ async def run_benchmark(request_tile: AsyncRequestFn, label: str, concurrency: i
                 if code == 200:
                     latencies.append(lat_ms)
                 else:
-                    failures.append(f"{z}/{x}/{y}: {code}" + (f" ({err})" if err else ""))
+                    failures.append(
+                        f"{z}/{x}/{y}: {code}" + (f" ({err})" if err else "")
+                    )
 
                 if idx % PROGRESS_INTERVAL == 0 or idx == TITILER_TILE_COUNT:
                     elapsed = time.perf_counter() - total_start
                     avg = sum(latencies) / len(latencies) if latencies else 0.0
-                    print(_progress_bar(idx, TITILER_TILE_COUNT, elapsed, avg), flush=True)
+                    print(
+                        _progress_bar(idx, TITILER_TILE_COUNT, elapsed, avg), flush=True
+                    )
 
             total_s = time.perf_counter() - total_start
-            result = RunResult(run, filename, latencies, total_s, len(failures), failures[:5])
+            result = RunResult(
+                run, filename, latencies, total_s, len(failures), failures[:5]
+            )
             s = result.stats()
             print(
                 f"  [{filename}] run {run} done — avg={s['avg']:.1f}ms  p90={s['p90']:.1f}ms  rps={s['rps']:.1f}  fails={result.failures}",
@@ -277,11 +336,16 @@ def test_cog_performance_fixture_async():
             timeout=httpx2.Timeout(TITILER_REQUEST_TIMEOUT),
             trust_env=False,
         ) as client:
+
             async def request_tile(filename: str, z: int, x: int, y: int) -> int:
-                r = await client.get(f"/tiles/WebMercatorQuad/{z}/{x}/{y}", params={"raster": filename})
+                r = await client.get(
+                    f"/tiles/WebMercatorQuad/{z}/{x}/{y}", params={"raster": filename}
+                )
                 return r.status_code
 
-            return await run_benchmark(request_tile, "async ASGI fixture", TITILER_CONCURRENCY)
+            return await run_benchmark(
+                request_tile, "async ASGI fixture", TITILER_CONCURRENCY
+            )
 
     results = asyncio.run(_run())
     print_detail_report(results, "async ASGI fixture")
@@ -304,11 +368,16 @@ def test_cog_performance_real_async():
             limits=limits,
             trust_env=False,
         ) as client:
+
             async def request_tile(filename: str, z: int, x: int, y: int) -> int:
-                r = await client.get(f"/tiles/WebMercatorQuad/{z}/{x}/{y}", params={"raster": filename})
+                r = await client.get(
+                    f"/tiles/WebMercatorQuad/{z}/{x}/{y}", params={"raster": filename}
+                )
                 return r.status_code
 
-            return await run_benchmark(request_tile, f"async HTTP {TITILER_BASE_URL}", TITILER_CONCURRENCY)
+            return await run_benchmark(
+                request_tile, f"async HTTP {TITILER_BASE_URL}", TITILER_CONCURRENCY
+            )
 
     results = asyncio.run(_run())
     print_detail_report(results, f"async HTTP {TITILER_BASE_URL}")
