@@ -4,19 +4,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-source "${SCRIPT_DIR}/../osm/area_config.sh"
+# shellcheck source=load_raster_config.sh
+source "${SCRIPT_DIR}/load_raster_config.sh"
 
 input_raster_stack="${SCRIPT_DIR}/${AREA}_raster_stack.tif"
 output_raster="${SCRIPT_DIR}/${AREA}_raster.tif"
-
-GTIFF_CREATION_OPTIONS=(
-  "--of=GTiff"
-  "--co=TILED=YES"
-  "--co=COMPRESS=DEFLATE"
-  "--co=PREDICTOR=2"
-#   "--co=INTERLEAVE=BAND"
-#   "--co=BIGTIFF=IF_SAFER"
-)
 
 # create only one raster with all the layers stacked together, so that we can easily serve it with TiTiler and do the remapping on the fly in the API
 gdal_calc \
@@ -28,27 +20,21 @@ gdal_calc \
   -F $input_raster_stack --F_band=6 \
   --calc="where(F==1, 200, A*B + (A+10)*C + (A+20)*D + (A+30)*E)" \
   --outfile=$output_raster \
-  --type=Byte \
-  --NoDataValue=255 \
-  --creation-option=TILED=YES \
-  --creation-option=COMPRESS=DEFLATE \
-  --creation-option=PREDICTOR=2 \
-  --overwrite
+  "--type=$RASTER_DATA_TYPE" \
+  "--NoDataValue=$RASTER_NODATA" \
+  "${GTIFF_CREATION_OPTIONS[@]}" \
+  ${OVERWRITE:-}
 
 gdal raster convert \
   -f COG \
-  --co COMPRESS=ZSTD \
-  --co PREDICTOR=NO \
-  --co OVERVIEWS=AUTO \
-  --co RESAMPLING=NEAREST \
-  --co BIGTIFF=IF_SAFER \
+  "${COG_WRITE_OPTIONS[@]}" \
   $output_raster \
   ${output_raster%.tif}_cog.tif \
-  --overwrite
+  ${OVERWRITE:-}
 
-gdal raster reproject -d EPSG:3857 sachsen_raster.tif temp_3857.tif --overwrite
+gdal raster reproject -d "$WEB_EPSG" sachsen_raster.tif temp_3857.tif ${OVERWRITE:-}
 rio cogeo create temp_3857.tif sachsen_raster_web.tif
-gdal raster reproject -d EPSG:3857 sachsen_raster_stack.tif temp_3857.tif --overwrite
+gdal raster reproject -d "$WEB_EPSG" sachsen_raster_stack.tif temp_3857.tif ${OVERWRITE:-}
 rio cogeo create temp_3857.tif sachsen_raster_stack_web.tif
 
 
@@ -74,5 +60,3 @@ rio cogeo create temp_3857.tif sachsen_raster_stack_web.tif
 # 120 0 0 0 nature
 # 80 0 0 0 farm
 # 50 0 0 0 urban
-
-

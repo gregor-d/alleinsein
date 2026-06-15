@@ -1,42 +1,31 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# set env varible area to germany
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-export AREA="${AREA:-germany}"
-# export OVERWRITE=""
-export OVERWRITE="--overwrite"
-
-# Shared raster bounds in EPSG:3035.
-# to get raster bounds use /input_data/bounds/export_bounds.py or check the .env file for the exported bounds
-# need to go to next 100, so we avoid weird clipping behaviour when combining 20m raster and 100m raste
-export MINX="4031300"
-export MINY="2684000"
-export MAXX="4672600"
-export MAXY="3556600"
+# shellcheck source=utils/load_raster_config.sh
+source "${SCRIPT_DIR}/utils/load_raster_config.sh"
 
 # create paths, road and railways geopackage
 # use create_gpkg.sh in input_data/osm to create the gpkg files for roads, paths and railways
 echo "Creating GeoPackage files for roads, paths and railways..."
-bash utils/create_gpkg.sh
+bash "${SCRIPT_DIR}/utils/create_gpkg.sh"
 
 echo "Rasterizing roads, paths and railways and creating smoothed combined raster..."
-bash utils/rasterize_all_road_lengths.sh
+bash "${SCRIPT_DIR}/utils/rasterize_all_road_lengths.sh"
 
 echo "Creating CLC raster stack..."
-bash utils/create_clc_raster.sh
-
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+bash "${SCRIPT_DIR}/utils/create_clc_raster.sh"
 
 clc_classes="${SCRIPT_DIR}/input/clc/germany_clc_classes_stack.tif"
 roads="${SCRIPT_DIR}/input/osm/${AREA}_roads_smooth.tif"                     
 bounds_gpkg="${SCRIPT_DIR}/input/bounds/${AREA}.gpkg"
-output_web_cog="${SCRIPT_DIR}/${AREA}_raster_web.tif"
+output_cog="${SCRIPT_DIR}/${AREA}_raster_web.tif"
 
 echo "calculating heatmap raster stack..."
 echo "using roads: $roads"
 echo "using clc classes: $clc_classes"
-echo "output raster: $output_web_cog"
+echo "output raster: $output_cog"
 
 # Create a temporary directory for intermediate steps, cleaned up automatically on exit
 TEMP_DIR=$(mktemp -d)
@@ -53,6 +42,10 @@ echo "running gdal__calc to tempfile ${raw_calc_raster}..."
 # 4       # urban
 # 5       # water
 
+# This is the main function:
+# It uses the roads-heatmap to create virtual layers by masking it with landcover.
+# Each layer has a different landcover and its own value-range.
+# With this its possible to have only one request to the backend for all layers, and not one per layer.
 gdal_calc \
   -A "$roads" --A_band=1 \
   -B "$clc_classes" --B_band=1 \
@@ -62,23 +55,32 @@ gdal_calc \
   -F "$clc_classes" --F_band=5 \
   --calc="where(F==1, 200, A*B + (A+10)*C + (A+20)*D + (A+30)*E)" \
   --outfile="$raw_calc_raster" \
-  --type=Byte \
-  --NoDataValue=255 \
-  --creation-option=TILED=YES \
-  --creation-option=COMPRESS=DEFLATE \
-  --creation-option=PREDICTOR=2 \
-  --overwrite
+  "--type=$RASTER_DATA_TYPE" \
+  "--NoDataValue=$RASTER_NODATA" \
+  "${GTIFF_CREATION_OPTIONS[@]}" \
+  ${OVERWRITE:-}
 
-# Process the pipeline: read -> clip to exact vector boundary -> reproject -> write temp tiff
 echo "Running GDAL pipeline clip to bounds and reproject..."
 gdal raster pipeline \
   "!" read "$raw_calc_raster" \
   "!" clip --like "$bounds_gpkg" --like-layer "$AREA" --allow-bbox-outside-source \
-  "!" reproject -d EPSG:3857 \
-  "!" write --overwrite "$temp_reprojected_raster"
+  "!" reproject -d "$WEB_EPSG" \
+  "!" write ${OVERWRITE:-} "$temp_reprojected_raster"
 
-# Create final optimized COG with rio-cogeo using web-optimized tiling
 echo "Creating web-optimized COG with overviews..."
-rio cogeo create -w "$temp_reprojected_raster" "$output_web_cog"
+# use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads.
+rio cogeo create --web-optimized "$temp_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling mode
 
-echo "Successfully created masked COG raster: $output_web_cog"
+# Alternative:
+# add overviews and create COG
+# gdal raster pipeline \
+#   "!" read "$temp_reprojected_raster" \
+#   "!" overview add --levels 2,4,8,16,32 --resampling nearest \
+#   "!" write -f COG --co COMPRESS=ZSTD --co PREDICTOR=NO --co RESAMPLING=NEAREST --co BIGTIFF=IF_SAFER \
+#   --co TILING_SCHEME=GoogleMapsCompatible \
+#   --co WARP_RESAMPLING=NEAREST \
+#   --co OVERVIEW_RESAMPLING=MODE \
+#    --overwrite "gl_${$output_cog}"
+
+echo "Successfully created masked COG raster: $output_cog"
+

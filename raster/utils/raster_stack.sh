@@ -4,7 +4,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-source "${SCRIPT_DIR}/../osm/area_config.sh"
+# shellcheck source=load_raster_config.sh
+source "${SCRIPT_DIR}/load_raster_config.sh"
 
 slope_classes="${SCRIPT_DIR}/germany_slope_classes.tif"
 clc_classes="${SCRIPT_DIR}/germany_clc_classes_stack.tif"
@@ -14,15 +15,6 @@ roads="${SCRIPT_DIR}/${AREA}_roads_heat025_src0_10.tif"
 # railways="${SCRIPT_DIR}/${AREA}_railways_lengths_50.tif"
 output_raster_stack="${SCRIPT_DIR}/${AREA}_raster_stack.tif"
 output_raster="${SCRIPT_DIR}/${AREA}_raster.tif"
-
-GTIFF_CREATION_OPTIONS=(
-  "--of=GTiff"
-  "--co=TILED=YES"
-  "--co=COMPRESS=DEFLATE"
-  "--co=PREDICTOR=2"
-#   "--co=INTERLEAVE=BAND"
-#   "--co=BIGTIFF=IF_SAFER"
-)
 
 read minx miny maxx maxy < <(
   gdalinfo -json "$roads" |
@@ -41,12 +33,12 @@ gdal raster stack \
   -i "$clc_classes" \
   -i "$slope_classes" \
   -o "$output_raster_stack" \
-  "${GTIFF_CREATION_OPTIONS[@]}" \
+  "${GTIFF_WRITE_OPTIONS[@]}" \
   --target-aligned-pixels \
-  --resolution 20,20 \
+  --resolution "$RASTER_RESOLUTION" \
   --bbox "$minx,$miny,$maxx,$maxy" \
-  --dst-nodata 255 \
-  --overwrite
+  --dst-nodata "$RASTER_NODATA" \
+  ${OVERWRITE:-}
 
 gdal raster overview add \
   -i "$output_raster_stack" \
@@ -59,14 +51,10 @@ echo "Raster stack written to $output_raster_stack"
 
 gdal raster convert \
   -f COG \
-  --co COMPRESS=ZSTD \
-  --co PREDICTOR=NO \
-  --co OVERVIEWS=AUTO \
-  --co RESAMPLING=NEAREST \
-  --co BIGTIFF=IF_SAFER \
+  "${COG_WRITE_OPTIONS[@]}" \
   $output_raster_stack \
   ${output_raster_stack%.tif}_cog.tif \
-  --overwrite
+  ${OVERWRITE:-}
 
 
 # remap CORINE land cover types
@@ -91,5 +79,3 @@ gdal raster convert \
 # 120 0 0 0 nature
 # 80 0 0 0 farm
 # 50 0 0 0 urban
-
-

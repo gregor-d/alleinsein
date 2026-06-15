@@ -3,11 +3,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=/dev/null
-source "${SCRIPT_DIR}/area_config.sh"
+
+# shellcheck source=load_raster_config.sh
+source "${SCRIPT_DIR}/load_raster_config.sh"
 
 FILE="${SCRIPT_DIR}/${AREA}-latest.osm.pbf"
-TARGET_CRS="EPSG:3035"
 OUTPUT_PATH="${SCRIPT_DIR}"
 
 ROADS="highway IN ('residential','secondary','primary','tertiary','service',\
@@ -51,7 +51,7 @@ gdal vector pipeline \
   ! read "$FILE" --if OSM --oo INTERLEAVED_READING=YES --layer lines \
   ! filter --where "$ROADS" \
   ! select --fields _ogr_geometry_ \
-  ! reproject --dst-crs "$TARGET_CRS" \
+  ! reproject --dst-crs "$TARGET_EPSG" \
   ! write "${OUTPUT_PATH}/${AREA}_roads.gpkg" ${OVERWRITE:-}
 
 echo "=== Writing paths ==="
@@ -59,7 +59,7 @@ gdal vector pipeline \
   ! read "$FILE" --if OSM --oo INTERLEAVED_READING=YES --layer lines \
   ! filter --where "$PATHS" \
   ! select --fields _ogr_geometry_ \
-  ! reproject --dst-crs "$TARGET_CRS" \
+  ! reproject --dst-crs "$TARGET_EPSG" \
   ! write "${OUTPUT_PATH}/${AREA}_paths.gpkg" ${OVERWRITE:-}
 
 echo "=== Writing railways ==="
@@ -67,7 +67,7 @@ gdal vector pipeline \
   ! read "$FILE" --if OSM --oo INTERLEAVED_READING=YES --layer lines \
   ! filter --where "$RAILWAYS" \
   ! select --fields _ogr_geometry_ \
-  ! reproject --dst-crs "$TARGET_CRS" \
+  ! reproject --dst-crs "$TARGET_EPSG" \
   ! write "${OUTPUT_PATH}/${AREA}_railways.gpkg" ${OVERWRITE:-}
 
 echo "Done."
