@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="APP_",
-        # env_file=[APP_DIR / ".env", APP_DIR / ".env.dev"],
+        env_file=[APP_DIR / "prod.env", APP_DIR / "dev.env"],
         extra="ignore",
         dotenv_filtering="only_existing",
     )

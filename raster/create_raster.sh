@@ -18,13 +18,13 @@ export MAXY="3556600"
 # create paths, road and railways geopackage
 # use create_gpkg.sh in input_data/osm to create the gpkg files for roads, paths and railways
 echo "Creating GeoPackage files for roads, paths and railways..."
-# bash input/osm/create_gpkg.sh
+bash utils/create_gpkg.sh
 
 echo "Rasterizing roads, paths and railways and creating smoothed combined raster..."
-# bash input/osm/rasterize_all_road_lengths.sh
+bash utils/rasterize_all_road_lengths.sh
 
 echo "Creating CLC raster stack..."
-# bash input/clc/create_clc_raster.sh
+bash utils/create_clc_raster.sh
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 

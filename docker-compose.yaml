@@ -15,15 +15,14 @@ services:
       # - GDAL_INGESTED_BYTES_AT_OPEN=32768
       # - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
       # - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES
-      - GDAL_HTTP_MULTIPLEX=YES
-      - GDAL_HTTP_VERSION=2
+      GDAL_HTTP_MULTIPLEX: "YES"
+      GDAL_HTTP_VERSION: "2"
       # - PYTHONWARNINGS=ignore
       # - VSI_CACHE=TRUE
       # - VSI_CACHE_SIZE=536870912
-      # TiTiler config
-      # - APP_ENABLE_DOCS=False
-      # - APP_ALLOWED_TMS=WebMercatorQuad
-      # - APP_ENV=dev
+      # App overrides here win over backend/${APP_ENV:-prod}.env.
+      # APP_ENABLE_DOCS: "false"
+      # APP_ALLOWED_TMS: "WebMercatorQuad"
 
     volumes:
       - ./backend:/backend

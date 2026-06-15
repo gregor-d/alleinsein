@@ -22,6 +22,7 @@ PATHS="highway IN ('footway','path','track','bridleway','trail')"
 RAILWAYS="railway IN ('rail','light_rail','tram','subway','narrow_gauge',\
 'funicular','monorail','miniature','preserved','construction','proposed')"
 
+# ADD THIS COMMENTS TO ITS OWN bash-script
 # echo "=== Unique highway types ==="
 # gdal vector sql \
 #   --if OSM \
@@ -33,7 +34,6 @@ RAILWAYS="railway IN ('rail','light_rail','tram','subway','narrow_gauge',\
 #   | tail -n +2 \
 #   | tr -d '\r' \
 #   | LC_ALL=C sort -u
-
 # echo "=== Unique railway types ==="
 # gdal vector sql \
 #   --if OSM \
