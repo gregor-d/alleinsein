@@ -29,9 +29,10 @@ class Settings(BaseSettings):
     add_viewer: bool = False
     add_ogc_maps: bool = False
 
+    # If present, load .env; real environment variables override .env values (e.g. docker or export)
     model_config = SettingsConfigDict(
         env_prefix="APP_",
-        env_file=[APP_DIR / "prod.env", APP_DIR / "dev.env"],
+        env_file=".env",
         extra="ignore",
         dotenv_filtering="only_existing",
     )
@@ -85,6 +86,7 @@ if settings.env == "prod":
     class CustomTiler(TilerFactory):
         def register_routes(self):
             self.tile()
+
             self.tilejson()
 elif settings.env == "dev":
 
