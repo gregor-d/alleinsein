@@ -17,7 +17,7 @@ repos:
 
       - id: ruff-format-check
         name: ruff format check
-        entry: uv run --active ruff format --check
+        entry: uv run --active ruff format
         language: system
         types_or:
           - python
