@@ -46,6 +46,13 @@ temp_reprojected_raster="${TEMP_DIR}/${AREA}_raster_3857.tif"
 
 echo "running gdal__calc to tempfile ${raw_calc_raster}..."
 
+# CORINE land cover types
+# 1       # nature
+# 2       # farm
+# 3       # park
+# 4       # urban
+# 5       # water
+
 gdal_calc \
   -A "$roads" --A_band=1 \
   -B "$clc_classes" --B_band=1 \
