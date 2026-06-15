@@ -38,7 +38,8 @@ htmlcov/
 .env.*
 
 # Editor settings
-.vscode/
+.vscode/*
+!.vscode/settings.json
 *.swp
 
 # OS files
