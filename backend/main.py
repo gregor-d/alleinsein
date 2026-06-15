@@ -1,5 +1,7 @@
 from pathlib import Path
+from typing import cast
 
+from backend._version import __version__
 from fastapi import FastAPI
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.cors import CORSMiddleware
@@ -16,7 +18,10 @@ PROJECT_DIR = APP_DIR.parent
 class Settings(BaseSettings):
     env: str = "prod"
     enable_docs: bool = False
-    cors_origins: list[str] = ["https://alleinseinkarte.de", "https://www.alleinseinkarte.de"]
+    cors_origins: list[str] = [
+        "https://alleinseinkarte.de",
+        "https://www.alleinseinkarte.de",
+    ]
     allowed_tms: str = "WebMercatorQuad"
     raster_path: str = "raster/out"
     add_preview: bool = False
@@ -31,6 +36,7 @@ class Settings(BaseSettings):
         dotenv_filtering="only_existing",
     )
 
+
 settings = Settings()
 
 
@@ -43,13 +49,14 @@ def build_supported_tms(name: str) -> TileMatrixSets:
 
     return TileMatrixSets(result)
 
+
 def get_raster_path(raster: str = "test_raster.tif") -> Path:
     # prevent directory traversal or access to subdirectories
     if not raster or "/" in raster or "\\" in raster or raster.startswith("."):
         # should raise 404 to prevent information disclosure about the existence of files
         raise FileNotFoundError(f"Rasters file not found: {raster}")
 
-    target_path = PROJECT_DIR / settings.raster_path / raster 
+    target_path = PROJECT_DIR / settings.raster_path / raster
     if not target_path.is_file():
         raise FileNotFoundError(f"Raster file not found: {target_path}")
     return target_path
@@ -62,7 +69,7 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.enable_docs else None,
 )
 
-add_exception_handlers(app, DEFAULT_STATUS_CODES)
+add_exception_handlers(app, cast(dict[type[Exception], int], DEFAULT_STATUS_CODES))
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,13 +80,14 @@ app.add_middleware(
 )
 
 
-
 if settings.env == "prod":
+
     class CustomTiler(TilerFactory):
         def register_routes(self):
             self.tile()
             self.tilejson()
 elif settings.env == "dev":
+
     class CustomTiler(TilerFactory):
         def register_routes(self):
             super().register_routes()
@@ -100,10 +108,10 @@ app.include_router(
 )
 
 
-
 @app.get("/healthz", include_in_schema=False)
 def healthz():
     return {
         "ok": True,
         "env": settings.env,
+        "version": __version__,
     }

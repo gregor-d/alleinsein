@@ -12,17 +12,27 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "commitizen>=4.0.0",
     "ty>=0.0.46",
+    "pre-commit>=4.0.0",
     "ruff>=0.15.16",
+    "pytest>=9.0.3",
     "rio-cogeo>=7.0.2",
     "osmnx>=2.1.0",
-    "pytest>=9.0.3",
-    "gdal==3.12.3",
+    "gdal==3.12.3; sys_platform != 'win32'",
 ]
+
 
 [tool.pytest.ini_options]
 addopts = "-s"
 pythonpath = ["."]
 testpaths = ["tests"]
-    
-    
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "pep621"
+tag_format = "v$version"
+version_files = [
+    "backend/_version.py:^__version__",
+]
+update_changelog_on_bump = false
