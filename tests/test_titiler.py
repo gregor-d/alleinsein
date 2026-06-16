@@ -19,6 +19,7 @@ def test_raster_default_endpoint(client):
     assert "content-bbox" in response.headers
     assert "content-crs" in response.headers
 
+
 def test_raster_endpoint(client):
     print("Testing specified raster endpoint...")
     response = client.get("/tiles/WebMercatorQuad/0/0/0?raster=test_raster.tif")
@@ -27,12 +28,12 @@ def test_raster_endpoint(client):
     assert "content-bbox" in response.headers
     assert "content-crs" in response.headers
 
+
 def test_raster_non_existent_endpoint(client):
     print("Testing non-existent raster endpoint...")
-    response = client.get(
-        "/tiles/WebMercatorQuad/0/0/0?raster=wrong_test_raster.tif"
-    )
+    response = client.get("/tiles/WebMercatorQuad/0/0/0?raster=wrong_test_raster.tif")
     assert response.status_code == 500
+
 
 def test_raster_secure_endpoint(client):
     print("Testing raster endpoint with directory traversal...")

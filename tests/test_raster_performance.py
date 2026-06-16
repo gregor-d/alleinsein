@@ -22,12 +22,11 @@ from backend.main import PROJECT_DIR, app, settings
 settings.raster_path = "raster/out/cog_compare"
 
 TITILER_BASE_URL = os.getenv("TITILER_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
-TITILER_CONCURRENCY = max(1, int(os.getenv("TITILER_CONCURRENCY", "25")))
-TITILER_TILE_COUNT = max(1, int(os.getenv("TITILER_TILE_COUNT", "400")))
+TITILER_CONCURRENCY = max(1, int(os.getenv("TITILER_CONCURRENCY", "20")))
+TITILER_TILE_COUNT = max(1, int(os.getenv("TITILER_TILE_COUNT", "1000")))
 TITILER_REQUEST_TIMEOUT = float(os.getenv("TITILER_REQUEST_TIMEOUT", "60"))
 BENCHMARK_RUNS = 2
-WARMUP_TILES = 50
-PROGRESS_INTERVAL = max(1, TITILER_TILE_COUNT // 4)
+WARMUP_TILES = 1
 
 
 # ---------------------------------------------------------------------------
@@ -214,7 +213,7 @@ AsyncRequestFn = Callable[[str, int, int, int], Awaitable[int]]
 
 
 async def run_benchmark(
-    request_tile: AsyncRequestFn, label: str, concurrency: int
+    request_tile: AsyncRequestFn, concurrency: int
 ) -> list[RunResult]:
     raster_dir = PROJECT_DIR / settings.raster_path
     assert raster_dir.exists(), f"Raster directory not found: {raster_dir}"
@@ -229,7 +228,7 @@ async def run_benchmark(
     )
 
     print(f"\n\n{'=' * 80}", flush=True)
-    print(f"COG PERFORMANCE BENCHMARK — {label}", flush=True)
+    print("COG PERFORMANCE BENCHMARK", flush=True)
     print(f"  Rasters    : {', '.join(f.name for f in raster_files)}", flush=True)
     print(
         f"  Tiles/file : {TITILER_TILE_COUNT}  |  Warm-up: {WARMUP_TILES}  |  Runs: {BENCHMARK_RUNS}  |  Concurrency: {concurrency}",
@@ -239,6 +238,10 @@ async def run_benchmark(
 
     semaphore = asyncio.Semaphore(concurrency)
     all_results: list[RunResult] = []
+    total_tiles = BENCHMARK_RUNS * len(raster_files) * TITILER_TILE_COUNT
+    global_done = 0
+    global_latencies: list[float] = []
+    global_start = time.perf_counter()
 
     async def timed(
         filename: str, z: int, x: int, y: int
@@ -253,19 +256,15 @@ async def run_benchmark(
             return z, x, y, code, (time.perf_counter() - t0) * 1000.0, err
 
     for run in range(1, BENCHMARK_RUNS + 1):
-        order_label = "reversed" if run % 2 == 0 else "normal"
         file_order = (
             list(reversed(raster_files)) if run % 2 == 0 else list(raster_files)
         )
-        print(f"\n--- Run {run}/{BENCHMARK_RUNS} ({order_label} order) ---", flush=True)
 
         for raster_file in file_order:
             filename = raster_file.name
             tiles = generate_tiles(raster_file, TITILER_TILE_COUNT)
             failures: list[str] = []
 
-            # warm-up: fire first WARMUP_TILES concurrently to open dataset and seed OS cache
-            print(f"  [{filename}] warming up ({WARMUP_TILES} tiles)...", flush=True)
             warmup_tasks = [
                 asyncio.create_task(timed(filename, z, x, y))
                 for z, x, y in tiles[:WARMUP_TILES]
@@ -275,41 +274,39 @@ async def run_benchmark(
                 if code != 200:
                     failures.append(f"warm-up {code}" + (f" ({err})" if err else ""))
 
-            # benchmark
-            print(
-                f"  [{filename}] benchmarking {TITILER_TILE_COUNT} tiles...", flush=True
-            )
             latencies: list[float] = []
             tasks = [asyncio.create_task(timed(filename, z, x, y)) for z, x, y in tiles]
             total_start = time.perf_counter()
 
-            for idx, coro in enumerate(asyncio.as_completed(tasks), start=1):
+            for coro in asyncio.as_completed(tasks):
                 z, x, y, code, lat_ms, err = await coro
                 if code == 200:
                     latencies.append(lat_ms)
+                    global_latencies.append(lat_ms)
                 else:
                     failures.append(
                         f"{z}/{x}/{y}: {code}" + (f" ({err})" if err else "")
                     )
-
-                if idx % PROGRESS_INTERVAL == 0 or idx == TITILER_TILE_COUNT:
-                    elapsed = time.perf_counter() - total_start
-                    avg = sum(latencies) / len(latencies) if latencies else 0.0
-                    print(
-                        _progress_bar(idx, TITILER_TILE_COUNT, elapsed, avg), flush=True
-                    )
+                global_done += 1
+                elapsed = time.perf_counter() - global_start
+                avg = (
+                    sum(global_latencies) / len(global_latencies)
+                    if global_latencies
+                    else 0.0
+                )
+                print(
+                    f"\r{_progress_bar(global_done, total_tiles, elapsed, avg)}",
+                    end="",
+                    flush=True,
+                )
 
             total_s = time.perf_counter() - total_start
             result = RunResult(
                 run, filename, latencies, total_s, len(failures), failures[:5]
             )
-            s = result.stats()
-            print(
-                f"  [{filename}] run {run} done — avg={s['avg']:.1f}ms  p90={s['p90']:.1f}ms  rps={s['rps']:.1f}  fails={result.failures}",
-                flush=True,
-            )
             all_results.append(result)
 
+    print(flush=True)
     return all_results
 
 
@@ -343,9 +340,7 @@ def test_cog_performance_fixture_async():
                 )
                 return r.status_code
 
-            return await run_benchmark(
-                request_tile, "async ASGI fixture", TITILER_CONCURRENCY
-            )
+            return await run_benchmark(request_tile, TITILER_CONCURRENCY)
 
     results = asyncio.run(_run())
     print_detail_report(results, "async ASGI fixture")
@@ -375,9 +370,7 @@ def test_cog_performance_real_async():
                 )
                 return r.status_code
 
-            return await run_benchmark(
-                request_tile, f"async HTTP {TITILER_BASE_URL}", TITILER_CONCURRENCY
-            )
+            return await run_benchmark(request_tile, TITILER_CONCURRENCY)
 
     results = asyncio.run(_run())
     print_detail_report(results, f"async HTTP {TITILER_BASE_URL}")
