@@ -1,6 +1,8 @@
-# alleinsein.de
+# [alleinsein.de](https://alleinsein.de)
 
-alleinsein.de is a spatial web application designed to help users visualize and explore isolation or "aloneness" through map data. The project utilizes high-performance Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https://developmentseed.org/titiler/) backend via FastAPI, combined with a frontend using MapLibre and/or Leaflet.
+[alleinsein.de](https://alleinsein.de) is a map for finding places where you can be alone. By visualizing areas where there is the lowest chance of meeting other people, it guides you to spots where you can escape people and have a good time with yourself.
+
+The project utilizes Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https://developmentseed.org/titiler/) backend via FastAPI, combined with a frontend using MapLibre and/or Leaflet.
 
 |PC Layout |Mobile Layout |
 |---|---|
@@ -34,11 +36,11 @@ Each script has a Linux (`.sh`) and a Windows PowerShell (`.ps1`) variant with i
 | `scripts/frontend.sh` / `.ps1` | Starts the browser-sync frontend dev server on port 5173 |
 | `scripts/docker.sh` / `.ps1` | Runs `docker compose up -d --force-recreate tiler` (containerised backend) |
 | `scripts/smoke-test.sh` / `.ps1` | Hits `/healthz` and a sample tile endpoint; exits non-zero on any non-200 response |
-| `raster/create_raster.sh` | Full pipeline entry point — runs all four stages below in sequence |
+| `raster/create_raster.sh` | Full pipeline entry point — runs all five stages in sequence |
 | `raster/utils/cog_info.sh` | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/` |
 | `raster/utils/create_germany_mask.py` | Reads `input/bounds/germany.gpkg`, inverts it to a Germany mask and writes `frontend/static/germany-mask.geojson`  |
 
-[Raster Creation Pipeline](docs/raster_creation.md) for a details
+See [Raster Creation Pipeline](docs/raster_creation.md) for details
 
 ---
 
@@ -124,12 +126,13 @@ Details about [architecture](#production-system-architecture)
 
 # Raster Generation
 
-The raster pipeline is driven by [raster/create_raster.sh](raster/create_raster.sh). It runs four stages in sequence:
+The raster pipeline is driven by [raster/create_raster.sh](raster/create_raster.sh). It runs five stages in sequence:
 
-1. **GeoPackage extraction** — exports roads, paths, and railways from OSM data into `.gpkg` files.
-2. **Rasterization** — burns road/path/railway lengths into a raster and applies Gaussian smoothing.
-3. **CLC stack** — builds a 5-band CORINE land-cover raster (Nature, Farm, Park, Urban, Water).
-4. **Final COG** — combines the roads heatmap and CLC bands into a single-band raster using `gdal_calc`, clips to the area boundary, reprojects to Web Mercator (EPSG:3857), and writes a web-optimized COG via `rio-cogeo`.
+1. **OSM pre-filtering** — filters raw OSM PBF data to contain only highway/railway layers to speed up processing.
+2. **GeoPackage extraction** — exports roads, paths, and railways from OSM data into a single `.gpkg` file.
+3. **Rasterization** — burns road/path/railway geometries into a raster and applies Gaussian smoothing.
+4. **CLC stack** — builds a 5-band CORINE land-cover raster (Nature, Farm, Park, Urban, Water).
+5. **Final COG** — combines the roads heatmap and CLC bands into a single-band raster using `gdal_calc`, clips to the area boundary, reprojects to Web Mercator (EPSG:3857), and writes a web-optimized COG via `rio-cogeo`.
 
 The output is written to `raster/out/` as `<AREA>_raster_v<N>.tif`, auto-incrementing the version number.
 ## Create Raster
