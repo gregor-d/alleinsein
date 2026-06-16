@@ -125,6 +125,8 @@ class LeafletEngine {
           updateWhenZooming: false,
           updateWhenIdle: true,
           keepBuffer: 2,
+          // workaround to be able to use 512-tilesize
+          zoomOffset: -1,
           tileSize: CONFIG.tile_size,
           minZoom: tj.minzoom,
           opacity: opacity,
@@ -264,14 +266,14 @@ class MapLibreEngine {
             "basemap-osm": {
               type: "raster",
               tiles: [BASEMAPS.osm.url],
-              tileSize: CONFIG.tile_size,
+              tileSize: 256,
               attribution: BASEMAPS.osm.options.attribution,
               maxzoom: BASEMAPS.osm.options.maxZoom,
             },
             "basemap-satellite": {
               type: "raster",
               tiles: [BASEMAPS.satellite.url],
-              tileSize: CONFIG.tile_size,
+              tileSize: 256,
               attribution: BASEMAPS.satellite.options.attribution,
               maxzoom: BASEMAPS.satellite.options.maxZoom,
             },
@@ -280,7 +282,7 @@ class MapLibreEngine {
               tiles: [
                 "https://sgx.geodatenzentrum.de/wms_basemapde_schummerung?service=WMS&version=1.1.1&request=GetMap&layers=de_basemapde_web_raster_combshade&styles=&format=image/png&transparent=true&height=256&width=256&srs=EPSG:3857&bbox={bbox-epsg-3857}",
               ],
-              tileSize: CONFIG.tile_size,
+              tileSize: 256,
               attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
               maxzoom: 15,
             },
