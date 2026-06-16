@@ -3,16 +3,16 @@
   "name": "rough-frost-f369",
   "compatibility_date": "2026-06-09",
   "assets": {
-    "directory": "./static"
+    "directory": "./static",
   },
-  "routes": [   
+  "routes": [
     {
       "pattern": "alleinseinkarte.de/*",
-      "zone_name": "alleinseinkarte.de"
+      "zone_name": "alleinseinkarte.de",
     },
     {
       "pattern": "www.alleinseinkarte.de/*",
-      "zone_name": "alleinseinkarte.de"
-    }
-  ]
+      "zone_name": "alleinseinkarte.de",
+    },
+  ],
 }

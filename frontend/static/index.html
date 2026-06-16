@@ -1,120 +1,187 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Raster Explorer</title>
-    <meta name="description" content="Interactive raster viewer supporting Leaflet and MapLibre GL JS." />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <meta
+      name="description"
+      content="Interactive raster viewer supporting Leaflet and MapLibre GL JS."
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <link
+      href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 
     <link rel="stylesheet" href="index.css" />
     <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css" />
     <script>
-        (function () {
-            const themes = ['brutalist', 'dark'];
-            const saved = localStorage.getItem('map-theme');
-            const systemDefault = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'brutalist';
-            const t = themes.includes(saved) ? saved : systemDefault;
-            localStorage.setItem('map-theme', t);
-            document.getElementById('theme-link').href = `themes/theme_${t}.css`;
-        })();
+      (function () {
+        const themes = ["brutalist", "dark"];
+        const saved = localStorage.getItem("map-theme");
+        const systemDefault = window.matchMedia("(prefers-color-scheme: dark)")
+          .matches
+          ? "dark"
+          : "brutalist";
+        const t = themes.includes(saved) ? saved : systemDefault;
+        localStorage.setItem("map-theme", t);
+        document.getElementById("theme-link").href = `themes/theme_${t}.css`;
+      })();
     </script>
     <script src="config.js"></script>
     <script src="geolocation.js"></script>
     <script src="map.js"></script>
     <script src="shared.js"></script>
     <script src="dev-drawer.js"></script>
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="map"></div>
 
     <div id="bottom-bar">
-        <div id="layer-strip" class="control-options"></div>
+      <div id="layer-strip" class="control-options"></div>
     </div>
 
     <div id="fab-group">
-        <button class="fab" id="loc-btn" title="My location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="3 11 22 2 13 21 11 13 3 11" />
-            </svg>
-        </button>
-        <button class="fab" id="search-btn" title="Search location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="10" cy="10" r="7" />
-                <line x1="21" y1="21" x2="15" y2="15" />
-            </svg>
-        </button>
-        <button class="fab" id="settings-btn" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-        </button>
-        <button class="fab" id="basemap-btn" title="Basemap">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6" />
-                <line x1="9" y1="3" x2="9" y2="18" />
-                <line x1="15" y1="6" x2="15" y2="21" />
-            </svg>
-        </button>
+      <button class="fab" id="loc-btn" title="My location">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        </svg>
+      </button>
+      <button class="fab" id="search-btn" title="Search location">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="10" cy="10" r="7" />
+          <line x1="21" y1="21" x2="15" y2="15" />
+        </svg>
+      </button>
+      <button class="fab" id="settings-btn" title="Settings">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+          />
+        </svg>
+      </button>
+      <button class="fab" id="basemap-btn" title="Basemap">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6" />
+          <line x1="9" y1="3" x2="9" y2="18" />
+          <line x1="15" y1="6" x2="15" y2="21" />
+        </svg>
+      </button>
     </div>
 
     <div id="basemap-popup" class="fab-popup"></div>
 
     <div id="settings-drawer">
-        <div class="drawer-header">
-            <div class="drawer-header-group drawer-header-group--inline">
-                <span class="drawer-header-label">Theme</span>
-                <div class="drawer-theme-group">
-                    <button class="dev-theme-btn" data-theme="brutalist">Light</button>
-                    <button class="dev-theme-btn" data-theme="dark">Dark</button>
-                </div>
-            </div>
-<button id="drawer-close" class="icon-btn" style="margin-left:auto;" title="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            </button>
+      <div class="drawer-header">
+        <div class="drawer-header-group drawer-header-group--inline">
+          <span class="drawer-header-label">Theme</span>
+          <div class="drawer-theme-group">
+            <button class="dev-theme-btn" data-theme="brutalist">Light</button>
+            <button class="dev-theme-btn" data-theme="dark">Dark</button>
+          </div>
         </div>
-        <div class="drawer-body" id="drawer-body"></div>
+        <button
+          id="drawer-close"
+          class="icon-btn"
+          style="margin-left: auto"
+          title="Close"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="drawer-body" id="drawer-body"></div>
     </div>
     <div id="settings-backdrop" class="drawer-backdrop"></div>
 
     <div id="color-sheet" class="bottom-sheet">
-        <div class="sheet-handle"></div>
-        <div id="color-sheet-header" class="layer-header"></div>
-        <div class="sheet-body" id="color-sheet-body"></div>
+      <div class="sheet-handle"></div>
+      <div id="color-sheet-header" class="layer-header"></div>
+      <div class="sheet-body" id="color-sheet-body"></div>
     </div>
     <div id="color-sheet-backdrop" class="sheet-backdrop"></div>
 
     <div id="search-sheet" class="search-popup">
-        <div class="sheet-header">
-            <span>Search Location</span>
-            <button id="search-sheet-close" class="icon-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-            </button>
+      <div class="sheet-header">
+        <span>Search Location</span>
+        <button id="search-sheet-close" class="icon-btn">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="sheet-body">
+        <div class="search-input-row">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search location..."
+            autocomplete="off"
+          />
+          <button id="search-go" class="search-go-btn">Go</button>
         </div>
-        <div class="sheet-body">
-            <div class="search-input-row">
-                <input id="search-input" type="text" placeholder="Search location..." autocomplete="off" />
-                <button id="search-go" class="search-go-btn">Go</button>
-            </div>
-            <ul id="search-results" class="search-results"></ul>
-        </div>
+        <ul id="search-results" class="search-results"></ul>
+      </div>
     </div>
     <div id="search-sheet-backdrop" class="sheet-backdrop"></div>
-</body>
-
+  </body>
 </html>
