@@ -18,14 +18,13 @@ source "$RASTER_CONFIG_FILE"
 : "${RASTER_RESOLUTION:?RASTER_RESOLUTION is required in $RASTER_CONFIG_FILE}"
 : "${RASTER_NODATA:?RASTER_NODATA is required in $RASTER_CONFIG_FILE}"
 : "${RASTER_DATA_TYPE:?RASTER_DATA_TYPE is required in $RASTER_CONFIG_FILE}"
-: "${RASTERIZE_DATA_TYPE:?RASTERIZE_DATA_TYPE is required in $RASTER_CONFIG_FILE}"
 : "${MINX:?MINX is required in $RASTER_CONFIG_FILE}"
 : "${MINY:?MINY is required in $RASTER_CONFIG_FILE}"
 : "${MAXX:?MAXX is required in $RASTER_CONFIG_FILE}"
 : "${MAXY:?MAXY is required in $RASTER_CONFIG_FILE}"
 
-for required_array in GTIFF_WRITE_OPTIONS GTIFF_CREATION_OPTIONS GTIFF_CO_OPTIONS; do
-  if ! declare -p "$required_array" >/dev/null 2>&1; then
+for required_array in GTIFF_WRITE_OPTIONS; do
+  if ! declare -p "$required_array" 2>/dev/null | grep -q '^declare \-[^ ]*a'; then
     echo "$required_array is required in $RASTER_CONFIG_FILE" >&2
     exit 1
   fi
@@ -34,4 +33,4 @@ done
 : "${OVERWRITE?OVERWRITE is required in $RASTER_CONFIG_FILE}"
 
 export AREA OVERWRITE TARGET_EPSG WEB_EPSG RASTER_RESOLUTION
-export RASTER_NODATA RASTER_DATA_TYPE RASTERIZE_DATA_TYPE MINX MINY MAXX MAXY
+export RASTER_NODATA RASTER_DATA_TYPE MINX MINY MAXX MAXY

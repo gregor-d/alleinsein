@@ -17,7 +17,7 @@ bash "${SCRIPT_DIR}/utils/rasterize_all_road_lengths.sh"
 echo "Creating CLC raster stack..."
 bash "${SCRIPT_DIR}/utils/create_clc_raster.sh"
 
-clc_classes="${SCRIPT_DIR}/input/clc/germany_clc_classes_stack.tif"
+clc_classes="${SCRIPT_DIR}/input/clc/${AREA}_clc_classes_stack.tif"
 roads="${SCRIPT_DIR}/input/osm/${AREA}_roads_smooth.tif"                     
 bounds_gpkg="${SCRIPT_DIR}/input/bounds/${AREA}.gpkg"
 output_dir="${SCRIPT_DIR}/out"
@@ -92,4 +92,3 @@ rio cogeo create --web-optimized "$temp_reprojected_raster" "$output_cog" --resa
 #    --overwrite "gl_${$output_cog}"
 
 echo "Successfully created masked COG raster: $output_cog"
-
