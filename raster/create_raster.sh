@@ -66,7 +66,7 @@ gdal_calc \
   --outfile="$raw_calc_raster" \
   "--type=$RASTER_DATA_TYPE" \
   "--NoDataValue=$RASTER_NODATA" \
-  "${GTIFF_CREATION_OPTIONS[@]}" \
+  "${GTIFF_WRITE_OPTIONS[@]}" \
   ${OVERWRITE:-}
 
 # echo "Running GDAL pipeline clip to bounds and reproject..."

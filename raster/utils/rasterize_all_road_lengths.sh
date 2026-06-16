@@ -25,16 +25,16 @@ echo "Using raster bounds: $RASTER_BBOX"
 echo "=== Rasterizing roads ==="
 echo "Reading vector data from $ROADS_INPUT"
 echo "Writing raster data to $ROADS_OUTPUT"
-gdal vector rasterize "$ROADS_INPUT" "$ROADS_OUTPUT" --resolution "$RASTER_RESOLUTION" --extent "$RASTER_BBOX" --burn 4 --target-aligned-pixels ${OVERWRITE:-} --init 0 --nodata "$RASTER_NODATA" --datatype "$RASTERIZE_DATA_TYPE" --all-touched
+gdal vector rasterize "$ROADS_INPUT" "$ROADS_OUTPUT" --resolution "$RASTER_RESOLUTION" --extent "$RASTER_BBOX" --burn 4 --target-aligned-pixels ${OVERWRITE:-} --init 0 --nodata "$RASTER_NODATA" --datatype "$RASTER_DATA_TYPE" --all-touched
 
 echo "=== Rasterizing paths ==="
-gdal vector rasterize "$PATHS_INPUT" "$PATHS_OUTPUT" --resolution "$RASTER_RESOLUTION" --extent "$RASTER_BBOX" --burn 4 ${OVERWRITE:-} --target-aligned-pixels --init 0 --nodata "$RASTER_NODATA" --datatype "$RASTERIZE_DATA_TYPE" --all-touched
+gdal vector rasterize "$PATHS_INPUT" "$PATHS_OUTPUT" --resolution "$RASTER_RESOLUTION" --extent "$RASTER_BBOX" --burn 4 ${OVERWRITE:-} --target-aligned-pixels --init 0 --nodata "$RASTER_NODATA" --datatype "$RASTER_DATA_TYPE" --all-touched
 
 echo "=== Rasterizing railways ==="
-gdal vector rasterize "$RAILWAYS_INPUT" "$RAILWAYS_OUTPUT" --resolution "$RASTER_RESOLUTION" --extent "$RASTER_BBOX" --burn 4 ${OVERWRITE:-} --target-aligned-pixels --init 0 --nodata "$RASTER_NODATA" --datatype "$RASTERIZE_DATA_TYPE" --all-touched
+gdal vector rasterize "$RAILWAYS_INPUT" "$RAILWAYS_OUTPUT" --resolution "$RASTER_RESOLUTION" --extent "$RASTER_BBOX" --burn 4 ${OVERWRITE:-} --target-aligned-pixels --init 0 --nodata "$RASTER_NODATA" --datatype "$RASTER_DATA_TYPE" --all-touched
 
 echo "=== Merging road rasters ==="
-gdal raster mosaic -i "$ROADS_OUTPUT" -i "$PATHS_OUTPUT" -i "$RAILWAYS_OUTPUT" --pixel-function max -o "$MERGED_OUTPUT" ${OVERWRITE:-} "--format=$GTIFF_FORMAT" "${GTIFF_CO_OPTIONS[@]}"
+gdal raster mosaic -i "$ROADS_OUTPUT" -i "$PATHS_OUTPUT" -i "$RAILWAYS_OUTPUT" --pixel-function max -o "$MERGED_OUTPUT" ${OVERWRITE:-} "${GTIFF_WRITE_OPTIONS[@]}"
 
 duration=$SECONDS
 echo "$((duration / 60)) minutes and $((duration % 60)) seconds elapsed."
