@@ -20,7 +20,15 @@ bash "${SCRIPT_DIR}/utils/create_clc_raster.sh"
 clc_classes="${SCRIPT_DIR}/input/clc/germany_clc_classes_stack.tif"
 roads="${SCRIPT_DIR}/input/osm/${AREA}_roads_smooth.tif"                     
 bounds_gpkg="${SCRIPT_DIR}/input/bounds/${AREA}.gpkg"
-output_cog="${SCRIPT_DIR}/${AREA}_raster_web.tif"
+output_dir="${SCRIPT_DIR}/out"
+base_name="${AREA}_raster"
+version=1
+
+while [[ -f "${output_dir}/${base_name}_v${version}.tif" ]]; do
+  ((version++))
+done
+
+output_cog="${output_dir}/${base_name}_v${version}.tif"
 
 echo "calculating heatmap raster stack..."
 echo "using roads: $roads"
@@ -30,8 +38,8 @@ echo "output raster: $output_cog"
 # Create a temporary directory for intermediate steps, cleaned up automatically on exit
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
-raw_calc_raster="${TEMP_DIR}/${AREA}_raster_raw.tif"
-temp_reprojected_raster="${TEMP_DIR}/${AREA}_raster_3857.tif"
+raw_calc_raster="${output_dir}/${AREA}_raster_raw.tif"
+temp_reprojected_raster="${output_dir}/${AREA}_raster_3857.tif"
 
 echo "running gdal__calc to tempfile ${raw_calc_raster}..."
 
@@ -46,6 +54,7 @@ echo "running gdal__calc to tempfile ${raw_calc_raster}..."
 # It uses the roads-heatmap to create virtual layers by masking it with landcover.
 # Each layer has a different landcover and its own value-range.
 # With this its possible to have only one request to the backend for all layers, and not one per layer.
+# because muparser is buggy, can not use the gdal raster pipeline for this
 gdal_calc \
   -A "$roads" --A_band=1 \
   -B "$clc_classes" --B_band=1 \
@@ -60,7 +69,7 @@ gdal_calc \
   "${GTIFF_CREATION_OPTIONS[@]}" \
   ${OVERWRITE:-}
 
-echo "Running GDAL pipeline clip to bounds and reproject..."
+# echo "Running GDAL pipeline clip to bounds and reproject..."
 gdal raster pipeline \
   "!" read "$raw_calc_raster" \
   "!" clip --like "$bounds_gpkg" --like-layer "$AREA" --allow-bbox-outside-source \
@@ -68,8 +77,8 @@ gdal raster pipeline \
   "!" write ${OVERWRITE:-} "$temp_reprojected_raster"
 
 echo "Creating web-optimized COG with overviews..."
-# use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads.
-rio cogeo create --web-optimized "$temp_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling mode
+# use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads. Default blocksize is 256
+rio cogeo create --web-optimized "$temp_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling nearest --blocksize 256 --overview-blocksize 256
 
 # Alternative:
 # add overviews and create COG

@@ -3,7 +3,9 @@ set -euo pipefail
 cd "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 source .venv/bin/activate
 
-COG_DIR="raster/out/cog_compare"
+COG_DIR="raster/out"
+
+
 
 echo "================================================================================"
 echo "FILE SIZES"
@@ -20,12 +22,16 @@ for f in "$COG_DIR"/*.tif; do
   rio cogeo info "$f"
 done
 
-echo ""
-echo "================================================================================"
-echo "GDAL RASTER INFO"
-echo "================================================================================"
-for f in "$COG_DIR"/*.tif; do
-  echo ""
-  echo "--- $(basename "$f") ---"
-  gdal raster info "$f"
-done
+diff <(rio cogeo info raster/out/germany_raster_v2.tif) <(rio cogeo info raster/out/germany_raster_v3.tif)
+
+# echo ""
+# echo "================================================================================"
+# echo "GDAL RASTER INFO"
+# echo "================================================================================"
+# for f in "$COG_DIR"/*.tif; do
+#   echo ""
+#   echo "--- $(basename "$f") ---"
+#   gdal raster info "$f"
+# done
+
+# diff <(rio cogeo info file1.tif) <(rio cogeo info file2.tif)
