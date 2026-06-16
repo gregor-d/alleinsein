@@ -9,7 +9,7 @@ This document describes the full raster pipeline: data sources, configuration, e
 |---|---|
 | `raster/create_raster.sh` | Full pipeline entry point — runs all four stages below in sequence |
 | `raster/utils/create_gpkg.sh` | Extracts roads, paths, and railways from the OSM PBF into GeoPackage files |
-| `raster/utils/rasterize_all_road_lengths.sh` | Rasterizes the GeoPackages and produces a smoothed road-proximity heatmap |
+| `raster/utils/rasterize_osm_roads.sh` | Rasterizes the GeoPackages and produces a smoothed road-proximity heatmap |
 | `raster/utils/create_clc_raster.sh` | Remaps and stacks CLC 2018 land-cover classes into a 5-band one-hot raster |
 | `raster/utils/cog_info.sh` | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/` |
 | `raster/utils/export_bounds.py` | Geocodes an area name via OSMnx, writes a bounds GeoPackage, and prints the `MINX/MINY/MAXX/MAXY` values for `raster.conf` — run with `AREA=germany uv run raster/utils/export_bounds.py` |
@@ -25,7 +25,7 @@ Entry point: `raster/create_raster.sh`
 ```
 OSM .pbf
     └─ create_gpkg.sh           → roads/paths/railways .gpkg
-         └─ rasterize_all_road_lengths.sh  → smoothed roads heatmap .tif
+         └─ rasterize_osm_roads.sh  → smoothed roads heatmap .tif
 CLC 2018 .tif
     └─ create_clc_raster.sh     → 5-band one-hot land-cover stack .tif
                                          ↓
@@ -121,7 +121,7 @@ Only the geometry column is retained (`--fields _ogr_geometry_`) to keep file si
 
 ---
 
-## Stage 2 — Rasterization and smoothing (`utils/rasterize_all_road_lengths.sh`)
+## Stage 2 — Rasterization and smoothing (`utils/rasterize_osm_roads.sh`)
 
 **Input:** three `.gpkg` files from Stage 1
 **Output:** `<AREA>_roads_smooth.tif` (20 m pixels, scaled 1–10)
@@ -290,6 +290,6 @@ RASTER_CONFIG_FILE=/path/to/custom.conf bash raster/create_raster.sh
 Run individual stages manually (useful for debugging):
 ```bash
 bash raster/utils/create_gpkg.sh
-bash raster/utils/rasterize_all_road_lengths.sh
+bash raster/utils/rasterize_osm_roads.sh
 bash raster/utils/create_clc_raster.sh
 ```

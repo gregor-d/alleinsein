@@ -29,10 +29,10 @@ Each script has a Linux (`.sh`) and a Windows PowerShell (`.ps1`) variant with i
 | Script | Description |
 |---|---|
 | `scripts/setup_dev.sh` | First-time setup: installs GDAL and `uv`, runs `uv sync`, installs pre-commit hooks |
-| `scripts/dev.sh` / `.ps1` | Starts backend + frontend together; launches backend health |
+| `scripts/dev.sh` / `.ps1` | Starts backend + frontend together; runs smoke test once backend is healthy |
 | `scripts/backend.sh` / `.ps1` | Starts FastAPI/Uvicorn backend on port 8000 |
 | `scripts/frontend.sh` / `.ps1` | Starts the browser-sync frontend dev server on port 5173 |
-| `scripts/docker.sh` / `.ps1` | Runs `docker compose up --force-recreate tiler` (containerised backend) |
+| `scripts/docker.sh` / `.ps1` | Runs `docker compose up -d --force-recreate tiler` (containerised backend) |
 | `scripts/smoke-test.sh` / `.ps1` | Hits `/healthz` and a sample tile endpoint; exits non-zero on any non-200 response |
 | `raster/create_raster.sh` | Full pipeline entry point — runs all four stages below in sequence |
 | `raster/utils/cog_info.sh` | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/` |
@@ -46,7 +46,7 @@ Each script has a Linux (`.sh`) and a Windows PowerShell (`.ps1`) variant with i
 # Technical Features
 
 1. **Optimized Spatial Data Masking**: Instead of querying multiple overlapping rasters, the pipeline uses `gdal` to encode distinct CORINE land-cover classifications (Nature, Farm, Parks, Urban, Water) and OSM road proximity into different value-ranges in a single-band raster. The frontend decodes these bands in real-time, reducing server reads by 5x.
-2. **Cloud-Optimized GeoTIFFs (COGs)**: The pipeline outputs web-optimized COGs with built-in overviews and ZSTD compression, aligned precisely to the Web Mercator tile grid using `rio-cogeo` for low-latency range requests.
+2. **Cloud-Optimized GeoTIFFs (COGs)**: The pipeline outputs web-optimized COGs with built-in overviews and DEFLATE compression, aligned precisely to the Web Mercator tile grid using `rio-cogeo` for low-latency range requests.
 3. **Cloudflare CDN Integration**: Caching rules absorb tile requests at the Edge. The Hetzner VPS is bypassed for any pre-rendered tiles.
 4. **Outbound Tunnel Networking**: Host ports remain closed to the public internet; traffic is routed from Cloudflare using a secure dockerized tunnel agent (`cloudflared`).
 5. **Tailscale VPN Integration**: Administrative services (SSH, development servers) bind to the private Tailnet, protecting the VPS from public discovery.
@@ -69,7 +69,7 @@ To develop or test the application on your local machine, we use `uv` for Python
 
 3. **Run Frontend**:
    ```bash
-   npx --yes browser-sync start --server "frontend/static" --files "frontend/static/*.html" "frontend/static/*.css" "frontend/static/themes/*.css" "frontend/static/*.js" --port 5173 --no-ui --host 172.0.0.1
+   npx --yes browser-sync start --server "frontend/static" --files "frontend/static/*.html" "frontend/static/*.css" "frontend/static/themes/*.css" "frontend/static/*.js" --port 5173 --no-ui --no-open --host 127.0.0.1
    ```
    
 
@@ -78,12 +78,12 @@ Launch both the backend API and the frontend server and run auto-healthcheck
 
 **Linux**
 ```bash
-./scripts/deploy_locally.sh
+./scripts/dev.sh
 ```
 
 **Windows (PowerShell):**
 ```powershell
- .\scripts\deploy_locally.ps1
+.\scripts\dev.ps1
 ```
 
 Once running:
@@ -98,7 +98,7 @@ Run the backend using Docker [docker-compose.yml](docker-compose.yaml).
 
 1. **Build and Start**:
    ```bash
-   docker compose up --force-recreate tiler
+   docker compose up -d --force-recreate tiler
    ```
 2. **Verify**:
    Container will run health-check you can see in the logs or
@@ -116,7 +116,7 @@ Details about [architecture](#production-system-architecture)
    Git pull updates to the VPS.
 2. **Re-Starting the Service**:
    ```bash
-   ssh gregor@$IP_VPS "./scripts/deploy_backend.sh"
+   ssh gregor@$IP_VPS "./scripts/docker.sh"
    ```
    *Environment variables and GDAL optimizations are set in docker-compose-yaml [VPS Setup](docs/vps_setup.md).*
 

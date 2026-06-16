@@ -9,12 +9,15 @@ source "${SCRIPT_DIR}/utils/load_raster_config.sh"
 # create paths, road and railways geopackage
 # use create_gpkg.sh in input_data/osm to create the gpkg files for roads, paths and railways
 echo "Creating GeoPackage files for roads, paths and railways..."
+echo "${SCRIPT_DIR}/utils/create_gpkg.sh"
 bash "${SCRIPT_DIR}/utils/create_gpkg.sh"
 
 echo "Rasterizing roads, paths and railways and creating smoothed combined raster..."
-bash "${SCRIPT_DIR}/utils/rasterize_all_road_lengths.sh"
+echo "${SCRIPT_DIR}/utils/rasterize_osm_roads.sh"
+bash "${SCRIPT_DIR}/utils/rasterize_osm_roads.sh"
 
 echo "Creating CLC raster stack..."
+echo "${SCRIPT_DIR}/utils/create_clc_raster.sh"
 bash "${SCRIPT_DIR}/utils/create_clc_raster.sh"
 
 clc_classes="${SCRIPT_DIR}/input/clc/${AREA}_clc_classes_stack.tif"
