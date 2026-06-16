@@ -920,6 +920,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
   flex-shrink: 0;
 }
 
+.drawer-intro {
+  color: var(--text-mid);
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 2px 4px 8px;
+}
+
+.drawer-intro a {
+  color: var(--text-hi);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 @media (max-width: 768px) {
   .drawer-pos-group {
     display: none;

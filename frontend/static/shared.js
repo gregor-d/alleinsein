@@ -844,6 +844,8 @@ function buildDrawerBody(container, opts) {
   opts = opts || {};
   container.innerHTML = "";
 
+  appendDrawerIntro(container);
+
   addSectionLabel(container, "Hotspot Mode");
   const hotspotCard = document.createElement("div");
   hotspotCard.className = `layer-card${hotspotMode ? " active" : ""}`;
@@ -1036,6 +1038,27 @@ function buildDrawerBody(container, opts) {
   container.appendChild(ovDiv);
 
   if (opts.includeLocationTools) appendDrawerLocationTools(container);
+}
+
+/**
+ * Appends the short project description at the top of the settings drawer.
+ */
+function appendDrawerIntro(container) {
+  const intro = document.createElement("p");
+  intro.className = "drawer-intro";
+
+  const link = document.createElement("a");
+  link.href = "https://alleinsein.de";
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.textContent = "alleinsein.de";
+
+  intro.append(
+    link,
+    " is a map for finding places where you can be alone. It shows you areas which have the lowest chance of having other people around.",
+  );
+
+  container.appendChild(intro);
 }
 
 /**
