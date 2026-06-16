@@ -185,7 +185,7 @@ const BASEMAPS = {
 };
 
 // ─── MUTABLE APP STATE ───
-let activeBasemapKey = "none";
+let activeBasemapKey = "osm";
 let basemapOpacity = 1.0;
 let dataLayerOpacity = 1.0;
 let boundsSet = false;

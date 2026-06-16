@@ -9,10 +9,10 @@
  * suitable for use as a TileJSON colormap entry.
  */
 function hexToRgba(hex) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return [r, g, b, 255];
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return [r, g, b, 255];
 }
 
 /**
@@ -20,23 +20,23 @@ function hexToRgba(hex) {
  * Reverses the colour order when reverse is true. First color makes up 20 percent
  */
 function buildGradient(preset, reverse) {
-    let colors = [...COLORMAP_PRESETS[preset]];
-    if (reverse) colors = [...colors].reverse();
+  let colors = [...COLORMAP_PRESETS[preset]];
+  if (reverse) colors = [...colors].reverse();
 
-    if (colors.length <= 1) {
-        const color = colors[0] || 'transparent';
-        return `linear-gradient(to right, ${color} 0%, ${color} 100%)`;
-    }
+  if (colors.length <= 1) {
+    const color = colors[0] || "transparent";
+    return `linear-gradient(to right, ${color} 0%, ${color} 100%)`;
+  }
 
-    const firstColorWidth = 20;
-    const stops = [`${colors[0]} 0%`, `${colors[0]} ${firstColorWidth}%`];
+  const firstColorWidth = 20;
+  const stops = [`${colors[0]} 0%`, `${colors[0]} ${firstColorWidth}%`];
 
-    const step = (100 - firstColorWidth) / (colors.length - 1);
-    colors.forEach(function(color, index) {
-        stops.push(`${color} ${firstColorWidth + step * index}%`);
-    });
+  const step = (100 - firstColorWidth) / (colors.length - 1);
+  colors.forEach(function (color, index) {
+    stops.push(`${color} ${firstColorWidth + step * index}%`);
+  });
 
-    return `linear-gradient(to left, ${stops.join(', ')})`;
+  return `linear-gradient(to left, ${stops.join(", ")})`;
 }
 
 /**
@@ -44,23 +44,24 @@ function buildGradient(preset, reverse) {
  * to be sent as a query parameter to the tile server.
  */
 function getCombinedColormapJson() {
-    const cmap = {};
-    layerState.forEach(function(layer) {
-        if (!layer.visible) return;
-        if (layer.type === 'overlay') return;
-        if (layer.type === 'solid') {
-            cmap[layer.start] = hexToRgba(layer.preset);
-        } else {
-            let colors = [...COLORMAP_PRESETS[layer.preset]];
-            if (layer.reverse) colors.reverse();
-            if (hotspotMode) {
-                cmap[layer.start] = hexToRgba(colors[0]);
-            } else {
-                for (let i = 0; i < 9; i++) cmap[layer.start + i] = hexToRgba(colors[i]);
-            }
-        }
-    });
-    return JSON.stringify(cmap);
+  const cmap = {};
+  layerState.forEach(function (layer) {
+    if (!layer.visible) return;
+    if (layer.type === "overlay") return;
+    if (layer.type === "solid") {
+      cmap[layer.start] = hexToRgba(layer.preset);
+    } else {
+      let colors = [...COLORMAP_PRESETS[layer.preset]];
+      if (layer.reverse) colors.reverse();
+      if (hotspotMode) {
+        cmap[layer.start] = hexToRgba(colors[0]);
+      } else {
+        for (let i = 0; i < 9; i++)
+          cmap[layer.start + i] = hexToRgba(colors[i]);
+      }
+    }
+  });
+  return JSON.stringify(cmap);
 }
 
 /**
@@ -68,12 +69,13 @@ function getCombinedColormapJson() {
  * using the current layer visibility and colormap settings.
  */
 function refreshDataLayer() {
-    if (mapEngine) mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
+  if (mapEngine)
+    mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
 }
 
 // ─── ENGINE STATE ───
 
-let activeEngine = localStorage.getItem('map-engine') || 'leaflet';
+let activeEngine = localStorage.getItem("map-engine") || "maplibre";
 let mapEngine = null;
 let _popupHandlerAttached = false;
 
@@ -83,29 +85,34 @@ let _popupHandlerAttached = false;
  * re-creates the map container element, and initialises the new engine.
  */
 function switchEngine(newKey) {
-    if (newKey === activeEngine && mapEngine) return;
+  if (newKey === activeEngine && mapEngine) return;
 
-    let center = DEFAULT_CENTER;
-    let zoom   = DEFAULT_ZOOM;
-    if (mapEngine) {
-        center = mapEngine.getCenter();
-        zoom   = mapEngine.getZoom();
-        mapEngine.destroy();
-    }
+  let center = DEFAULT_CENTER;
+  let zoom = DEFAULT_ZOOM;
+  if (mapEngine) {
+    center = mapEngine.getCenter();
+    zoom = mapEngine.getZoom();
+    mapEngine.destroy();
+  }
 
-    const oldEl = document.getElementById('map');
-    oldEl.parentNode.replaceChild(oldEl.cloneNode(false), oldEl);
+  const oldEl = document.getElementById("map");
+  oldEl.parentNode.replaceChild(oldEl.cloneNode(false), oldEl);
 
-    activeEngine = newKey;
-    localStorage.setItem('map-engine', activeEngine);
+  activeEngine = newKey;
+  localStorage.setItem("map-engine", activeEngine);
 
-    const ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-    mapEngine = new ctor();
-    mapEngine.init('map', center, zoom, NAV_CONTROL_POSITIONS[activeEngine])
-        .then(function() { afterEngineInit(false); });
+  const ctor = activeEngine === "leaflet" ? LeafletEngine : MapLibreEngine;
+  mapEngine = new ctor();
+  mapEngine
+    .init("map", center, zoom, NAV_CONTROL_POSITIONS[activeEngine])
+    .then(function () {
+      afterEngineInit(false);
+    });
 
-    document.querySelectorAll('.control-btn[data-engine]').forEach(function(btn) {
-        btn.classList.toggle('active', btn.dataset.engine === activeEngine);
+  document
+    .querySelectorAll(".control-btn[data-engine]")
+    .forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.engine === activeEngine);
     });
 }
 
@@ -114,27 +121,27 @@ function switchEngine(newKey) {
  * opacity settings, overlay states, and on first load flies to the IP-geolocated position.
  */
 function afterEngineInit(isFirstLoad) {
-    mapEngine.switchBasemap(activeBasemapKey);
-    mapEngine.updateBasemapOpacity(basemapOpacity);
-    refreshDataLayer();
+  mapEngine.switchBasemap(activeBasemapKey);
+  mapEngine.updateBasemapOpacity(basemapOpacity);
+  refreshDataLayer();
 
-    for (const key in activeOverlays) {
-        if (activeOverlays[key]) {
-            mapEngine.toggleOverlay(key, true);
-        }
+  for (const key in activeOverlays) {
+    if (activeOverlays[key]) {
+      mapEngine.toggleOverlay(key, true);
     }
+  }
 
-    if (isFirstLoad) {
-        getIpLocation().then(function(coords) {
-            if (coords && mapEngine) {
-                setTimeout(function() {
-                    if (mapEngine) {
-                        mapEngine.flyTo(coords, CONFIG.location_zoom);
-                    }
-                }, 1000);
-            }
-        });
-    }
+  if (isFirstLoad) {
+    getIpLocation().then(function (coords) {
+      if (coords && mapEngine) {
+        setTimeout(function () {
+          if (mapEngine) {
+            mapEngine.flyTo(coords, CONFIG.location_zoom);
+          }
+        }, 1000);
+      }
+    });
+  }
 }
 
 /**
@@ -142,10 +149,12 @@ function afterEngineInit(isFirstLoad) {
  * to call switchEngine when clicked.
  */
 function initEngineBtns(container) {
-    container.querySelectorAll('.control-btn').forEach(function(btn) {
-        btn.classList.toggle('active', btn.dataset.engine === activeEngine);
-        btn.addEventListener('click', function() { switchEngine(btn.dataset.engine); });
+  container.querySelectorAll(".control-btn").forEach(function (btn) {
+    btn.classList.toggle("active", btn.dataset.engine === activeEngine);
+    btn.addEventListener("click", function () {
+      switchEngine(btn.dataset.engine);
     });
+  });
 }
 
 // ─── VISIBILITY SYNC ───
@@ -155,17 +164,17 @@ function initEngineBtns(container) {
  * visible state after it has been toggled programmatically.
  */
 function syncLayerVisible(layer) {
-    const layerChip = document.getElementById(`layer-chip-${layer.id}`);
-    if (layerChip) {
-        layerChip.classList.toggle('active', layer.visible);
-        layerChip.setAttribute('aria-checked', String(layer.visible));
-    }
-    const dcb = document.getElementById(`dvis-${layer.id}`);
-    if (dcb) {
-        dcb.checked = layer.visible;
-        const dcard = dcb.closest('.layer-card');
-        if (dcard) dcard.classList.toggle('inactive', !layer.visible);
-    }
+  const layerChip = document.getElementById(`layer-chip-${layer.id}`);
+  if (layerChip) {
+    layerChip.classList.toggle("active", layer.visible);
+    layerChip.setAttribute("aria-checked", String(layer.visible));
+  }
+  const dcb = document.getElementById(`dvis-${layer.id}`);
+  if (dcb) {
+    dcb.checked = layer.visible;
+    const dcard = dcb.closest(".layer-card");
+    if (dcard) dcard.classList.toggle("inactive", !layer.visible);
+  }
 }
 
 // ─── COLOR SYNC ───
@@ -175,20 +184,21 @@ function syncLayerVisible(layer) {
  * to reflect the layer's current preset and reverse setting.
  */
 function syncLayerColor(layer) {
-    if (layer.type === 'overlay') return;
-    const chipColor = document.getElementById(`layer-chip-color-${layer.id}`);
-    if (!chipColor) return;
-    chipColor.style.background = layer.type === 'category'
-        ? buildGradient(layer.preset, layer.reverse)
-        : layer.preset;
+  if (layer.type === "overlay") return;
+  const chipColor = document.getElementById(`layer-chip-color-${layer.id}`);
+  if (!chipColor) return;
+  chipColor.style.background =
+    layer.type === "category"
+      ? buildGradient(layer.preset, layer.reverse)
+      : layer.preset;
 }
 
 /**
  * Repaints the gradient bar inside the drawer card for the given layer.
  */
 function updateDrawerBar(layer) {
-    const bar = document.getElementById(`dbar-${layer.id}`);
-    if (bar) bar.style.background = buildGradient(layer.preset, layer.reverse);
+  const bar = document.getElementById(`dbar-${layer.id}`);
+  if (bar) bar.style.background = buildGradient(layer.preset, layer.reverse);
 }
 
 // ─── BASEMAP BLOCK ───
@@ -199,24 +209,24 @@ function updateDrawerBar(layer) {
  * basemap opacity slider, and optionally a data layer opacity slider.
  */
 function buildBasemapBlock(el) {
-    const uid = el.id || ('bm' + Math.random().toString(36).slice(2, 7));
+  const uid = el.id || "bm" + Math.random().toString(36).slice(2, 7);
 
-    const isEnabled  = activeBasemapKey !== 'none';
-    const uiBaseKey  = activeBasemapKey === 'none' ? 'osm' : activeBasemapKey;
+  const isEnabled = activeBasemapKey !== "none";
+  const uiBaseKey = activeBasemapKey === "none" ? "osm" : activeBasemapKey;
 
-    el.innerHTML = `
+  el.innerHTML = `
         <div class="bm-row">
             <div class="bm-row-label" style="display:flex;justify-content:space-between;align-items:center;">
                 <span>Basemap</span>
                 <label class="toggle">
-                    <input type="checkbox" id="bm-toggle-${uid}" ${isEnabled ? 'checked' : ''} />
+                    <input type="checkbox" id="bm-toggle-${uid}" ${isEnabled ? "checked" : ""} />
                     <span class="toggle-track"></span>
                 </label>
             </div>
-            <div class="control-options" id="bm-opts-${uid}" style="${!isEnabled ? 'opacity:0.5;pointer-events:none;' : ''}">
-                <button class="control-btn${uiBaseKey === 'osm'         ? ' active' : ''}" data-key="osm">OSM</button>
-                <button class="control-btn${uiBaseKey === 'satellite'   ? ' active' : ''}" data-key="satellite">Satellite</button>
-                <button class="control-btn${uiBaseKey === 'schummerung' ? ' active' : ''}" data-key="schummerung">Relief</button>
+            <div class="control-options" id="bm-opts-${uid}" style="${!isEnabled ? "opacity:0.5;pointer-events:none;" : ""}">
+                <button class="control-btn${uiBaseKey === "osm" ? " active" : ""}" data-key="osm">OSM</button>
+                <button class="control-btn${uiBaseKey === "satellite" ? " active" : ""}" data-key="satellite">Satellite</button>
+                <button class="control-btn${uiBaseKey === "schummerung" ? " active" : ""}" data-key="schummerung">Relief</button>
             </div>
             <div class="ctrl-row">
                 <div class="ctrl-label">
@@ -228,50 +238,52 @@ function buildBasemapBlock(el) {
         </div>
     `;
 
-    document.getElementById(`bm-toggle-${uid}`).addEventListener('change', function(e) {
-        const enabled = e.target.checked;
-        const optsDiv = document.getElementById(`bm-opts-${uid}`);
-        if (enabled) {
-            optsDiv.style.opacity = '1';
-            optsDiv.style.pointerEvents = 'auto';
-            if (activeBasemapKey === 'none') {
-                activeBasemapKey = 'osm';
-                el.querySelectorAll('.control-btn[data-key]').forEach(function(b) {
-                    b.classList.toggle('active', b.dataset.key === activeBasemapKey);
-                });
-            }
-            if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
-        } else {
-            optsDiv.style.opacity = '0.5';
-            optsDiv.style.pointerEvents = 'none';
-            if (mapEngine) mapEngine.switchBasemap('none');
+  document
+    .getElementById(`bm-toggle-${uid}`)
+    .addEventListener("change", function (e) {
+      const enabled = e.target.checked;
+      const optsDiv = document.getElementById(`bm-opts-${uid}`);
+      if (enabled) {
+        optsDiv.style.opacity = "1";
+        optsDiv.style.pointerEvents = "auto";
+        if (activeBasemapKey === "none") {
+          activeBasemapKey = "osm";
+          el.querySelectorAll(".control-btn[data-key]").forEach(function (b) {
+            b.classList.toggle("active", b.dataset.key === activeBasemapKey);
+          });
         }
+        if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
+      } else {
+        optsDiv.style.opacity = "0.5";
+        optsDiv.style.pointerEvents = "none";
+        if (mapEngine) mapEngine.switchBasemap("none");
+      }
     });
 
-    el.querySelectorAll('.control-btn[data-key]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            activeBasemapKey = btn.dataset.key;
-            if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
-            el.querySelectorAll('.control-btn[data-key]').forEach(function(b) {
-                b.classList.toggle('active', b.dataset.key === activeBasemapKey);
-            });
-        });
+  el.querySelectorAll(".control-btn[data-key]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      activeBasemapKey = btn.dataset.key;
+      if (mapEngine) mapEngine.switchBasemap(activeBasemapKey);
+      el.querySelectorAll(".control-btn[data-key]").forEach(function (b) {
+        b.classList.toggle("active", b.dataset.key === activeBasemapKey);
+      });
     });
+  });
 
-
-    document.getElementById(`bm-op-${uid}`).addEventListener('input', function(e) {
-        basemapOpacity = parseFloat(e.target.value);
-        document.getElementById(`bm-op-val-${uid}`).textContent = `${Math.round(basemapOpacity * 100)}%`;
-        if (mapEngine) mapEngine.updateBasemapOpacity(basemapOpacity);
+  document
+    .getElementById(`bm-op-${uid}`)
+    .addEventListener("input", function (e) {
+      basemapOpacity = parseFloat(e.target.value);
+      document.getElementById(`bm-op-val-${uid}`).textContent =
+        `${Math.round(basemapOpacity * 100)}%`;
+      if (mapEngine) mapEngine.updateBasemapOpacity(basemapOpacity);
     });
-
-
 }
 
 // ─── LAYER STRIP CARD ───
 
 const _eyeOpenSvg = `<svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-const _eyeOffSvg  = `<svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+const _eyeOffSvg = `<svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
 /**
  * Creates and returns a layer strip card DOM element for the given layer.
@@ -280,81 +292,88 @@ const _eyeOffSvg  = `<svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke
  * Bottom half: colour ramp (click = open colour sheet) or solid swatch.
  */
 function makeL4LayerCard(layer) {
-    const key  = layer.id.toLowerCase();
-    const card = document.createElement('div');
-    card.className = `layer-strip-card layer-chip--${key}${layer.visible ? ' active' : ''}`;
-    card.id = `layer-chip-${layer.id}`;
-    card.tabIndex = 0;
-    card.setAttribute('role', 'switch');
-    card.setAttribute('aria-checked', String(layer.visible));
+  const key = layer.id.toLowerCase();
+  const card = document.createElement("div");
+  card.className = `layer-strip-card layer-chip--${key}${layer.visible ? " active" : ""}`;
+  card.id = `layer-chip-${layer.id}`;
+  card.tabIndex = 0;
+  card.setAttribute("role", "switch");
+  card.setAttribute("aria-checked", String(layer.visible));
 
-    // Top half — name + eye icon
-    const top = document.createElement('div');
-    top.className = 'layer-strip-card-top';
+  // Top half — name + eye icon
+  const top = document.createElement("div");
+  top.className = "layer-strip-card-top";
 
-    const eyeEl = document.createElement('span');
-    eyeEl.className = 'layer-chip-eye';
-    eyeEl.innerHTML = _eyeOpenSvg + _eyeOffSvg;
-    top.appendChild(eyeEl);
+  const eyeEl = document.createElement("span");
+  eyeEl.className = "layer-chip-eye";
+  eyeEl.innerHTML = _eyeOpenSvg + _eyeOffSvg;
+  top.appendChild(eyeEl);
 
-    const nameEl = document.createElement('span');
-    nameEl.className   = 'layer-name';
-    nameEl.textContent = layer.id;
-    top.appendChild(nameEl);
-    card.appendChild(top);
+  const nameEl = document.createElement("span");
+  nameEl.className = "layer-name";
+  nameEl.textContent = layer.id;
+  top.appendChild(nameEl);
+  card.appendChild(top);
 
-    // Divider
-    const divider = document.createElement('div');
-    divider.className = 'layer-strip-divider';
-    card.appendChild(divider);
+  // Divider
+  const divider = document.createElement("div");
+  divider.className = "layer-strip-divider";
+  card.appendChild(divider);
 
-    // Bottom half — ramp / swatch
-    const bottom = document.createElement('div');
-    bottom.className = 'layer-strip-card-bottom';
+  // Bottom half — ramp / swatch
+  const bottom = document.createElement("div");
+  bottom.className = "layer-strip-card-bottom";
 
-    if (layer.type === 'category') {
-        const ramp = document.createElement('div');
-        ramp.className = 'layer-strip-ramp';
-        ramp.id = `layer-chip-color-${layer.id}`;
-        ramp.style.background = buildGradient(layer.preset, layer.reverse);
-        ramp.addEventListener('click', function(e) { e.stopPropagation(); openColorSheet(layer); });
-        bottom.appendChild(ramp);
-    } else if (layer.type === 'solid') {
-        const swatch = document.createElement('div');
-        swatch.className = 'layer-strip-solid-swatch';
-        swatch.id = `layer-chip-color-${layer.id}`;
-        swatch.style.background = layer.preset;
-
-        const picker = document.createElement('input');
-        picker.type     = 'color';
-        picker.value    = layer.preset;
-        picker.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none;';
-        card.appendChild(picker);
-
-        swatch.addEventListener('click', function(e) { e.stopPropagation(); picker.click(); });
-        picker.addEventListener('input', function(e) {
-            layer.preset           = e.target.value;
-            swatch.style.background = layer.preset;
-            refreshDataLayer();
-        });
-        bottom.appendChild(swatch);
-    }
-    card.appendChild(bottom);
-
-    function toggleLayer() {
-        layer.visible = !layer.visible;
-        syncLayerVisible(layer);
-        refreshDataLayer();
-    }
-
-    card.addEventListener('click', toggleLayer);
-    card.addEventListener('keydown', function(e) {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        e.preventDefault();
-        toggleLayer();
+  if (layer.type === "category") {
+    const ramp = document.createElement("div");
+    ramp.className = "layer-strip-ramp";
+    ramp.id = `layer-chip-color-${layer.id}`;
+    ramp.style.background = buildGradient(layer.preset, layer.reverse);
+    ramp.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openColorSheet(layer);
     });
+    bottom.appendChild(ramp);
+  } else if (layer.type === "solid") {
+    const swatch = document.createElement("div");
+    swatch.className = "layer-strip-solid-swatch";
+    swatch.id = `layer-chip-color-${layer.id}`;
+    swatch.style.background = layer.preset;
 
-    return card;
+    const picker = document.createElement("input");
+    picker.type = "color";
+    picker.value = layer.preset;
+    picker.style.cssText =
+      "position:absolute;opacity:0;width:0;height:0;pointer-events:none;";
+    card.appendChild(picker);
+
+    swatch.addEventListener("click", function (e) {
+      e.stopPropagation();
+      picker.click();
+    });
+    picker.addEventListener("input", function (e) {
+      layer.preset = e.target.value;
+      swatch.style.background = layer.preset;
+      refreshDataLayer();
+    });
+    bottom.appendChild(swatch);
+  }
+  card.appendChild(bottom);
+
+  function toggleLayer() {
+    layer.visible = !layer.visible;
+    syncLayerVisible(layer);
+    refreshDataLayer();
+  }
+
+  card.addEventListener("click", toggleLayer);
+  card.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    toggleLayer();
+  });
+
+  return card;
 }
 
 // ─── HOTSPOT CHIP ───
@@ -362,55 +381,52 @@ function makeL4LayerCard(layer) {
 const _flameSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`;
 
 function makeHotspotChip() {
-    const card = document.createElement('div');
-    card.className = `layer-strip-card layer-chip--hotspot${hotspotMode ? ' active' : ''}`;
-    card.id = 'hotspot-chip';
-    card.tabIndex = 0;
-    card.setAttribute('role', 'switch');
-    card.setAttribute('aria-checked', String(hotspotMode));
-    card.title = 'Hotspot — show top values only';
+  const card = document.createElement("div");
+  card.className = `layer-strip-card layer-chip--hotspot${hotspotMode ? " active" : ""}`;
+  card.id = "hotspot-chip";
+  card.tabIndex = 0;
+  card.setAttribute("role", "switch");
+  card.setAttribute("aria-checked", String(hotspotMode));
+  card.title = "Hotspot — show top values only";
 
-    const top = document.createElement('div');
-    top.className = 'layer-strip-card-top';
-    const iconEl = document.createElement('span');
-    iconEl.className = 'hotspot-icon';
-    iconEl.innerHTML = _flameSvg;
-    top.appendChild(iconEl);
-    const nameEl = document.createElement('span');
-    nameEl.className   = 'layer-name';
-    nameEl.textContent = 'Hotspot';
-    top.appendChild(nameEl);
-    card.appendChild(top);
+  const top = document.createElement("div");
+  top.className = "layer-strip-card-top";
+  const iconEl = document.createElement("span");
+  iconEl.className = "hotspot-icon";
+  iconEl.innerHTML = _flameSvg;
+  top.appendChild(iconEl);
+  const nameEl = document.createElement("span");
+  nameEl.className = "layer-name";
+  nameEl.textContent = "Hotspot";
+  top.appendChild(nameEl);
+  card.appendChild(top);
 
+  function toggleHotspot() {
+    hotspotMode = !hotspotMode;
+    syncHotspotMode();
+    refreshDataLayer();
+  }
 
+  card.addEventListener("click", toggleHotspot);
+  card.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    toggleHotspot();
+  });
 
-
-    function toggleHotspot() {
-        hotspotMode = !hotspotMode;
-        syncHotspotMode();
-        refreshDataLayer();
-    }
-
-    card.addEventListener('click', toggleHotspot);
-    card.addEventListener('keydown', function(e) {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        e.preventDefault();
-        toggleHotspot();
-    });
-
-    return card;
+  return card;
 }
 
 function syncHotspotMode() {
-    const chip = document.getElementById('hotspot-chip');
-    if (chip) {
-        chip.classList.toggle('active', hotspotMode);
-        chip.setAttribute('aria-checked', String(hotspotMode));
-    }
-    const drawerCard = document.getElementById('drawer-hotspot-card');
-    if (drawerCard) drawerCard.classList.toggle('active', hotspotMode);
-    const drawerToggle = document.getElementById('drawer-hotspot-toggle');
-    if (drawerToggle) drawerToggle.checked = hotspotMode;
+  const chip = document.getElementById("hotspot-chip");
+  if (chip) {
+    chip.classList.toggle("active", hotspotMode);
+    chip.setAttribute("aria-checked", String(hotspotMode));
+  }
+  const drawerCard = document.getElementById("drawer-hotspot-card");
+  if (drawerCard) drawerCard.classList.toggle("active", hotspotMode);
+  const drawerToggle = document.getElementById("drawer-hotspot-toggle");
+  if (drawerToggle) drawerToggle.checked = hotspotMode;
 }
 
 // ─── COLOR SHEET ───
@@ -422,17 +438,17 @@ function syncHotspotMode() {
  * No backdrop — the map remains fully interactive behind the sheet.
  */
 function openColorSheet(layer) {
-    const header = document.getElementById('color-sheet-header');
-    const body   = document.getElementById('color-sheet-body');
+  const header = document.getElementById("color-sheet-header");
+  const body = document.getElementById("color-sheet-body");
 
-    header.innerHTML = `
+  header.innerHTML = `
         <label class="toggle">
-            <input type="checkbox" id="cs-vis" ${layer.visible ? 'checked' : ''} />
+            <input type="checkbox" id="cs-vis" ${layer.visible ? "checked" : ""} />
             <span class="toggle-track"></span>
         </label>
         <span class="layer-name">${layer.id}</span>
         <div class="color-sheet-gradient-bar" id="cs-bar" style="background:${buildGradient(layer.preset, layer.reverse)};"></div>
-        <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="cs-rev">&#x21C4;</button>
+        <button class="btn-reverse${layer.reverse ? " active" : ""}" id="cs-rev">&#x21C4;</button>
         <button class="icon-btn" id="cs-close" title="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -440,13 +456,13 @@ function openColorSheet(layer) {
             </svg>
         </button>`;
 
-    const schemeBtns = Object.keys(COLORMAP_PRESETS)
-        .map(function(k) {
-            return `<button class="scheme-btn${k === layer.preset ? ' active' : ''}" data-scheme="${k}" title="${k}" style="background:${buildGradient(k, false)};"></button>`;
-        })
-        .join('');
+  const schemeBtns = Object.keys(COLORMAP_PRESETS)
+    .map(function (k) {
+      return `<button class="scheme-btn${k === layer.preset ? " active" : ""}" data-scheme="${k}" title="${k}" style="background:${buildGradient(k, false)};"></button>`;
+    })
+    .join("");
 
-    body.innerHTML = `
+  body.innerHTML = `
         <div class="color-sheet-scheme-grid">${schemeBtns}</div>
         <div class="ctrl-row" style="margin-top:12px;">
             <div class="ctrl-label">
@@ -456,53 +472,66 @@ function openColorSheet(layer) {
             <input type="range" id="cs-op-slider" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
         </div>`;
 
-    document.getElementById('cs-close').addEventListener('click', closeColorSheet);
+  document
+    .getElementById("cs-close")
+    .addEventListener("click", closeColorSheet);
 
-    document.getElementById('cs-vis').addEventListener('change', function(e) {
-        layer.visible = e.target.checked;
-        syncLayerVisible(layer);
-        if (layer.type === 'overlay') {
-            if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
-        } else {
-            refreshDataLayer();
-        }
+  document.getElementById("cs-vis").addEventListener("change", function (e) {
+    layer.visible = e.target.checked;
+    syncLayerVisible(layer);
+    if (layer.type === "overlay") {
+      if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
+    } else {
+      refreshDataLayer();
+    }
+  });
+
+  document.getElementById("cs-rev").addEventListener("click", function () {
+    layer.reverse = !layer.reverse;
+    document.getElementById("cs-rev").classList.toggle("active", layer.reverse);
+    document.getElementById("cs-bar").style.background = buildGradient(
+      layer.preset,
+      layer.reverse,
+    );
+    syncLayerColor(layer);
+    updateDrawerBar(layer);
+    refreshDataLayer();
+  });
+
+  body.querySelectorAll(".scheme-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      layer.preset = btn.dataset.scheme;
+      body.querySelectorAll(".scheme-btn").forEach(function (b) {
+        b.classList.remove("active");
+      });
+      btn.classList.add("active");
+      document.getElementById("cs-bar").style.background = buildGradient(
+        layer.preset,
+        layer.reverse,
+      );
+      syncLayerColor(layer);
+      updateDrawerBar(layer);
+      refreshDataLayer();
+    });
+  });
+
+  document
+    .getElementById("cs-op-slider")
+    .addEventListener("input", function (e) {
+      dataLayerOpacity = parseFloat(e.target.value);
+      document.getElementById("cs-op-val").textContent =
+        `${Math.round(dataLayerOpacity * 100)}%`;
+      if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
     });
 
-    document.getElementById('cs-rev').addEventListener('click', function() {
-        layer.reverse = !layer.reverse;
-        document.getElementById('cs-rev').classList.toggle('active', layer.reverse);
-        document.getElementById('cs-bar').style.background = buildGradient(layer.preset, layer.reverse);
-        syncLayerColor(layer);
-        updateDrawerBar(layer);
-        refreshDataLayer();
-    });
-
-    body.querySelectorAll('.scheme-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            layer.preset = btn.dataset.scheme;
-            body.querySelectorAll('.scheme-btn').forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            document.getElementById('cs-bar').style.background = buildGradient(layer.preset, layer.reverse);
-            syncLayerColor(layer);
-            updateDrawerBar(layer);
-            refreshDataLayer();
-        });
-    });
-
-    document.getElementById('cs-op-slider').addEventListener('input', function(e) {
-        dataLayerOpacity = parseFloat(e.target.value);
-        document.getElementById('cs-op-val').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
-        if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
-    });
-
-    document.getElementById('color-sheet').classList.add('open');
+  document.getElementById("color-sheet").classList.add("open");
 }
 
 /**
  * Closes the colour scheme bottom sheet.
  */
 function closeColorSheet() {
-    document.getElementById('color-sheet').classList.remove('open');
+  document.getElementById("color-sheet").classList.remove("open");
 }
 
 // ─── SEARCH SHEET ───
@@ -511,17 +540,19 @@ function closeColorSheet() {
  * Opens the location search popup and focuses the input field.
  */
 function openSearchSheet() {
-    document.getElementById('search-sheet').classList.add('open');
-    document.getElementById('search-sheet-backdrop').classList.add('open');
-    setTimeout(function() { document.getElementById('search-input').focus(); }, 180);
+  document.getElementById("search-sheet").classList.add("open");
+  document.getElementById("search-sheet-backdrop").classList.add("open");
+  setTimeout(function () {
+    document.getElementById("search-input").focus();
+  }, 180);
 }
 
 /**
  * Closes the location search popup.
  */
 function closeSearchSheet() {
-    document.getElementById('search-sheet').classList.remove('open');
-    document.getElementById('search-sheet-backdrop').classList.remove('open');
+  document.getElementById("search-sheet").classList.remove("open");
+  document.getElementById("search-sheet-backdrop").classList.remove("open");
 }
 
 /**
@@ -530,43 +561,49 @@ function closeSearchSheet() {
  * Clicking a result flies the map to that location.
  */
 async function doSearch(inputId, resultsId, opts) {
-    inputId   = inputId   || 'search-input';
-    resultsId = resultsId || 'search-results';
-    opts      = opts      || {};
+  inputId = inputId || "search-input";
+  resultsId = resultsId || "search-results";
+  opts = opts || {};
 
-    const input = document.getElementById(inputId);
-    const list  = document.getElementById(resultsId);
-    if (!input || !list) return;
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(resultsId);
+  if (!input || !list) return;
 
-    const q = input.value.trim();
-    if (!q) return;
-    list.innerHTML = '<li class="result-empty">Searching…</li>';
+  const q = input.value.trim();
+  if (!q) return;
+  list.innerHTML = '<li class="result-empty">Searching…</li>';
 
-    try {
-        const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`,
-            { headers: { 'Accept-Language': 'en' } }
-        );
-        const data = await res.json();
-        list.innerHTML = '';
-        if (!data.length) {
-            list.innerHTML = '<li class="result-empty">No results found.</li>';
-            return;
-        }
-        data.forEach(function(item) {
-            const parts = item.display_name.split(',');
-            const li    = document.createElement('li');
-            li.innerHTML = `<div class="result-name">${parts[0].trim()}</div>
-                <div class="result-detail">${parts.slice(1, 3).map(function(s) { return s.trim(); }).join(', ')}</div>`;
-            li.addEventListener('click', function() {
-                if (mapEngine) mapEngine.flyTo([parseFloat(item.lon), parseFloat(item.lat)], 12);
-                if (opts.closeOnSelect) opts.closeOnSelect();
-            });
-            list.appendChild(li);
-        });
-    } catch (e) {
-        list.innerHTML = '<li class="result-empty">Search failed.</li>';
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5`,
+      { headers: { "Accept-Language": "en" } },
+    );
+    const data = await res.json();
+    list.innerHTML = "";
+    if (!data.length) {
+      list.innerHTML = '<li class="result-empty">No results found.</li>';
+      return;
     }
+    data.forEach(function (item) {
+      const parts = item.display_name.split(",");
+      const li = document.createElement("li");
+      li.innerHTML = `<div class="result-name">${parts[0].trim()}</div>
+                <div class="result-detail">${parts
+                  .slice(1, 3)
+                  .map(function (s) {
+                    return s.trim();
+                  })
+                  .join(", ")}</div>`;
+      li.addEventListener("click", function () {
+        if (mapEngine)
+          mapEngine.flyTo([parseFloat(item.lon), parseFloat(item.lat)], 12);
+        if (opts.closeOnSelect) opts.closeOnSelect();
+      });
+      list.appendChild(li);
+    });
+  } catch (e) {
+    list.innerHTML = '<li class="result-empty">Search failed.</li>';
+  }
 }
 
 /**
@@ -574,32 +611,40 @@ async function doSearch(inputId, resultsId, opts) {
  * then wires up the main search input and button.
  */
 function initSearch() {
-    document.getElementById('search-sheet-close').addEventListener('click', closeSearchSheet);
-    document.getElementById('search-sheet-backdrop').addEventListener('click', closeSearchSheet);
-    bindSearchControls('search-input', 'search-go', 'search-results', { closeOnSelect: closeSearchSheet });
+  document
+    .getElementById("search-sheet-close")
+    .addEventListener("click", closeSearchSheet);
+  document
+    .getElementById("search-sheet-backdrop")
+    .addEventListener("click", closeSearchSheet);
+  bindSearchControls("search-input", "search-go", "search-results", {
+    closeOnSelect: closeSearchSheet,
+  });
 }
 
 /**
  * Wires the Go button and Enter key on the given input to call doSearch.
  */
 function bindSearchControls(inputId, buttonId, resultsId, opts) {
-    opts = opts || {};
-    const input  = document.getElementById(inputId);
-    const button = document.getElementById(buttonId);
-    if (!input || !button) return;
+  opts = opts || {};
+  const input = document.getElementById(inputId);
+  const button = document.getElementById(buttonId);
+  if (!input || !button) return;
 
-    button.addEventListener('click', function() { doSearch(inputId, resultsId, opts); });
-    input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') doSearch(inputId, resultsId, opts);
-    });
+  button.addEventListener("click", function () {
+    doSearch(inputId, resultsId, opts);
+  });
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") doSearch(inputId, resultsId, opts);
+  });
 }
 
 /**
  * Wires a button element to open the search sheet when clicked.
  */
 function bindSearchBtn(id) {
-    const btn = document.getElementById(id);
-    if (btn) btn.onclick = openSearchSheet;
+  const btn = document.getElementById(id);
+  if (btn) btn.onclick = openSearchSheet;
 }
 
 // ─── LAYOUT 4 ───
@@ -608,13 +653,13 @@ function bindSearchBtn(id) {
  * Clears all dynamic content from the Layout 4 layer strip, basemap popup, and drawer body.
  */
 function clearLayout4() {
-    ['layer-strip', 'basemap-popup', 'drawer-body'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '';
-    });
-    document.getElementById('basemap-popup')?.classList.remove('open');
-    document.getElementById('settings-drawer')?.classList.remove('open');
-    document.getElementById('settings-backdrop')?.classList.remove('open');
+  ["layer-strip", "basemap-popup", "drawer-body"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = "";
+  });
+  document.getElementById("basemap-popup")?.classList.remove("open");
+  document.getElementById("settings-drawer")?.classList.remove("open");
+  document.getElementById("settings-backdrop")?.classList.remove("open");
 }
 
 /**
@@ -622,81 +667,84 @@ function clearLayout4() {
  * settings drawer, FAB button bindings, and the bottom-bar height CSS variable.
  */
 function buildLayout4() {
-    clearLayout4();
+  clearLayout4();
 
-    const strip = document.getElementById('layer-strip');
+  const strip = document.getElementById("layer-strip");
 
-    layerState.forEach(function(layer) {
-        if (layer.id === 'Water') return;
-        strip.appendChild(makeL4LayerCard(layer));
-    });
-    strip.appendChild(makeHotspotChip());
+  layerState.forEach(function (layer) {
+    if (layer.id === "Water") return;
+    strip.appendChild(makeL4LayerCard(layer));
+  });
+  strip.appendChild(makeHotspotChip());
 
-    const popup = document.getElementById('basemap-popup');
-    popup.innerHTML = '';
+  const popup = document.getElementById("basemap-popup");
+  popup.innerHTML = "";
 
-    const popupHeader = document.createElement('div');
-    popupHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;';
+  const popupHeader = document.createElement("div");
+  popupHeader.style.cssText =
+    "display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;";
 
-    const engLabel = document.createElement('div');
-    engLabel.className    = 'bm-row-label';
-    engLabel.style.margin = '0';
-    engLabel.textContent  = 'Map Engine';
+  const engLabel = document.createElement("div");
+  engLabel.className = "bm-row-label";
+  engLabel.style.margin = "0";
+  engLabel.textContent = "Map Engine";
 
-    const closeBtn = document.createElement('button');
-    closeBtn.className   = 'icon-btn';
-    closeBtn.title       = 'Close';
-    closeBtn.style.padding = '2px';
-    closeBtn.style.cursor  = 'pointer';
-    closeBtn.innerHTML = `
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "icon-btn";
+  closeBtn.title = "Close";
+  closeBtn.style.padding = "2px";
+  closeBtn.style.cursor = "pointer";
+  closeBtn.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
         </svg>`;
-    closeBtn.onclick = function(e) {
-        e.stopPropagation();
-        popup.classList.remove('open');
-    };
+  closeBtn.onclick = function (e) {
+    e.stopPropagation();
+    popup.classList.remove("open");
+  };
 
-    popupHeader.appendChild(engLabel);
-    popupHeader.appendChild(closeBtn);
-    popup.appendChild(popupHeader);
+  popupHeader.appendChild(engLabel);
+  popupHeader.appendChild(closeBtn);
+  popup.appendChild(popupHeader);
 
-    const engWrap = document.createElement('div');
-    engWrap.className        = 'control-options';
-    engWrap.style.padding    = '0';
-    engWrap.style.marginBottom = '12px';
-    engWrap.innerHTML = `
+  const engWrap = document.createElement("div");
+  engWrap.className = "control-options";
+  engWrap.style.padding = "0";
+  engWrap.style.marginBottom = "12px";
+  engWrap.innerHTML = `
         <button class="control-btn" data-engine="leaflet">Leaflet</button>
         <button class="control-btn" data-engine="maplibre">MapLibre</button>`;
-    popup.appendChild(engWrap);
-    initEngineBtns(engWrap);
+  popup.appendChild(engWrap);
+  initEngineBtns(engWrap);
 
-    const divider = document.createElement('div');
-    divider.style.cssText = 'border-top:1px solid var(--border);margin-bottom:12px;';
-    popup.appendChild(divider);
+  const divider = document.createElement("div");
+  divider.style.cssText =
+    "border-top:1px solid var(--border);margin-bottom:12px;";
+  popup.appendChild(divider);
 
-    const bmBlock = document.createElement('div');
-    bmBlock.id = 'bm-inner';
-    popup.appendChild(bmBlock);
-    
-    buildBasemapBlock(bmBlock);
+  const bmBlock = document.createElement("div");
+  bmBlock.id = "bm-inner";
+  popup.appendChild(bmBlock);
 
-    const ovDiv = document.createElement("div")
-    ovDiv.innerHTML = `
+  buildBasemapBlock(bmBlock);
+
+  const ovDiv = document.createElement("div");
+  ovDiv.innerHTML = `
             <div class="bm-row">
             <div class="bm-row-label">Overlays</div>
             <div class="control-options" style="padding:0;">
-                <button class="control-btn${activeOverlays.hiking  ? ' active' : ''}" data-overlay="hiking">Hiking</button>
-                <button class="control-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
+                <button class="control-btn${activeOverlays.hiking ? " active" : ""}" data-overlay="hiking">Hiking</button>
+                <button class="control-btn${activeOverlays.cycling ? " active" : ""}" data-overlay="cycling">Cycling</button>
             </div>
         </div>
-        </div>`
-    ovDiv.style.cssText ='border-top:1px solid var(--border);margin-top:14px; padding-top:6px';
-    popup.appendChild(ovDiv);
+        </div>`;
+  ovDiv.style.cssText =
+    "border-top:1px solid var(--border);margin-top:14px; padding-top:6px";
+  popup.appendChild(ovDiv);
 
-    const opDiv = document.createElement('div');
-    opDiv.innerHTML = `
+  const opDiv = document.createElement("div");
+  opDiv.innerHTML = `
         <div class="ctrl-row">
             <div class="ctrl-label">
                 <span>DATA LAYER OPACITY</span>
@@ -704,80 +752,86 @@ function buildLayout4() {
             </div>
             <input type="range" id="drawer-dl-opacity2" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
         </div>`;
-    opDiv.style.cssText = 'border-top:1px solid var(--border);margin-top:12px; padding-top:10px';
-    popup.appendChild(opDiv);
+  opDiv.style.cssText =
+    "border-top:1px solid var(--border);margin-top:12px; padding-top:10px";
+  popup.appendChild(opDiv);
 
-    document.getElementById('drawer-dl-opacity2').addEventListener('input', function(e) {
-        dataLayerOpacity = parseFloat(e.target.value);
-        document.getElementById('drawer-dl-val2').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
-        if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
+  document
+    .getElementById("drawer-dl-opacity2")
+    .addEventListener("input", function (e) {
+      dataLayerOpacity = parseFloat(e.target.value);
+      document.getElementById("drawer-dl-val2").textContent =
+        `${Math.round(dataLayerOpacity * 100)}%`;
+      if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
     });
 
+  const bmBtn = document.getElementById("basemap-btn");
+  const settingsBtn = document.getElementById("settings-btn");
 
-    const bmBtn = document.getElementById('basemap-btn');
-    const settingsBtn = document.getElementById('settings-btn');
+  bmBtn.onclick = function (e) {
+    e.stopPropagation();
+    closeLayout4Drawer();
+    popup.classList.toggle("open");
+  };
+  if (!_popupHandlerAttached) {
+    _popupHandlerAttached = true;
+    document.addEventListener("click", (e) => {
+      const p = document.getElementById("basemap-popup");
+      const b = document.getElementById("basemap-btn");
+      if (p && b && !p.contains(e.target) && e.target !== b) {
+        p.classList.remove("open");
+      }
+    });
+  }
 
-    bmBtn.onclick = function(e) {
-        e.stopPropagation();
-        closeLayout4Drawer();
-        popup.classList.toggle('open');
-    };
-    if (!_popupHandlerAttached) {
-        _popupHandlerAttached = true;
-        document.addEventListener('click', e => {
-            const p = document.getElementById('basemap-popup');
-            const b = document.getElementById('basemap-btn');
-            if (p && b && !p.contains(e.target) && e.target !== b) {
-                p.classList.remove('open');
-            }
-        });
+  buildDrawerBody(document.getElementById("drawer-body"), {
+    includeLocationTools: true,
+  });
+
+  settingsBtn.onclick = function () {
+    popup.classList.remove("open");
+    const drawer = document.getElementById("settings-drawer");
+    const backdrop = document.getElementById("settings-backdrop");
+    const bottomBar = document.getElementById("bottom-bar");
+    if (drawer.classList.contains("open")) {
+      drawer.classList.remove("open");
+      backdrop.classList.remove("open");
+      if (bottomBar) bottomBar.style.display = "";
+    } else {
+      drawer.classList.add("open");
+      backdrop.classList.add("open");
+      if (bottomBar) bottomBar.style.display = "none";
     }
+  };
+  document.getElementById("drawer-close").onclick = closeLayout4Drawer;
+  document.getElementById("settings-backdrop").onclick = closeLayout4Drawer;
 
-    buildDrawerBody(document.getElementById('drawer-body'), { includeLocationTools: true });
+  bindSearchBtn("search-btn");
+  bindLocBtn("loc-btn");
 
-    settingsBtn.onclick = function() {
-        popup.classList.remove('open');
-        const drawer = document.getElementById('settings-drawer');
-        const backdrop = document.getElementById('settings-backdrop');
-        const bottomBar = document.getElementById('bottom-bar');
-        if (drawer.classList.contains('open')) {
-            drawer.classList.remove('open');
-            backdrop.classList.remove('open');
-            if (bottomBar) bottomBar.style.display = '';
-        } else {
-            drawer.classList.add('open');
-            backdrop.classList.add('open');
-            if (bottomBar) bottomBar.style.display = 'none';
-        }
-    };
-    document.getElementById('drawer-close').onclick = closeLayout4Drawer;
-    document.getElementById('settings-backdrop').onclick = closeLayout4Drawer;
+  requestAnimationFrame(() => {
+    const h = document.getElementById("bottom-bar")?.offsetHeight;
+    if (h)
+      document.documentElement.style.setProperty("--bottom-bar-h", `${h}px`);
 
-    bindSearchBtn('search-btn');
-    bindLocBtn('loc-btn');
-
-    requestAnimationFrame(() => {
-        const h = document.getElementById('bottom-bar')?.offsetHeight;
-        if (h) document.documentElement.style.setProperty('--bottom-bar-h', `${h}px`);
-
-        // if (window.innerWidth >= 769) {
-        //     const drawer = document.getElementById('settings-drawer');
-        //     if (drawer) {
-        //         drawer.classList.add('open');
-        //         updateFabShift();
-        //     }
-        // }
-    });
+    // if (window.innerWidth >= 769) {
+    //     const drawer = document.getElementById('settings-drawer');
+    //     if (drawer) {
+    //         drawer.classList.add('open');
+    //         updateFabShift();
+    //     }
+    // }
+  });
 }
 
 /**
  * Closes the Layout 4 settings drawer and its backdrop.
  */
 function closeLayout4Drawer() {
-    document.getElementById('settings-drawer').classList.remove('open');
-    document.getElementById('settings-backdrop').classList.remove('open');
-    const bottomBar = document.getElementById('bottom-bar');
-    if (bottomBar) bottomBar.style.display = '';
+  document.getElementById("settings-drawer").classList.remove("open");
+  document.getElementById("settings-backdrop").classList.remove("open");
+  const bottomBar = document.getElementById("bottom-bar");
+  if (bottomBar) bottomBar.style.display = "";
 }
 
 // ─── DRAWER BODY ───
@@ -787,122 +841,147 @@ function closeLayout4Drawer() {
  * map engine switcher, basemap block, and optionally location tools.
  */
 function buildDrawerBody(container, opts) {
-    opts = opts || {};
-    container.innerHTML = '';
+  opts = opts || {};
+  container.innerHTML = "";
 
-    addSectionLabel(container, 'Hotspot Mode');
-    const hotspotCard = document.createElement('div');
-    hotspotCard.className = `layer-card${hotspotMode ? ' active' : ''}`;
-    hotspotCard.id = 'drawer-hotspot-card';
-    hotspotCard.innerHTML = `
+  addSectionLabel(container, "Hotspot Mode");
+  const hotspotCard = document.createElement("div");
+  hotspotCard.className = `layer-card${hotspotMode ? " active" : ""}`;
+  hotspotCard.id = "drawer-hotspot-card";
+  hotspotCard.innerHTML = `
         <div class="layer-header">
             <label class="toggle">
-                <input type="checkbox" id="drawer-hotspot-toggle" ${hotspotMode ? 'checked' : ''} />
+                <input type="checkbox" id="drawer-hotspot-toggle" ${hotspotMode ? "checked" : ""} />
                 <span class="toggle-track"></span>
             </label>
             <span class="hotspot-icon" style="display:flex;align-items:center;flex-shrink:0;">${_flameSvg}</span>
             <span class="layer-name">Hotspot</span>
             <span style="font-size:10px;color:var(--text-lo);flex-shrink:0;white-space:nowrap;">Top values only</span>
         </div>`;
-    container.appendChild(hotspotCard);
-    document.getElementById('drawer-hotspot-toggle').addEventListener('change', function(e) {
-        hotspotMode = e.target.checked;
-        syncHotspotMode();
-        refreshDataLayer();
+  container.appendChild(hotspotCard);
+  document
+    .getElementById("drawer-hotspot-toggle")
+    .addEventListener("change", function (e) {
+      hotspotMode = e.target.checked;
+      syncHotspotMode();
+      refreshDataLayer();
     });
 
-    addSectionLabel(container, 'Data Layers');
+  addSectionLabel(container, "Data Layers");
 
-    layerState.forEach(function(layer) {
-        const card = document.createElement('div');
-        card.className = `layer-card${layer.visible ? '' : ' inactive'}`;
+  layerState.forEach(function (layer) {
+    const card = document.createElement("div");
+    card.className = `layer-card${layer.visible ? "" : " inactive"}`;
 
-        let headerControls = '';
-        let dropdownHtml   = '';
+    let headerControls = "";
+    let dropdownHtml = "";
 
-        if (layer.type === 'category') {
-            const schemeBtns = Object.keys(COLORMAP_PRESETS)
-                .map(function(k) {
-                    return `<button class="scheme-btn${k === layer.preset ? ' active' : ''}" data-scheme="${k}" style="background:${buildGradient(k, false)};"></button>`;
-                })
-                .join('');
-            headerControls = `
+    if (layer.type === "category") {
+      const schemeBtns = Object.keys(COLORMAP_PRESETS)
+        .map(function (k) {
+          return `<button class="scheme-btn${k === layer.preset ? " active" : ""}" data-scheme="${k}" style="background:${buildGradient(k, false)};"></button>`;
+        })
+        .join("");
+      headerControls = `
             <div class="scheme-bar-btn" id="dbar-${layer.id}" style="background:${buildGradient(layer.preset, layer.reverse)};"></div>
-            <button class="btn-reverse${layer.reverse ? ' active' : ''}" id="drev-${layer.id}">&#x21C4;</button>
+            <button class="btn-reverse${layer.reverse ? " active" : ""}" id="drev-${layer.id}">&#x21C4;</button>
             `;
-            dropdownHtml = `
+      dropdownHtml = `
                 <div class="scheme-dropdown" id="ddrop-${layer.id}">
                     <div class="scheme-grid" id="dschemes-${layer.id}">${schemeBtns}</div>
                 </div>`;
-        } else if (layer.type === 'solid') {
-            headerControls = `<input type="color" id="dcol-${layer.id}" value="${layer.preset}" class="header-color-picker" />`;
-        }
+    } else if (layer.type === "solid") {
+      headerControls = `<input type="color" id="dcol-${layer.id}" value="${layer.preset}" class="header-color-picker" />`;
+    }
 
-        card.innerHTML = `
+    card.innerHTML = `
             <div class="layer-header">
                 <label class="toggle">
-                    <input type="checkbox" id="dvis-${layer.id}" ${layer.visible ? 'checked' : ''} />
+                    <input type="checkbox" id="dvis-${layer.id}" ${layer.visible ? "checked" : ""} />
                     <span class="toggle-track"></span>
                 </label>
                 <span class="layer-name">${layer.id}</span>
                 ${headerControls}
             </div>
             ${dropdownHtml}`;
-        container.appendChild(card);
+    container.appendChild(card);
 
-        document.getElementById(`dvis-${layer.id}`).addEventListener('change', function(e) {
-            layer.visible = e.target.checked;
-            card.classList.toggle('inactive', !layer.visible);
-            syncLayerVisible(layer);
-            if (layer.type === 'overlay') {
-                if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
-            } else {
-                refreshDataLayer();
-            }
+    document
+      .getElementById(`dvis-${layer.id}`)
+      .addEventListener("change", function (e) {
+        layer.visible = e.target.checked;
+        card.classList.toggle("inactive", !layer.visible);
+        syncLayerVisible(layer);
+        if (layer.type === "overlay") {
+          if (mapEngine) mapEngine.toggleOverlay(layer.id, layer.visible);
+        } else {
+          refreshDataLayer();
+        }
+      });
+
+    if (layer.type === "category") {
+      document
+        .getElementById(`dbar-${layer.id}`)
+        .addEventListener("click", function (e) {
+          e.stopPropagation();
+          document
+            .querySelectorAll(".scheme-dropdown.open")
+            .forEach(function (d) {
+              if (d.id !== `ddrop-${layer.id}`) d.classList.remove("open");
+            });
+          document.getElementById(`ddrop-${layer.id}`).classList.toggle("open");
         });
 
-        if (layer.type === 'category') {
-            document.getElementById(`dbar-${layer.id}`).addEventListener('click', function(e) {
-                e.stopPropagation();
-                document.querySelectorAll('.scheme-dropdown.open').forEach(function(d) {
-                    if (d.id !== `ddrop-${layer.id}`) d.classList.remove('open');
-                });
-                document.getElementById(`ddrop-${layer.id}`).classList.toggle('open');
-            });
+      document
+        .getElementById(`dschemes-${layer.id}`)
+        .querySelectorAll(".scheme-btn")
+        .forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            layer.preset = btn.dataset.scheme;
+            document
+              .getElementById(`dschemes-${layer.id}`)
+              .querySelectorAll(".scheme-btn")
+              .forEach(function (b) {
+                b.classList.remove("active");
+              });
+            btn.classList.add("active");
+            document.getElementById(`dbar-${layer.id}`).style.background =
+              buildGradient(layer.preset, layer.reverse);
+            syncLayerColor(layer);
+            refreshDataLayer();
+            document
+              .getElementById(`ddrop-${layer.id}`)
+              .classList.remove("open");
+          });
+        });
 
-            document.getElementById(`dschemes-${layer.id}`).querySelectorAll('.scheme-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    layer.preset = btn.dataset.scheme;
-                    document.getElementById(`dschemes-${layer.id}`).querySelectorAll('.scheme-btn')
-                        .forEach(function(b) { b.classList.remove('active'); });
-                    btn.classList.add('active');
-                    document.getElementById(`dbar-${layer.id}`).style.background = buildGradient(layer.preset, layer.reverse);
-                    syncLayerColor(layer);
-                    refreshDataLayer();
-                    document.getElementById(`ddrop-${layer.id}`).classList.remove('open');
-                });
-            });
+      document
+        .getElementById(`drev-${layer.id}`)
+        .addEventListener("click", function (e) {
+          e.stopPropagation();
+          layer.reverse = !layer.reverse;
+          document
+            .getElementById(`drev-${layer.id}`)
+            .classList.toggle("active", layer.reverse);
+          document.getElementById(`dbar-${layer.id}`).style.background =
+            buildGradient(layer.preset, layer.reverse);
+          syncLayerColor(layer);
+          refreshDataLayer();
+        });
+    } else if (layer.type === "solid") {
+      document
+        .getElementById(`dcol-${layer.id}`)
+        .addEventListener("input", function (e) {
+          layer.preset = e.target.value;
+          syncLayerColor(layer);
+          refreshDataLayer();
+        });
+    }
+  });
 
-            document.getElementById(`drev-${layer.id}`).addEventListener('click', function(e) {
-                e.stopPropagation();
-                layer.reverse = !layer.reverse;
-                document.getElementById(`drev-${layer.id}`).classList.toggle('active', layer.reverse);
-                document.getElementById(`dbar-${layer.id}`).style.background = buildGradient(layer.preset, layer.reverse);
-                syncLayerColor(layer);
-                refreshDataLayer();
-            });
-        } else if (layer.type === 'solid') {
-            document.getElementById(`dcol-${layer.id}`).addEventListener('input', function(e) {
-                layer.preset = e.target.value;
-                syncLayerColor(layer);
-                refreshDataLayer();
-            });
-        }
-    });
-
-    const opDiv = document.createElement('div');
-    opDiv.style.padding = '2px 4px 8px';
-    opDiv.innerHTML = `
+  const opDiv = document.createElement("div");
+  opDiv.style.padding = "2px 4px 8px";
+  opDiv.innerHTML = `
         <div class="ctrl-row">
             <div class="ctrl-label">
                 <span>Opacity</span>
@@ -910,51 +989,53 @@ function buildDrawerBody(container, opts) {
             </div>
             <input type="range" id="drawer-dl-opacity" min="0" max="1" step="0.01" value="${dataLayerOpacity}" />
         </div>`;
-    container.appendChild(opDiv);
+  container.appendChild(opDiv);
 
-    document.getElementById('drawer-dl-opacity').addEventListener('input', function(e) {
-        dataLayerOpacity = parseFloat(e.target.value);
-        document.getElementById('drawer-dl-val').textContent = `${Math.round(dataLayerOpacity * 100)}%`;
-        if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
+  document
+    .getElementById("drawer-dl-opacity")
+    .addEventListener("input", function (e) {
+      dataLayerOpacity = parseFloat(e.target.value);
+      document.getElementById("drawer-dl-val").textContent =
+        `${Math.round(dataLayerOpacity * 100)}%`;
+      if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
     });
 
-    addSectionLabel(container, 'Backend');
-    const engWrap = document.createElement('div');
-    engWrap.className    = 'control-card';
-    engWrap.style.padding = '10px 12px';
-    engWrap.innerHTML = `
+  addSectionLabel(container, "Backend");
+  const engWrap = document.createElement("div");
+  engWrap.className = "control-card";
+  engWrap.style.padding = "10px 12px";
+  engWrap.innerHTML = `
             <div class="bm-row-label" style="margin-bottom:10px;">Map Engine</div>
     
         <div class="control-options" style="padding:0;">
             <button class="control-btn" data-engine="leaflet">Leaflet</button>
             <button class="control-btn" data-engine="maplibre">MapLibre</button>
         </div>`;
-    container.appendChild(engWrap);
-    initEngineBtns(engWrap);
+  container.appendChild(engWrap);
+  initEngineBtns(engWrap);
 
-    const bmWrap = document.createElement('div');
-    bmWrap.className    = 'control-card';
-    bmWrap.id           = 'drawer-bm-area';
-    bmWrap.style.padding = '10px 12px';
-    container.appendChild(bmWrap);
-    buildBasemapBlock(bmWrap);
+  const bmWrap = document.createElement("div");
+  bmWrap.className = "control-card";
+  bmWrap.id = "drawer-bm-area";
+  bmWrap.style.padding = "10px 12px";
+  container.appendChild(bmWrap);
+  buildBasemapBlock(bmWrap);
 
-    const ovDiv = document.createElement("div")
-    
-    ovDiv.className    = 'control-card';
-    ovDiv.style.padding = '10px 12px';
-    ovDiv.innerHTML = `
+  const ovDiv = document.createElement("div");
+
+  ovDiv.className = "control-card";
+  ovDiv.style.padding = "10px 12px";
+  ovDiv.innerHTML = `
             <div class="bm-row-label" style="margin-bottom:10px;">Overlays</div>
             <div class="control-options" style="padding:0;">
-                <button class="control-btn${activeOverlays.hiking  ? ' active' : ''}" data-overlay="hiking">Hiking</button>
-                <button class="control-btn${activeOverlays.cycling ? ' active' : ''}" data-overlay="cycling">Cycling</button>
+                <button class="control-btn${activeOverlays.hiking ? " active" : ""}" data-overlay="hiking">Hiking</button>
+                <button class="control-btn${activeOverlays.cycling ? " active" : ""}" data-overlay="cycling">Cycling</button>
             </div>
         </div>
-        </div>`
-    container.appendChild(ovDiv);
+        </div>`;
+  container.appendChild(ovDiv);
 
-
-    if (opts.includeLocationTools) appendDrawerLocationTools(container);
+  if (opts.includeLocationTools) appendDrawerLocationTools(container);
 }
 
 /**
@@ -962,15 +1043,15 @@ function buildDrawerBody(container, opts) {
  * to the given drawer container element.
  */
 function appendDrawerLocationTools(container) {
-    const section = document.createElement('div');
-    section.className = 'drawer-location-section';
-    container.appendChild(section);
+  const section = document.createElement("div");
+  section.className = "drawer-location-section";
+  container.appendChild(section);
 
-    addSectionLabel(section, 'Location');
+  addSectionLabel(section, "Location");
 
-    const locWrap = document.createElement('div');
-    locWrap.className = 'control-card drawer-location-card';
-    locWrap.innerHTML = `
+  const locWrap = document.createElement("div");
+  locWrap.className = "control-card drawer-location-card";
+  locWrap.innerHTML = `
         <div class="search-input-row drawer-search-row">
             <input id="drawer-search-input" type="text" placeholder="Search location…" autocomplete="off" />
             <button id="drawer-search-go" class="search-go-btn">Go</button>
@@ -980,10 +1061,14 @@ function appendDrawerLocationTools(container) {
             ${getMyLocationIconSvg()}
             <span>My location</span>
         </button>`;
-    section.appendChild(locWrap);
+  section.appendChild(locWrap);
 
-    bindSearchControls('drawer-search-input', 'drawer-search-go', 'drawer-search-results');
-    bindLocBtn('drawer-loc-btn');
+  bindSearchControls(
+    "drawer-search-input",
+    "drawer-search-go",
+    "drawer-search-results",
+  );
+  bindLocBtn("drawer-loc-btn");
 }
 
 // ─── FAB SHIFT ───
@@ -993,30 +1078,30 @@ function appendDrawerLocationTools(container) {
  * when the settings drawer overlaps it on wide viewports.
  */
 function updateFabShift() {
-    const drawer = document.getElementById('settings-drawer');
-    const fab = document.getElementById('fab-group');
-    if (!drawer || !fab) return;
+  const drawer = document.getElementById("settings-drawer");
+  const fab = document.getElementById("fab-group");
+  if (!drawer || !fab) return;
 
-    if (window.innerWidth < 769) {
-        document.body.classList.remove('fab-shifted');
-        return;
+  if (window.innerWidth < 769) {
+    document.body.classList.remove("fab-shifted");
+    return;
+  }
+
+  const isOpen = drawer.classList.contains("open");
+  const pos = drawer.dataset.pos || "right-middle";
+  const isOnRight = !pos.includes("left");
+
+  if (isOpen && isOnRight) {
+    const fabHeight = fab.offsetHeight || 200;
+    const drawerRect = drawer.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - drawerRect.bottom;
+
+    if (spaceBelow < fabHeight + 24) {
+      document.body.classList.add("fab-shifted");
+      return;
     }
-
-    const isOpen    = drawer.classList.contains('open');
-    const pos       = drawer.dataset.pos || 'right-middle';
-    const isOnRight = !pos.includes('left');
-
-    if (isOpen && isOnRight) {
-        const fabHeight  = fab.offsetHeight || 200;
-        const drawerRect = drawer.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - drawerRect.bottom;
-
-        if (spaceBelow < fabHeight + 24) {
-            document.body.classList.add('fab-shifted');
-            return;
-        }
-    }
-    document.body.classList.remove('fab-shifted');
+  }
+  document.body.classList.remove("fab-shifted");
 }
 
 // ─── HELPERS ───
@@ -1025,10 +1110,10 @@ function updateFabShift() {
  * Appends a section label div with the given text to the parent element.
  */
 function addSectionLabel(parent, text) {
-    const div = document.createElement('div');
-    div.className   = 'section-label';
-    div.textContent = text;
-    parent.appendChild(div);
+  const div = document.createElement("div");
+  div.className = "section-label";
+  div.textContent = text;
+  parent.appendChild(div);
 }
 
 // ─── THEME SWITCHER ───
@@ -1038,70 +1123,92 @@ function addSectionLabel(parent, text) {
  * theme buttons to switch and persist the active theme.
  */
 function initThemeSwitcher() {
-    const buttons    = document.querySelectorAll('.dev-theme-btn');
-    const themes     = Array.from(buttons).map(function(btn) { return btn.dataset.theme; });
-    const saved      = localStorage.getItem('map-theme');
-    const systemDefault = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'brutalist';
-    const activeTheme = themes.includes(saved) ? saved : systemDefault;
+  const buttons = document.querySelectorAll(".dev-theme-btn");
+  const themes = Array.from(buttons).map(function (btn) {
+    return btn.dataset.theme;
+  });
+  const saved = localStorage.getItem("map-theme");
+  const systemDefault = window.matchMedia("(prefers-color-scheme: dark)")
+    .matches
+    ? "dark"
+    : "brutalist";
+  const activeTheme = themes.includes(saved) ? saved : systemDefault;
 
-    document.getElementById('theme-link').href = `themes/theme_${activeTheme}.css`;
-    localStorage.setItem('map-theme', activeTheme);
+  document.getElementById("theme-link").href =
+    `themes/theme_${activeTheme}.css`;
+  localStorage.setItem("map-theme", activeTheme);
 
-    buttons.forEach(function(btn) {
-        btn.classList.toggle('active', btn.dataset.theme === activeTheme);
-        btn.addEventListener('click', function() {
-            buttons.forEach(function(b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            const t = btn.dataset.theme;
-            document.getElementById('theme-link').href = `themes/theme_${t}.css`;
-            localStorage.setItem('map-theme', t);
-        });
+  buttons.forEach(function (btn) {
+    btn.classList.toggle("active", btn.dataset.theme === activeTheme);
+    btn.addEventListener("click", function () {
+      buttons.forEach(function (b) {
+        b.classList.remove("active");
+      });
+      btn.classList.add("active");
+      const t = btn.dataset.theme;
+      document.getElementById("theme-link").href = `themes/theme_${t}.css`;
+      localStorage.setItem("map-theme", t);
     });
+  });
 }
 
 // ─── STARTUP ───
 
-document.addEventListener('DOMContentLoaded', function() {
-    buildLayout4();
-    initThemeSwitcher();
+document.addEventListener("DOMContentLoaded", function () {
+  buildLayout4();
+  initThemeSwitcher();
 
-    if (window.innerWidth >= 769) {
-        document.getElementById('settings-drawer').classList.add('open');
-    }
+  if (window.innerWidth >= 769) {
+    document.getElementById("settings-drawer").classList.add("open");
+  }
 
-    const drawer = document.getElementById('settings-drawer');
-    if (drawer) {
-        const observer = new MutationObserver(function() { updateFabShift(); });
-        observer.observe(drawer, { attributes: true, attributeFilter: ['class', 'data-pos'] });
-    }
+  const drawer = document.getElementById("settings-drawer");
+  if (drawer) {
+    const observer = new MutationObserver(function () {
+      updateFabShift();
+    });
+    observer.observe(drawer, {
+      attributes: true,
+      attributeFilter: ["class", "data-pos"],
+    });
+  }
 
-    window.addEventListener('resize', updateFabShift);
-    requestAnimationFrame(updateFabShift);
+  window.addEventListener("resize", updateFabShift);
+  requestAnimationFrame(updateFabShift);
 
-    initSearch();
+  initSearch();
 
-    mapEngine = activeEngine === 'leaflet' ? new LeafletEngine() : new MapLibreEngine();
-    mapEngine.init('map', DEFAULT_CENTER, DEFAULT_ZOOM, NAV_CONTROL_POSITIONS[activeEngine])
-        .then(function() { afterEngineInit(true); });
-
-    window.addEventListener('resize', () => {
-        requestAnimationFrame(() => {
-            const h4 = document.getElementById('bottom-bar')?.offsetHeight;
-            if (h4) document.documentElement.style.setProperty('--bottom-bar-h', `${h4}px`);
-        });
+  mapEngine =
+    activeEngine === "leaflet" ? new LeafletEngine() : new MapLibreEngine();
+  mapEngine
+    .init(
+      "map",
+      DEFAULT_CENTER,
+      DEFAULT_ZOOM,
+      NAV_CONTROL_POSITIONS[activeEngine],
+    )
+    .then(function () {
+      afterEngineInit(true);
     });
 
-    
-    document.querySelectorAll('button[data-overlay]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const key = btn.dataset.overlay;
-            activeOverlays[key] = !activeOverlays[key];
-            document.querySelectorAll(`button[data-overlay="${key}"]`).forEach(function(b) {
-                b.classList.toggle('active', activeOverlays[key]);
-            });
-            if (mapEngine) mapEngine.toggleOverlay(key, activeOverlays[key]);
-        });
+  window.addEventListener("resize", () => {
+    requestAnimationFrame(() => {
+      const h4 = document.getElementById("bottom-bar")?.offsetHeight;
+      if (h4)
+        document.documentElement.style.setProperty("--bottom-bar-h", `${h4}px`);
     });
+  });
 
-    
+  document.querySelectorAll("button[data-overlay]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const key = btn.dataset.overlay;
+      activeOverlays[key] = !activeOverlays[key];
+      document
+        .querySelectorAll(`button[data-overlay="${key}"]`)
+        .forEach(function (b) {
+          b.classList.toggle("active", activeOverlays[key]);
+        });
+      if (mapEngine) mapEngine.toggleOverlay(key, activeOverlays[key]);
+    });
+  });
 });
