@@ -2,14 +2,14 @@
 
 ## System Architecture
 
-This diagram illustrates the high-level architecture of the Alleinsein project, detailing the interaction between the frontend, Cloudflare, the Hetzner VPS backend, and the mapping data.
+This diagram illustrates the high-level architecture of the Alleinseinkarte project, detailing the interaction between the frontend, Cloudflare, the Hetzner VPS backend, and the mapping data.
 
 ```mermaid
 graph TD
     User([User / Browser])
     
     subgraph Cloudflare [Cloudflare Network]
-        CF_DNS[DNS: alleinsein.de]
+        CF_DNS[DNS: alleinseinkarte.de]
         CF_Cache[(Edge Cache)]
         CF_Tunnel[Cloudflare Tunnel Endpoint]
     end
@@ -46,13 +46,13 @@ sequenceDiagram
     participant CF_Cache as Cloudflare Edge Cache
     participant VPS as Hetzner VPS (Titiler)
 
-    User->>Browser: Enters alleinsein.de
+    User->>Browser: Enters alleinseinkarte.de
     Browser->>CF_Cache: Request static assets (HTML/CSS/JS)
     CF_Cache-->>Browser: Return static assets
     
     Note over Browser: User pans/zooms map
     
-    Browser->>CF_Cache: Request map tile (tiles.alleinsein.de/...)
+    Browser->>CF_Cache: Request map tile (tiles.alleinseinkarte.de/...)
     
     alt Tile is in Cache (Cache Hit)
         CF_Cache-->>Browser: Return cached tile
