@@ -1,10 +1,88 @@
-# Cloudflare Tunnel, Caching & Routing Configuration
+# Cloudflare Frontend, Tunnel, Caching & Routing Configuration
 
-This document describes how the `alleinsein` map tile backend is securely exposed and cached at the edge using Cloudflare.
+This document describes how the `alleinsein` static frontend is deployed by Cloudflare, and how the map tile backend is securely exposed and cached at the edge.
 
 ---
 
-## 1. Cloudflare Tunnel Setup (`tiles.alleinseinkarte.de`)
+## 1. Static Frontend Deployment (`alleinseinkarte.de`)
+
+The frontend is deployed from the repository by **Cloudflare Workers Builds**. When a commit is pushed to the connected production branch, Cloudflare runs the configured commands in its build image and deploys the Worker/static assets with Wrangler.
+
+For this project, the frontend is already described by [`frontend/wrangler.jsonc`](../frontend/wrangler.jsonc):
+
+```jsonc
+{
+  "name": "rough-frost-f369",
+  "assets": {
+    "directory": "./static"
+  },
+  "routes": [
+    {
+      "pattern": "alleinseinkarte.de/*",
+      "zone_name": "alleinseinkarte.de"
+    },
+    {
+      "pattern": "www.alleinseinkarte.de/*",
+      "zone_name": "alleinseinkarte.de"
+    }
+  ]
+}
+```
+
+Because `assets.directory` is relative to the Wrangler config file, Cloudflare deploys files from `frontend/static`.
+
+### Initial Setup In Cloudflare
+
+1. Open **Cloudflare Dashboard** -> **Workers & Pages**.
+2. Select **Create application** -> **Import a repository**.
+3. Connect the GitHub/GitLab account and select the `alleinsein` repository.
+4. Configure the Worker build:
+   - **Worker name**: `rough-frost-f369`
+   - **Root directory**: `frontend`
+   - **Production branch**: `main`
+   - **Build command**: leave empty
+   - **Deploy command**: `npx wrangler deploy`
+   - **Non-production branch deploy command**: `npx wrangler versions upload`
+5. Save and deploy.
+
+The Worker name in Cloudflare must match the `name` in `frontend/wrangler.jsonc`. If those values differ, Cloudflare Workers Builds will fail before deployment.
+
+### How Push-Based Deployment Works
+
+1. A developer pushes to the configured production branch, normally `main`.
+2. Cloudflare detects the Git event and starts a Workers Builds job.
+3. The build runs from the configured root directory: `frontend`.
+4. No separate frontend build command is needed because this project serves checked-in static files directly from `frontend/static`.
+5. Cloudflare runs `npx wrangler deploy`.
+6. Wrangler reads `frontend/wrangler.jsonc`, uploads `./static` as static assets, and deploys the Worker to:
+   - `https://alleinseinkarte.de`
+   - `https://www.alleinseinkarte.de`
+
+### Preview And Verification
+
+- Build logs: **Workers & Pages** -> `rough-frost-f369` -> **Deployments** or **Settings** -> **Builds**.
+- Preview URLs: Cloudflare creates preview versions for non-production branch builds when using `npx wrangler versions upload`.
+- Production check:
+  ```bash
+  curl -I https://alleinseinkarte.de/
+  ```
+
+Expected result: a `200` response for the static frontend.
+
+### Manual Deploy Fallback
+
+If the Git integration is unavailable, deploy the same frontend manually from the repository root:
+
+```bash
+cd frontend
+npx wrangler deploy
+```
+
+This uses the same `frontend/wrangler.jsonc` file and uploads the same `frontend/static` directory.
+
+---
+
+## 2. Cloudflare Tunnel Setup (`tiles.alleinseinkarte.de`)
 
 A **Cloudflare Tunnel** (`cloudflared`) establishes a secure, outbound-only connection between the Hetzner VPS and Cloudflare's global edge network. This design enhances security by:
 - Eliminating the need to open public inbound ports (e.g., `80`, `443`, or `8000`) on the VPS.
@@ -54,7 +132,7 @@ docker logs -f cloudflared
 
 ---
 
-## 2. Caching and Routing Rules
+## 3. Caching and Routing Rules
 
 Because geospatial mapping clients perform heavy zooming and panning, a single user session can generate hundreds of tile requests in seconds. Caching tiles at Cloudflare's Edge CDN is crucial to minimize Hetzner VPS resource consumption.
 
@@ -87,7 +165,7 @@ Configure these rules in the Cloudflare Dashboard under **Caching** -> **Cache R
 
 ---
 
-## 3. Verification
+## 4. Backend Cache Verification
 
 Inspect the HTTP response headers in your browser's Developer Tools network panel or via `curl`:
 
