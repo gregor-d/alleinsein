@@ -2,6 +2,10 @@
 
 alleinsein.de is a spatial web application designed to help users visualize and explore isolation or "aloneness" through map data. The project utilizes high-performance Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https://developmentseed.org/titiler/) backend via FastAPI, combined with a frontend using MapLibre and/or Leaflet.
 
+|PC Layout |Mobile Layout |
+|---|---|
+|<img src="./docs/pc.png" height="600" alt="PC Layout"> | <img src="./docs/mobile.png" height="600" alt="Mobile Layout"> |
+
 
 # Table of Contents
 - [Scripts](#scripts)
@@ -51,7 +55,7 @@ Each script has a Linux (`.sh`) and a Windows PowerShell (`.ps1`) variant with i
 
 # How to Run Locally
 
-To develop or test the application on your local machine, we use `uv` for lightning-fast Python dependency management.
+To develop or test the application on your local machine, we use `uv` for Python dependency management.
 
 1. **Install dependencies**:
    ```bash
