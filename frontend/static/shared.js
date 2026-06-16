@@ -1048,10 +1048,10 @@ function appendDrawerIntro(container) {
   intro.className = "drawer-intro";
 
   const link = document.createElement("a");
-  link.href = "https://alleinsein.de";
+  link.href = "https://alleinseinkarte.de";
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.textContent = "alleinsein.de";
+  link.textContent = "alleinseinkarte.de";
 
   intro.append(
     link,

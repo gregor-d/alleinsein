@@ -126,7 +126,7 @@ docker logs -f cloudflared
 ### Routing In Cloudflare Dashboard
 1. Go to **Zero Trust** -> **Networks** -> **Tunnels**.
 2. Select your active tunnel and add a public hostname:
-   - **Public Hostname**: `tiles.alleinseinkarte.de` (or `tiles.alleinsein.de`)
+   - **Public Hostname**: `tiles.alleinseinkarte.de` 
    - **Service Type**: `HTTP`
    - **URL**: `http://tiler:8000` (or `http://localhost:8000` depending on your network setup)
 

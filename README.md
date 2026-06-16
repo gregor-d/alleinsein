@@ -1,6 +1,6 @@
-# [alleinsein.de](https://alleinsein.de)
+# [alleinseinkarte.de](https://alleinseinkarte.de)
 
-[alleinsein.de](https://alleinsein.de) is a map for finding places where you can be alone. By visualizing areas where there is the lowest chance of meeting other people, it guides you to spots where you can escape and have a good time with yourself.
+[alleinseinkarte.de](https://alleinseinkarte.de) is a map for finding places where you can be alone. By visualizing areas where there is the lowest chance of meeting other people, it guides you to spots where you can escape and have a good time with yourself.
 
 The project utilizes Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https://developmentseed.org/titiler/) backend via FastAPI, combined with a frontend using MapLibre and/or Leaflet.
 
