@@ -9,16 +9,20 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=load_raster_config.sh
 source "${SCRIPT_DIR}/load_raster_config.sh"
 
-ROADS_INPUT="${SCRIPT_DIR}/${AREA}_roads.gpkg"
-PATHS_INPUT="${SCRIPT_DIR}/${AREA}_paths.gpkg"
-RAILWAYS_INPUT="${SCRIPT_DIR}/${AREA}_railways.gpkg"
+OSM_DIR="${RASTER_ROOT_DIR}/input/osm"
 
-ROADS_OUTPUT="${SCRIPT_DIR}/${AREA}_roads.tif"
-PATHS_OUTPUT="${SCRIPT_DIR}/${AREA}_paths.tif"
-RAILWAYS_OUTPUT="${SCRIPT_DIR}/${AREA}_railways.tif"
-MERGED_OUTPUT="${SCRIPT_DIR}/${AREA}_roads_merge.tif"
-SMOOTH_OUTPUT="${SCRIPT_DIR}/${AREA}_roads_smooth.tif"
+ROADS_INPUT="${OSM_DIR}/${AREA}_roads.gpkg"
+PATHS_INPUT="${OSM_DIR}/${AREA}_paths.gpkg"
+RAILWAYS_INPUT="${OSM_DIR}/${AREA}_railways.gpkg"
+
+ROADS_OUTPUT="${OSM_DIR}/${AREA}_roads.tif"
+PATHS_OUTPUT="${OSM_DIR}/${AREA}_paths.tif"
+RAILWAYS_OUTPUT="${OSM_DIR}/${AREA}_railways.tif"
+MERGED_OUTPUT="${OSM_DIR}/${AREA}_roads_merge.tif"
+SMOOTH_OUTPUT="${OSM_DIR}/${AREA}_roads_smooth.tif"
 RASTER_BBOX="${MINX},${MINY},${MAXX},${MAXY}"
+
+mkdir -p "$OSM_DIR"
 
 echo "Using raster bounds: $RASTER_BBOX"
 
@@ -42,13 +46,13 @@ echo "$((duration / 60)) minutes and $((duration % 60)) seconds elapsed."
 echo "=== Smoothing road raster ==="
 SECONDS=0
 gdal raster pipeline \
-! read $MERGED_OUTPUT \
-! neighbours --method mean --size 5 --kernel gaussian \
-! reproject --resolution 100,100 -r sum \
-! resize --resolution 20,20 -r bilinear \
-! neighbours --method mean --size 5 --kernel gaussian --nodata 255 \
-! scale --src-min 0 --src-max 10 --dst-min 1 --dst-max 10 --ot Byte --exponent 0.25 \
-! write $OVERWRITE $SMOOTH_OUTPUT
+  "!" read "$MERGED_OUTPUT" \
+  "!" neighbours --method mean --size 5 --kernel gaussian \
+  "!" reproject --resolution 100,100 -r sum \
+  "!" resize --resolution 20,20 -r bilinear \
+  "!" neighbours --method mean --size 5 --kernel gaussian --nodata 255 \
+  "!" scale --src-min 0 --src-max 10 --dst-min 1 --dst-max 10 --ot Byte --exponent 0.25 \
+  "!" write $OVERWRITE "$SMOOTH_OUTPUT"
 
 duration=$SECONDS
 echo "$((duration / 60)) minutes and $((duration % 60)) seconds elapsed."

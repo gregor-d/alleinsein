@@ -7,10 +7,11 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=load_raster_config.sh
 source "${SCRIPT_DIR}/load_raster_config.sh"
 
-INPUT_RASTER="${SCRIPT_DIR}/U2018_CLC2018_V2020_20u1.tif"
-MAPPING_FILE="${SCRIPT_DIR}/clc_custom_classes.reclass.txt"
-OUTPUT_RASTER_CLASSIFIED="${SCRIPT_DIR}/germany_clc_classes.tif"
-OUTPUT_RASTER_STACK="${SCRIPT_DIR}/germany_clc_classes_stack.tif"
+CLC_DIR="${RASTER_ROOT_DIR}/input/clc"
+INPUT_RASTER="${CLC_DIR}/U2018_CLC2018_V2020_20u1.tif"
+MAPPING_FILE="${CLC_DIR}/custom_classes.txt"
+OUTPUT_RASTER_CLASSIFIED="${CLC_DIR}/${AREA}_clc_classes.tif"
+OUTPUT_RASTER_STACK="${CLC_DIR}/${AREA}_clc_classes_stack.tif"
 
 # Output band order:
 # 1 nature
@@ -24,6 +25,16 @@ CLASS_CODES=(1 2 3 4 5)
 BBOX="${MINX},${MINY},${MAXX},${MAXY}"
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
+
+if [[ ! -r "$INPUT_RASTER" ]]; then
+  echo "Missing CLC input raster: $INPUT_RASTER" >&2
+  exit 1
+fi
+
+if [[ ! -r "$MAPPING_FILE" ]]; then
+  echo "Missing CLC mapping file: $MAPPING_FILE" >&2
+  exit 1
+fi
 
 printf 'Running gdal raster pipeline -> %s\n' "$OUTPUT_RASTER_CLASSIFIED"
 gdal raster pipeline \

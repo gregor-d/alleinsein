@@ -7,8 +7,16 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=load_raster_config.sh
 source "${SCRIPT_DIR}/load_raster_config.sh"
 
-FILE="${SCRIPT_DIR}/${AREA}-latest.osm.pbf"
-OUTPUT_PATH="${SCRIPT_DIR}"
+OSM_DIR="${RASTER_ROOT_DIR}/input/osm"
+FILE="${OSM_DIR}/${AREA}-latest.osm.pbf"
+OUTPUT_PATH="${OSM_DIR}"
+
+if [[ ! -r "$FILE" ]]; then
+  echo "Missing OSM PBF input: $FILE" >&2
+  exit 1
+fi
+
+mkdir -p "$OUTPUT_PATH"
 
 ROADS="highway IN ('residential','secondary','primary','tertiary','service',\
 'living_street','primary_link','secondary_link','tertiary_link',\
