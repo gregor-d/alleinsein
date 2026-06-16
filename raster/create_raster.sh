@@ -6,43 +6,55 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=utils/load_raster_config.sh
 source "${SCRIPT_DIR}/utils/load_raster_config.sh"
 
+# input files
+clc_classes="${SCRIPT_DIR}/input/clc/${AREA}_clc_classes_stack.tif"
+roads="${SCRIPT_DIR}/input/osm/${AREA}_roads_smooth.tif"                     
+bounds_gpkg="${SCRIPT_DIR}/input/bounds/${AREA}.gpkg"
+
+# output files
+output_dir="${SCRIPT_DIR}/out"
+base_name="${AREA}_raster"
+version=1
+# increase existing version number by 1
+while [[ -f "${output_dir}/${base_name}_v${version}.tif" ]]; do
+  ((version++))
+done
+output_cog="${output_dir}/${base_name}_v${version}.tif"
+
+# Create a temporary directory for intermediate steps, cleaned up automatically on exit
+# TEMP_DIR=$(mktemp -d)
+# trap 'rm -rf "$TEMP_DIR"' EXIT
+TEMP_DIR=$output_dir
+raw_calc_raster="${TEMP_DIR}/${AREA}_raster_raw.tif"
+calc_reprojected_raster="${TEMP_DIR}/${AREA}_raster_3857.tif"
+
+
 # create paths, road and railways geopackage
-# use create_gpkg.sh in input_data/osm to create the gpkg files for roads, paths and railways
+echo "Filter OSM-PBF to have only roads, paths and railways..."
+echo "${SCRIPT_DIR}/utils/osm_filter_pbf.sh"
+# bash "${SCRIPT_DIR}/utils/osm_filter_pbf.sh"
+echo "-------------------------------------------------------"
+
+# use osm_create_gpkg.sh in input_data/osm to create the gpkg files for roads, paths and railways
 echo "Creating GeoPackage files for roads, paths and railways..."
-echo "${SCRIPT_DIR}/utils/create_gpkg.sh"
-bash "${SCRIPT_DIR}/utils/create_gpkg.sh"
+echo "${SCRIPT_DIR}/utils/osm_create_gpkg.sh"
+bash "${SCRIPT_DIR}/utils/osm_create_gpkg.sh"
+echo "-------------------------------------------------------"
 
 echo "Rasterizing roads, paths and railways and creating smoothed combined raster..."
-echo "${SCRIPT_DIR}/utils/rasterize_osm_roads.sh"
-bash "${SCRIPT_DIR}/utils/rasterize_osm_roads.sh"
+echo "${SCRIPT_DIR}/utils/osm_rasterize_roads.sh"
+bash "${SCRIPT_DIR}/utils/osm_rasterize_roads.sh"
+echo "-------------------------------------------------------"
 
 echo "Creating CLC raster stack..."
 echo "${SCRIPT_DIR}/utils/create_clc_raster.sh"
 bash "${SCRIPT_DIR}/utils/create_clc_raster.sh"
-
-clc_classes="${SCRIPT_DIR}/input/clc/${AREA}_clc_classes_stack.tif"
-roads="${SCRIPT_DIR}/input/osm/${AREA}_roads_smooth.tif"                     
-bounds_gpkg="${SCRIPT_DIR}/input/bounds/${AREA}.gpkg"
-output_dir="${SCRIPT_DIR}/out"
-base_name="${AREA}_raster"
-version=1
-
-while [[ -f "${output_dir}/${base_name}_v${version}.tif" ]]; do
-  ((version++))
-done
-
-output_cog="${output_dir}/${base_name}_v${version}.tif"
+echo "-------------------------------------------------------"
 
 echo "calculating heatmap raster stack..."
 echo "using roads: $roads"
 echo "using clc classes: $clc_classes"
 echo "output raster: $output_cog"
-
-# Create a temporary directory for intermediate steps, cleaned up automatically on exit
-TEMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TEMP_DIR"' EXIT
-raw_calc_raster="${output_dir}/${AREA}_raster_raw.tif"
-temp_reprojected_raster="${output_dir}/${AREA}_raster_3857.tif"
 
 echo "running gdal__calc to tempfile ${raw_calc_raster}..."
 
@@ -71,22 +83,23 @@ gdal_calc \
   "--NoDataValue=$RASTER_NODATA" \
   "${GTIFF_WRITE_OPTIONS[@]}" \
   $OVERWRITE
-
-# echo "Running GDAL pipeline clip to bounds and reproject..."
+echo "Running GDAL pipeline clip to bounds and reproject..."
 gdal raster pipeline \
   "!" read "$raw_calc_raster" \
   "!" clip --like "$bounds_gpkg" --like-layer "$AREA" --allow-bbox-outside-source \
   "!" reproject -d "$WEB_EPSG" \
-  "!" write $OVERWRITE "$temp_reprojected_raster"
+  "!" write $OVERWRITE "$calc_reprojected_raster"
+echo "-------------------------------------------------------"
+
 
 echo "Creating web-optimized COG with overviews..."
 # use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads. Default blocksize is 256
-rio cogeo create --web-optimized "$temp_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling nearest --blocksize 256 --overview-blocksize 256
+rio cogeo create --web-optimized "$calc_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling nearest --blocksize 256 --overview-blocksize 256
 
 # Alternative:
 # add overviews and create COG
 # gdal raster pipeline \
-#   "!" read "$temp_reprojected_raster" \
+#   "!" read "$calc_reprojected_raster" \
 #   "!" overview add --levels 2,4,8,16,32 --resampling nearest \
 #   "!" write -f COG --co COMPRESS=ZSTD --co PREDICTOR=NO --co RESAMPLING=NEAREST --co BIGTIFF=IF_SAFER \
 #   --co TILING_SCHEME=GoogleMapsCompatible \
