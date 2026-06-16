@@ -7,8 +7,8 @@ This document describes the full raster pipeline: data sources, configuration, e
 
 | Script | Description |
 |---|---|
-| `raster/create_raster.sh` | Full pipeline entry point — runs all four stages below in sequence |
-| `raster/utils/osm_filter.sh` | Pre-filters the OSM PBF to highway and railway ways using osmium-tool, producing a much smaller PBF for GDAL to process |
+| `raster/create_raster.sh` | Full pipeline entry point — runs all five stages below in sequence |
+| `raster/utils/osm_filter_pbf.sh` | Pre-filters the OSM PBF to highway and railway ways using osmium-tool, producing a much smaller PBF for GDAL to process |
 | `raster/utils/osm_create_gpkg.sh` | Extracts roads, paths, and railways from the filtered OSM PBF into a single GeoPackage |
 | `raster/utils/osm_rasterize_roads.sh` | Rasterizes the GeoPackage and produces a smoothed road-proximity heatmap |
 | `raster/utils/clc_raster_create.sh` | Remaps and stacks CLC 2018 land-cover classes into a 5-band one-hot raster |
@@ -25,7 +25,7 @@ Entry point: `raster/create_raster.sh`
 
 ```
 OSM .pbf
-    └─ osm_filter.sh                → <AREA>-filtered.osm.pbf
+    └─ osm_filter_pbf.sh            → <AREA>-filtered.osm.pbf
          └─ osm_create_gpkg.sh      → roads .gpkg
               └─ osm_rasterize_roads.sh  → smoothed roads heatmap .tif
 CLC 2018 .tif
@@ -88,10 +88,16 @@ TARGET_EPSG="EPSG:3035"    # Processing CRS (ETRS89-LAEA for metric accuracy ove
 WEB_EPSG="EPSG:3857"       # Output CRS for the final COG (Web Mercator)
 
 RASTER_RESOLUTION="20,20"  # Pixel size in meters for the road raster
-SMOOTH_RESOLUTION="100,100" # Intermediate resolution during Gaussian smoothing
 RASTER_NODATA="255"        # NoData sentinel used across all intermediate rasters
 RASTER_DATA_TYPE="Byte"    # Output data type (0–254 usable values; 255 = NoData)
-RASTERIZE_DATA_TYPE="byte" # Data type passed to gdal vector rasterize
+
+# GDAL/OSM memory and temporary file settings.
+# Allow GDAL to use up to 2GB RAM for block caching.
+GDAL_CACHEMAX="2048"
+# Keep OSM node indexing in memory up to 2GB.
+OSM_MAX_TMPFILE_SIZE="2048"
+# Redirect temporary files to WSL native /tmp.
+CPL_TMPDIR="/tmp"
 
 # Bounding box in TARGET_EPSG.
 # Align to a 100 m grid to avoid sub-pixel clipping when mixing 20 m and 100 m rasters.
@@ -99,80 +105,77 @@ MINX="4031300"
 MINY="2684000"
 MAXX="4672600"
 MAXY="3556600"
+
+GTIFF_WRITE_OPTIONS=(
+  "--of=GTiff"
+  "--co=TILED=YES"
+  "--co=COMPRESS=DEFLATE"
+  "--co=PREDICTOR=2"
+  "--co=BIGTIFF=IF_SAFER"
+)
 ```
 
 ---
 
-## Stage 1 — GeoPackage extraction (`utils/osm_create_gpkg.sh`)
+## Stage 1 — OSM pre-filtering (`utils/osm_filter_pbf.sh`)
 
-**Input:** `<AREA>-latest.osm.pbf`
-**Output:** `<AREA>_roads.gpkg`, `<AREA>_paths.gpkg`, `<AREA>_railways.gpkg`
+**Input:** `input/osm/<AREA>-latest.osm.pbf`  
+**Output:** `input/osm/<AREA>-filtered.osm.pbf`
 
-Reads the raw OSM PBF using the GDAL OSM driver and writes three filtered GeoPackages, all reprojected to `TARGET_EPSG`.
+Uses `osmium-tool` to pre-filter the raw OSM PBF to only contain lines/ways with `highway` or `railway` tags, producing a much smaller PBF file for subsequent GDAL processing.
+
+---
+
+## Stage 2 — GeoPackage extraction (`utils/osm_create_gpkg.sh`)
+
+**Input:** `input/osm/<AREA>-filtered.osm.pbf`  
+**Output:** `input/osm/<AREA>_roads.gpkg`
+
+Reads the pre-filtered OSM PBF using the GDAL OSM driver and writes a single GeoPackage containing roads, paths, and railways, all reprojected to `TARGET_EPSG`.
 
 ### Feature filters
 
-**Roads** — motorised carriageways and bicycle/pedestrian infrastructure that shares space with traffic:
-```
-residential, secondary, primary, tertiary, service, living_street,
-primary_link, secondary_link, tertiary_link, unclassified,
-trunk, trunk_link, motorway, motorway_link,
-road, ramp, pedestrian, cycleway, proposed, construction
-```
+Roads, paths, and railways are extracted based on the following combined query:
+- **Roads**: motorized carriageways and bicycle/pedestrian infrastructure sharing space with traffic (`residential`, `secondary`, `primary`, `tertiary`, `service`, `living_street`, `primary_link`, `secondary_link`, `tertiary_link`, `unclassified`, `trunk`, `motorway_link`, `trunk_link`, `motorway`, `road`, `ramp`, `pedestrian`, `cycleway`, `proposed`, `construction`)
+- **Paths**: off-carriageway routes (`footway`, `path`, `track`, `bridleway`, `trail`)
+- **Railways**: track-bearing lines (`rail`, `light_rail`, `tram`, `subway`, `narrow_gauge`, `funicular`, `monorail`, `miniature`, `preserved`, `construction`, `proposed`)
 
-**Paths** — off-carriageway routes:
-```
-footway, path, track, bridleway, trail
-```
+### Performance and Size Optimizations
 
-**Railways** — track-bearing lines only (platforms, stops, and other tagged infrastructure excluded):
-```
-rail, light_rail, tram, subway, narrow_gauge,
-funicular, monorail, miniature, preserved, construction, proposed
-```
-
-Only the geometry column is retained (`--fields _ogr_geometry_`) to keep file sizes minimal.
+To keep the GeoPackage file size minimal:
+- Only the geometry column is retained (`--fields _ogr_geometry_`).
+- Spatial index creation is disabled (`--lco SPATIAL_INDEX=NO`) since the rasterization step processes the vector layers line-by-line and does not require a spatial query index.
 
 ---
 
-## Stage 2 — Rasterization and smoothing (`utils/osm_rasterize_roads.sh`)
+## Stage 3 — Rasterization and smoothing (`utils/osm_rasterize_roads.sh`)
 
-**Input:** three `.gpkg` files from Stage 1
-**Output:** `<AREA>_roads_smooth.tif` (20 m pixels, scaled 1–10)
+**Input:** `input/osm/<AREA>_roads.gpkg` from Stage 2  
+**Output:** `input/osm/<AREA>_roads_smooth.tif` (20 m pixels, scaled 1–10)
 
 ### Rasterization
 
-Each GeoPackage is rasterized separately at `RASTER_RESOLUTION` (default 20 m) within the bounding box. `--all-touched` ensures that thin lines always hit at least one pixel. Every pixel touched by a feature is burned to `4`; untouched pixels are initialised to `0`.
+The GeoPackage is rasterized at `RASTER_RESOLUTION` (default 20 m) within the bounding box. `--all-touched` ensures that thin lines always hit at least one pixel. Every pixel touched by a feature is burned to `4`; untouched pixels are initialized to `0`.
 
 ```
-roads.gpkg   → roads.tif    (burn=4)
-paths.gpkg   → paths.tif    (burn=4)
-railways.tif → railways.tif (burn=4)
-```
-
-### Merging
-
-The three rasters are merged with a `max` pixel function via `gdal raster mosaic`, so overlapping features do not double-count.
-
-```
-roads.tif + paths.tif + railways.tif → <AREA>_roads_merge.tif
+<AREA>_roads.gpkg → <AREA>_roads_rasterized.tif (burn=4)
 ```
 
 ### Smoothing pipeline
 
-The merge raster is then smoothed through a sequence of GDAL raster pipeline steps:
+The rasterized output is then smoothed through a sequence of GDAL raster pipeline steps:
 
 ```
-merged.tif
+<AREA>_roads_rasterized.tif
   │
   ├─ neighbours --method mean --size 5 --kernel gaussian
   │     Gaussian blur at 20 m resolution to spread road presence outward
   │
   ├─ reproject --resolution 100,100 -r sum
-  │     Downscale to 100 m, summing pixel values — accumulates road length
+  │     Downscale to 100 m, summing pixel values — accumulates road length/density
   │
   ├─ resize --resolution 20,20 -r bilinear
-  │     Upsample back to 20 m with smooth interpolation
+  │     Upsample back to 20 m with smooth bilinear interpolation
   │
   ├─ neighbours --method mean --size 5 --kernel gaussian --nodata 255
   │     Second Gaussian pass to remove upsampling artefacts
@@ -187,10 +190,10 @@ The resulting raster has values `1`–`10` where **1 = low road proximity** (rem
 
 ---
 
-## Stage 3 — CLC land-cover stack (`utils/clc_raster_create.sh`)
+## Stage 4 — CLC land-cover stack (`utils/clc_raster_create.sh`)
 
-**Input:** `input/clc/U2018_CLC2018_V2020_20u1.tif`
-**Output:** `input/clc/germany_clc_classes_stack.tif` (5-band, one-hot encoded)
+**Input:** `input/clc/U2018_CLC2018_V2020_20u1.tif`  
+**Output:** `input/clc/<AREA>_clc_classes_stack.tif` (5-band, one-hot encoded)
 
 ### CLC class remapping
 
@@ -212,24 +215,24 @@ The full CLC-to-class mapping is in `input/clc/clc_classes_overview.csv`.
 For each of the five classes (nature=1, farm=2, park=3, urban=4, water=5), a virtual reclassify is computed in GDALG (lazy/streamed) format:
 
 ```
-germany_clc_classes.tif
+<AREA>_clc_classes.tif
   ├─ band: nature  (1 where class=1, else 0)
   ├─ band: farm    (1 where class=2, else 0)
   ├─ band: park    (1 where class=3, else 0)
   ├─ band: urban   (1 where class=4, else 0)
   └─ band: water   (1 where class=5, else 0)
-  → germany_clc_classes_stack.tif  (resampled to RASTER_RESOLUTION)
+  → <AREA>_clc_classes_stack.tif  (resampled to RASTER_RESOLUTION)
 ```
 
 Each band is a binary mask: `1` = pixel belongs to that class, `0` = it does not.
 
 ---
 
-## Stage 4 — Value encoding and COG assembly (`create_raster.sh`)
+## Stage 5 — Value encoding and COG assembly (`create_raster.sh`)
 
 **Inputs:**
 - `input/osm/<AREA>_roads_smooth.tif` — road heatmap (A, values 1–10)
-- `input/clc/germany_clc_classes_stack.tif` — 5-band one-hot stack (B–F)
+- `input/clc/<AREA>_clc_classes_stack.tif` — 5-band one-hot stack (B–F)
 - `input/bounds/<AREA>.gpkg` — area boundary for clipping
 
 **Output:** `out/<AREA>_raster_v<N>.tif`
@@ -269,7 +272,8 @@ raw_calc.tif
   ├─ clip --like <AREA>.gpkg          clip to area boundary
   ├─ reproject -d EPSG:3857           reproject to Web Mercator
   └─ rio cogeo create --web-optimized align tiles to Web Mercator tile matrix,
-                                       add overviews, ZSTD compression
+                                       add overviews with Nearest resampling,
+                                       blocksize of 512x512
      → out/<AREA>_raster_v<N>.tif
 ```
 
@@ -303,6 +307,7 @@ RASTER_CONFIG_FILE=/path/to/custom.conf bash raster/create_raster.sh
 
 Run individual stages manually (useful for debugging):
 ```bash
+bash raster/utils/osm_filter_pbf.sh
 bash raster/utils/osm_create_gpkg.sh
 bash raster/utils/osm_rasterize_roads.sh
 bash raster/utils/clc_raster_create.sh
