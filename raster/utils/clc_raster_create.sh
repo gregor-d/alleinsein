@@ -23,8 +23,7 @@ CLASS_NAMES=(nature farm park urban water)
 CLASS_CODES=(1 2 3 4 5)
 
 BBOX="${MINX},${MINY},${MAXX},${MAXY}"
-TEMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TEMP_DIR"' EXIT
+
 
 if [[ ! -r "$INPUT_RASTER" ]]; then
   echo "Missing CLC input raster: $INPUT_RASTER" >&2
@@ -44,6 +43,8 @@ gdal raster pipeline \
   "!" edit "--nodata=$RASTER_NODATA" \
   "!" write "${GTIFF_WRITE_OPTIONS[@]}" $OVERWRITE "$OUTPUT_RASTER_CLASSIFIED"
 
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT
 printf 'Writing streamed one-hot class descriptors in %s\n' "$TEMP_DIR"
 BAND_FILES=()
 for class_code in "${CLASS_CODES[@]}"; do
