@@ -25,12 +25,6 @@ railway IN ('rail','light_rail','tram','subway','narrow_gauge',\
 'funicular','monorail','miniature','preserved','construction','proposed')"
 
 echo "=== Writing roads, paths and railways ==="
-# Configure GDAL environment variables for optimal memory usage and temp directories
-export GDAL_CACHEMAX=2048          # Allow GDAL to use up to 2GB RAM for block caching
-export OSM_MAX_TMPFILE_SIZE=2048   # Keep OSM node indexing in-memory (up to 2GB)
-export CPL_TMPDIR=/tmp             # Redirect any necessary temp files to WSL native /tmp
-
-echo "=== Writing roads, paths and railways ==="
 # no need for spatial index, because in the next step it will get rasterizes line by line anyway
 gdal vector pipeline \
   ! read "$FILE" --if OSM --layer lines \

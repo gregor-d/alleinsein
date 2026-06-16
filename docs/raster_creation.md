@@ -8,9 +8,10 @@ This document describes the full raster pipeline: data sources, configuration, e
 | Script | Description |
 |---|---|
 | `raster/create_raster.sh` | Full pipeline entry point — runs all four stages below in sequence |
-| `raster/utils/create_gpkg.sh` | Extracts roads, paths, and railways from the OSM PBF into GeoPackage files |
-| `raster/utils/rasterize_osm_roads.sh` | Rasterizes the GeoPackages and produces a smoothed road-proximity heatmap |
-| `raster/utils/create_clc_raster.sh` | Remaps and stacks CLC 2018 land-cover classes into a 5-band one-hot raster |
+| `raster/utils/osm_filter.sh` | Pre-filters the OSM PBF to highway and railway ways using osmium-tool, producing a much smaller PBF for GDAL to process |
+| `raster/utils/osm_create_gpkg.sh` | Extracts roads, paths, and railways from the filtered OSM PBF into a single GeoPackage |
+| `raster/utils/osm_rasterize_roads.sh` | Rasterizes the GeoPackage and produces a smoothed road-proximity heatmap |
+| `raster/utils/clc_raster_create.sh` | Remaps and stacks CLC 2018 land-cover classes into a 5-band one-hot raster |
 | `raster/utils/cog_info.sh` | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/` |
 | `raster/utils/export_bounds.py` | Geocodes an area name via OSMnx, writes a bounds GeoPackage, and prints the `MINX/MINY/MAXX/MAXY` values for `raster.conf` — run with `AREA=germany uv run raster/utils/export_bounds.py` |
 | `raster/utils/create_germany_mask.py` | Reads `input/bounds/germany.gpkg`, inverts it to a world-minus-Germany mask, simplifies, and writes `frontend/static/germany-mask.geojson` — run with `uv run raster/utils/create_germany_mask.py` |
@@ -24,10 +25,11 @@ Entry point: `raster/create_raster.sh`
 
 ```
 OSM .pbf
-    └─ create_gpkg.sh           → roads/paths/railways .gpkg
-         └─ rasterize_osm_roads.sh  → smoothed roads heatmap .tif
+    └─ osm_filter.sh                → <AREA>-filtered.osm.pbf
+         └─ osm_create_gpkg.sh      → roads .gpkg
+              └─ osm_rasterize_roads.sh  → smoothed roads heatmap .tif
 CLC 2018 .tif
-    └─ create_clc_raster.sh     → 5-band one-hot land-cover stack .tif
+    └─ clc_raster_create.sh     → 5-band one-hot land-cover stack .tif
                                          ↓
                                gdal_calc  (value encoding)
                                          ↓
@@ -47,6 +49,18 @@ CLC 2018 .tif
 | OSM PBF extract | `raster/input/osm/<AREA>-latest.osm.pbf` | [Geofabrik](https://download.geofabrik.de/) |
 | CLC 2018 raster | `raster/input/clc/U2018_CLC2018_V2020_20u1.tif` | [Copernicus Land Service](https://land.copernicus.eu/pan-european/corine-land-cover) |
 | Area boundary | `raster/input/bounds/<AREA>.gpkg` | Manually prepared GeoPackage |
+
+### System tools
+
+`osmium-tool` is required for the OSM pre-filtering step and must be installed separately:
+
+```bash
+# Debian / Ubuntu
+sudo apt install osmium-tool
+
+# macOS
+brew install osmium-tool
+```
 
 ### Python / GDAL environment
 
@@ -89,7 +103,7 @@ MAXY="3556600"
 
 ---
 
-## Stage 1 — GeoPackage extraction (`utils/create_gpkg.sh`)
+## Stage 1 — GeoPackage extraction (`utils/osm_create_gpkg.sh`)
 
 **Input:** `<AREA>-latest.osm.pbf`
 **Output:** `<AREA>_roads.gpkg`, `<AREA>_paths.gpkg`, `<AREA>_railways.gpkg`
@@ -121,7 +135,7 @@ Only the geometry column is retained (`--fields _ogr_geometry_`) to keep file si
 
 ---
 
-## Stage 2 — Rasterization and smoothing (`utils/rasterize_osm_roads.sh`)
+## Stage 2 — Rasterization and smoothing (`utils/osm_rasterize_roads.sh`)
 
 **Input:** three `.gpkg` files from Stage 1
 **Output:** `<AREA>_roads_smooth.tif` (20 m pixels, scaled 1–10)
@@ -173,7 +187,7 @@ The resulting raster has values `1`–`10` where **1 = low road proximity** (rem
 
 ---
 
-## Stage 3 — CLC land-cover stack (`utils/create_clc_raster.sh`)
+## Stage 3 — CLC land-cover stack (`utils/clc_raster_create.sh`)
 
 **Input:** `input/clc/U2018_CLC2018_V2020_20u1.tif`
 **Output:** `input/clc/germany_clc_classes_stack.tif` (5-band, one-hot encoded)
@@ -289,7 +303,7 @@ RASTER_CONFIG_FILE=/path/to/custom.conf bash raster/create_raster.sh
 
 Run individual stages manually (useful for debugging):
 ```bash
-bash raster/utils/create_gpkg.sh
-bash raster/utils/rasterize_osm_roads.sh
-bash raster/utils/create_clc_raster.sh
+bash raster/utils/osm_create_gpkg.sh
+bash raster/utils/osm_rasterize_roads.sh
+bash raster/utils/clc_raster_create.sh
 ```

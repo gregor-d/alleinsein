@@ -23,7 +23,13 @@ echo "Using raster bounds: $RASTER_BBOX"
 echo "=== Rasterizing roads ==="
 echo "Reading vector data from $ROADS_INPUT"
 echo "Writing raster data to $RASTERIZED_OUTPUT"
-gdal vector rasterize "$ROADS_INPUT" "$RASTERIZED_OUTPUT" --resolution "$RASTER_RESOLUTION" --extent "$RASTER_BBOX" --burn 4 --target-aligned-pixels $OVERWRITE --init 0 --nodata "$RASTER_NODATA" --datatype "$RASTER_DATA_TYPE" --all-touched
+gdal vector rasterize "$ROADS_INPUT" "$RASTERIZED_OUTPUT" \
+  --resolution "$RASTER_RESOLUTION" \
+  --extent "$RASTER_BBOX" \
+  --burn 4 --target-aligned-pixels --init 0 \
+  --nodata "$RASTER_NODATA" \
+  --datatype "$RASTER_DATA_TYPE" --all-touched \
+  $OVERWRITE "${GTIFF_WRITE_OPTIONS[@]}"
 
 duration=$SECONDS
 echo "$((duration / 60)) minutes and $((duration % 60)) seconds elapsed."

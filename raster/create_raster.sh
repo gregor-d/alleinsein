@@ -32,7 +32,7 @@ calc_reprojected_raster="${TEMP_DIR}/${AREA}_raster_3857.tif"
 # create paths, road and railways geopackage
 echo "Filter OSM-PBF to have only roads, paths and railways..."
 echo "${SCRIPT_DIR}/utils/osm_filter_pbf.sh"
-# bash "${SCRIPT_DIR}/utils/osm_filter_pbf.sh"
+bash "${SCRIPT_DIR}/utils/osm_filter_pbf.sh"
 echo "-------------------------------------------------------"
 
 # use osm_create_gpkg.sh in input_data/osm to create the gpkg files for roads, paths and railways
@@ -47,8 +47,8 @@ bash "${SCRIPT_DIR}/utils/osm_rasterize_roads.sh"
 echo "-------------------------------------------------------"
 
 echo "Creating CLC raster stack..."
-echo "${SCRIPT_DIR}/utils/create_clc_raster.sh"
-bash "${SCRIPT_DIR}/utils/create_clc_raster.sh"
+echo "${SCRIPT_DIR}/utils/clc_raster_create.sh"
+bash "${SCRIPT_DIR}/utils/clc_raster_create.sh"
 echo "-------------------------------------------------------"
 
 echo "calculating heatmap raster stack..."
@@ -93,8 +93,8 @@ echo "-------------------------------------------------------"
 
 
 echo "Creating web-optimized COG with overviews..."
-# use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads. Default blocksize is 256
-rio cogeo create --web-optimized "$calc_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling nearest --blocksize 256 --overview-blocksize 256
+# use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads.
+rio cogeo create --web-optimized "$calc_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling nearest --blocksize 512 --overview-blocksize 512
 
 # Alternative:
 # add overviews and create COG
