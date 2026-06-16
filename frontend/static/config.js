@@ -185,7 +185,7 @@ const BASEMAPS = {
 
 // ─── MUTABLE APP STATE ───
 let activeBasemapKey = "osm";
-let basemapOpacity = 1.0;
+let basemapOpacity = 0.7;
 let dataLayerOpacity = 1.0;
 let boundsSet = false;
 let hotspotMode = false;
