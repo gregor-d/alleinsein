@@ -52,7 +52,7 @@ gdal vector pipeline \
   ! filter --where "$ROADS" \
   ! select --fields _ogr_geometry_ \
   ! reproject --dst-crs "$TARGET_EPSG" \
-  ! write "${OUTPUT_PATH}/${AREA}_roads.gpkg" ${OVERWRITE:-}
+  ! write "${OUTPUT_PATH}/${AREA}_roads.gpkg" $OVERWRITE
 
 echo "=== Writing paths ==="
 gdal vector pipeline \
@@ -60,7 +60,7 @@ gdal vector pipeline \
   ! filter --where "$PATHS" \
   ! select --fields _ogr_geometry_ \
   ! reproject --dst-crs "$TARGET_EPSG" \
-  ! write "${OUTPUT_PATH}/${AREA}_paths.gpkg" ${OVERWRITE:-}
+  ! write "${OUTPUT_PATH}/${AREA}_paths.gpkg" $OVERWRITE
 
 echo "=== Writing railways ==="
 gdal vector pipeline \
@@ -68,6 +68,6 @@ gdal vector pipeline \
   ! filter --where "$RAILWAYS" \
   ! select --fields _ogr_geometry_ \
   ! reproject --dst-crs "$TARGET_EPSG" \
-  ! write "${OUTPUT_PATH}/${AREA}_railways.gpkg" ${OVERWRITE:-}
+  ! write "${OUTPUT_PATH}/${AREA}_railways.gpkg" $OVERWRITE
 
 echo "Done."

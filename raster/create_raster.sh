@@ -67,14 +67,14 @@ gdal_calc \
   "--type=$RASTER_DATA_TYPE" \
   "--NoDataValue=$RASTER_NODATA" \
   "${GTIFF_WRITE_OPTIONS[@]}" \
-  ${OVERWRITE:-}
+  $OVERWRITE
 
 # echo "Running GDAL pipeline clip to bounds and reproject..."
 gdal raster pipeline \
   "!" read "$raw_calc_raster" \
   "!" clip --like "$bounds_gpkg" --like-layer "$AREA" --allow-bbox-outside-source \
   "!" reproject -d "$WEB_EPSG" \
-  "!" write ${OVERWRITE:-} "$temp_reprojected_raster"
+  "!" write $OVERWRITE "$temp_reprojected_raster"
 
 echo "Creating web-optimized COG with overviews..."
 # use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads. Default blocksize is 256

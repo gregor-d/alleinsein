@@ -31,7 +31,7 @@ gdal raster pipeline \
   "!" clip "--bbox=$BBOX" "--bbox-crs=$TARGET_EPSG" --allow-bbox-outside-source \
   "!" reclassify "--mapping=@$MAPPING_FILE" "--ot=$RASTER_DATA_TYPE" \
   "!" edit "--nodata=$RASTER_NODATA" \
-  "!" write "${GTIFF_WRITE_OPTIONS[@]}" ${OVERWRITE:-} "$OUTPUT_RASTER_CLASSIFIED"
+  "!" write "${GTIFF_WRITE_OPTIONS[@]}" $OVERWRITE "$OUTPUT_RASTER_CLASSIFIED"
 
 printf 'Writing streamed one-hot class descriptors in %s\n' "$TEMP_DIR"
 BAND_FILES=()
@@ -46,10 +46,10 @@ for class_code in "${CLASS_CODES[@]}"; do
     --of=GDALG \
     "--mapping=${class_code}=1;DEFAULT=0;NO_DATA=NO_DATA" \
     "--ot=$RASTER_DATA_TYPE" \
-    ${OVERWRITE:-}
+    $OVERWRITE
 
   BAND_FILES+=("$class_dataset")
 done
 
 printf 'Stacking one-hot class rasters -> %s\n' "$OUTPUT_RASTER_STACK"
-gdal raster stack "${BAND_FILES[@]}" "$OUTPUT_RASTER_STACK" "${GTIFF_WRITE_OPTIONS[@]}" ${OVERWRITE:-} --dst-nodata "$RASTER_NODATA" --resolution "$RASTER_RESOLUTION"
+gdal raster stack "${BAND_FILES[@]}" "$OUTPUT_RASTER_STACK" "${GTIFF_WRITE_OPTIONS[@]}" $OVERWRITE --dst-nodata "$RASTER_NODATA" --resolution "$RASTER_RESOLUTION"
