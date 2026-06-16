@@ -1,0 +1,281 @@
+# Raster Creation
+
+This document describes the full raster pipeline: data sources, configuration, each script's role, and the value-encoding scheme used in the final COG.
+
+## Overview
+
+The pipeline converts two data sources — OpenStreetMap road/path/railway geometries and the CORINE Land Cover (CLC) 2018 dataset — into a single-band, web-optimized Cloud Optimized GeoTIFF (COG). Each pixel encodes both a land-cover class and a road-proximity score in a compact `Byte` value, so the frontend needs only one tile request per viewport instead of one per layer.
+
+Entry point: `raster/create_raster.sh`
+
+```
+OSM .pbf
+    └─ create_gpkg.sh           → roads/paths/railways .gpkg
+         └─ rasterize_all_road_lengths.sh  → smoothed roads heatmap .tif
+CLC 2018 .tif
+    └─ create_clc_raster.sh     → 5-band one-hot land-cover stack .tif
+                                         ↓
+                               gdal_calc  (value encoding)
+                                         ↓
+                               clip + reproject to EPSG:3857
+                                         ↓
+                               rio cogeo  → web-optimized COG
+```
+
+---
+
+## Prerequisites
+
+### Input data
+
+| File | Expected location | Source |
+|---|---|---|
+| OSM PBF extract | `raster/input/osm/<AREA>-latest.osm.pbf` | [Geofabrik](https://download.geofabrik.de/) |
+| CLC 2018 raster | `raster/input/clc/U2018_CLC2018_V2020_20u1.tif` | [Copernicus Land Service](https://land.copernicus.eu/pan-european/corine-land-cover) |
+| Area boundary | `raster/input/bounds/<AREA>.gpkg` | Manually prepared GeoPackage |
+
+### Python / GDAL environment
+
+```bash
+uv sync
+source .venv/bin/activate   # Linux / macOS
+# or on Windows:
+.venv\Scripts\activate
+```
+
+The venv provides `gdal` (≥ 3.10, for the pipeline sub-commands), `rio-cogeo`, and their dependencies.
+
+---
+
+## Configuration (`raster/raster.conf`)
+
+All scripts source `raster/raster.conf` (or `$RASTER_CONFIG_FILE`) before running.
+
+```bash
+# raster/raster.conf — annotated example
+AREA="germany"              # Area name: drives file naming throughout the pipeline
+OVERWRITE="--overwrite"     # Remove to protect existing intermediate files
+
+TARGET_EPSG="EPSG:3035"    # Processing CRS (ETRS89-LAEA for metric accuracy over Europe)
+WEB_EPSG="EPSG:3857"       # Output CRS for the final COG (Web Mercator)
+
+RASTER_RESOLUTION="20,20"  # Pixel size in meters for the road raster
+SMOOTH_RESOLUTION="100,100" # Intermediate resolution during Gaussian smoothing
+RASTER_NODATA="255"        # NoData sentinel used across all intermediate rasters
+RASTER_DATA_TYPE="Byte"    # Output data type (0–254 usable values; 255 = NoData)
+RASTERIZE_DATA_TYPE="byte" # Data type passed to gdal vector rasterize
+
+# Bounding box in TARGET_EPSG.
+# Align to a 100 m grid to avoid sub-pixel clipping when mixing 20 m and 100 m rasters.
+MINX="4031300"
+MINY="2684000"
+MAXX="4672600"
+MAXY="3556600"
+```
+
+---
+
+## Stage 1 — GeoPackage extraction (`utils/create_gpkg.sh`)
+
+**Input:** `<AREA>-latest.osm.pbf`
+**Output:** `<AREA>_roads.gpkg`, `<AREA>_paths.gpkg`, `<AREA>_railways.gpkg`
+
+Reads the raw OSM PBF using the GDAL OSM driver and writes three filtered GeoPackages, all reprojected to `TARGET_EPSG`.
+
+### Feature filters
+
+**Roads** — motorised carriageways and bicycle/pedestrian infrastructure that shares space with traffic:
+```
+residential, secondary, primary, tertiary, service, living_street,
+primary_link, secondary_link, tertiary_link, unclassified,
+trunk, trunk_link, motorway, motorway_link,
+road, ramp, pedestrian, cycleway, proposed, construction
+```
+
+**Paths** — off-carriageway routes:
+```
+footway, path, track, bridleway, trail
+```
+
+**Railways** — track-bearing lines only (platforms, stops, and other tagged infrastructure excluded):
+```
+rail, light_rail, tram, subway, narrow_gauge,
+funicular, monorail, miniature, preserved, construction, proposed
+```
+
+Only the geometry column is retained (`--fields _ogr_geometry_`) to keep file sizes minimal.
+
+---
+
+## Stage 2 — Rasterization and smoothing (`utils/rasterize_all_road_lengths.sh`)
+
+**Input:** three `.gpkg` files from Stage 1
+**Output:** `<AREA>_roads_smooth.tif` (20 m pixels, scaled 1–10)
+
+### Rasterization
+
+Each GeoPackage is rasterized separately at `RASTER_RESOLUTION` (default 20 m) within the bounding box. `--all-touched` ensures that thin lines always hit at least one pixel. Every pixel touched by a feature is burned to `4`; untouched pixels are initialised to `0`.
+
+```
+roads.gpkg   → roads.tif    (burn=4)
+paths.gpkg   → paths.tif    (burn=4)
+railways.tif → railways.tif (burn=4)
+```
+
+### Merging
+
+The three rasters are merged with a `max` pixel function via `gdal raster mosaic`, so overlapping features do not double-count.
+
+```
+roads.tif + paths.tif + railways.tif → <AREA>_roads_merge.tif
+```
+
+### Smoothing pipeline
+
+The merge raster is then smoothed through a sequence of GDAL raster pipeline steps:
+
+```
+merged.tif
+  │
+  ├─ neighbours --method mean --size 5 --kernel gaussian
+  │     Gaussian blur at 20 m resolution to spread road presence outward
+  │
+  ├─ reproject --resolution 100,100 -r sum
+  │     Downscale to 100 m, summing pixel values — accumulates road length
+  │
+  ├─ resize --resolution 20,20 -r bilinear
+  │     Upsample back to 20 m with smooth interpolation
+  │
+  ├─ neighbours --method mean --size 5 --kernel gaussian --nodata 255
+  │     Second Gaussian pass to remove upsampling artefacts
+  │
+  └─ scale --src-min 0 --src-max 10 --dst-min 1 --dst-max 10
+           --ot Byte --exponent 0.25
+        Power-curve rescale to 1–10 (exponent < 1 boosts low-road-density areas)
+        → <AREA>_roads_smooth.tif
+```
+
+The resulting raster has values `1`–`10` where **1 = low road proximity** (remote) and **10 = high road proximity** (dense network).
+
+---
+
+## Stage 3 — CLC land-cover stack (`utils/create_clc_raster.sh`)
+
+**Input:** `input/clc/U2018_CLC2018_V2020_20u1.tif`
+**Output:** `input/clc/germany_clc_classes_stack.tif` (5-band, one-hot encoded)
+
+### CLC class remapping
+
+The 44 original CLC classes are remapped to five custom classes using `input/clc/custom_classes.txt`:
+
+| CLC values | Custom class | Code |
+|---|---|---|
+| 1–9 | urban | 4 |
+| 10–11 | park | 3 |
+| 12–17, 19–22 | farm | 2 |
+| 18, 23–39 | nature | 1 |
+| 40–44 | water | 5 |
+| 48, DEFAULT | no data | 0 |
+
+The full CLC-to-class mapping is in `input/clc/clc_classes_overview.csv`.
+
+### One-hot stack
+
+For each of the five classes (nature=1, farm=2, park=3, urban=4, water=5), a virtual reclassify is computed in GDALG (lazy/streamed) format:
+
+```
+germany_clc_classes.tif
+  ├─ band: nature  (1 where class=1, else 0)
+  ├─ band: farm    (1 where class=2, else 0)
+  ├─ band: park    (1 where class=3, else 0)
+  ├─ band: urban   (1 where class=4, else 0)
+  └─ band: water   (1 where class=5, else 0)
+  → germany_clc_classes_stack.tif  (resampled to RASTER_RESOLUTION)
+```
+
+Each band is a binary mask: `1` = pixel belongs to that class, `0` = it does not.
+
+---
+
+## Stage 4 — Value encoding and COG assembly (`create_raster.sh`)
+
+**Inputs:**
+- `input/osm/<AREA>_roads_smooth.tif` — road heatmap (A, values 1–10)
+- `input/clc/germany_clc_classes_stack.tif` — 5-band one-hot stack (B–F)
+- `input/bounds/<AREA>.gpkg` — area boundary for clipping
+
+**Output:** `out/<AREA>_raster_v<N>.tif`
+
+### Value encoding formula
+
+```
+where(F==1, 200, A*B + (A+10)*C + (A+20)*D + (A+30)*E)
+```
+
+| Variable | Raster | Meaning |
+|---|---|---|
+| A | roads_smooth | Road-proximity score (1–10) |
+| B | CLC band 1 | Nature mask (0 or 1) |
+| C | CLC band 2 | Farm mask (0 or 1) |
+| D | CLC band 3 | Park mask (0 or 1) |
+| E | CLC band 4 | Urban mask (0 or 1) |
+| F | CLC band 5 | Water mask (0 or 1) |
+
+This produces a single `Byte` pixel whose value encodes both the land-cover class and isolation score:
+
+| Pixel range | Class | Isolation (lower = more remote) |
+|---|---|---|
+| 0 | No data / unclassified | — |
+| 1–10 | Nature | 1 = remote, 10 = near roads |
+| 11–20 | Farm | 1 = remote, 10 = near roads |
+| 21–30 | Park | 1 = remote, 10 = near roads |
+| 31–40 | Urban | 1 = remote, 10 = near roads |
+| 200 | Water | — |
+
+The frontend recovers the class with `Math.floor(value / 10)` and the isolation score with `value % 10`.
+
+### Post-processing
+
+```
+raw_calc.tif
+  ├─ clip --like <AREA>.gpkg          clip to area boundary
+  ├─ reproject -d EPSG:3857           reproject to Web Mercator
+  └─ rio cogeo create --web-optimized align tiles to Web Mercator tile matrix,
+                                       add overviews, ZSTD compression
+     → out/<AREA>_raster_v<N>.tif
+```
+
+The output version number auto-increments (`v1`, `v2`, …) so existing COGs are never silently overwritten (unless `OVERWRITE` is set in `raster.conf`).
+
+---
+
+## Inspecting the output (`utils/cog_info.sh`)
+
+```bash
+bash raster/utils/cog_info.sh
+```
+
+Prints file sizes and `rio cogeo info` output for every `.tif` in `raster/out/`, and diffs two named versions for quick before/after comparison.
+
+---
+
+## Running the full pipeline
+
+```bash
+# activate the venv first
+source .venv/bin/activate
+
+bash raster/create_raster.sh
+```
+
+Override the config path:
+```bash
+RASTER_CONFIG_FILE=/path/to/custom.conf bash raster/create_raster.sh
+```
+
+Run individual stages manually (useful for debugging):
+```bash
+bash raster/utils/create_gpkg.sh
+bash raster/utils/rasterize_all_road_lengths.sh
+bash raster/utils/create_clc_raster.sh
+```

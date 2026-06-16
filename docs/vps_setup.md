@@ -6,16 +6,18 @@ This document outlines the steps required to initialize and manage the backend V
 
 The initial server configuration is handled via a `cloud-config` script upon provisioning the Hetzner VPS.
 
-### System Updates & Timezone
+### Complete Cloud-Config File
+
+Paste this into the Hetzner VPS "User data" field when creating the server:
+
 ```yaml
+#cloud-config
+
 timezone: Europe/Berlin
+
 package_update: true
 package_upgrade: true
-```
 
-### User Configuration
-A non-root user `gregor` is created with `sudo` privileges and passwordless sudo access. Authentication is locked down to SSH keys only.
-```yaml
 users:
   - name: gregor
     groups: sudo
@@ -23,12 +25,8 @@ users:
     sudo: ALL=(ALL) NOPASSWD:ALL
     lock_passwd: true
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAA... diden@gregdesk
-```
+      - ssh-rsa AAA......sJDCE= diden@gregdesk
 
-### Security and Hardening
-Root login and password authentication are disabled for SSH. Fail2ban is installed to protect against brute-force attacks.
-```yaml
 ssh_pwauth: false
 disable_root: true
 
@@ -94,47 +92,31 @@ source $HOME/.local/bin/env
 
 # Install build tools
 sudo apt install -y build-essential
-
-# Sync dependencies and run
-uv sync --python 3.12
-uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-## GDAL Environment Variables
 
-To optimize Rasterio and Titiler performance on the backend, several GDAL environment variables are configured:
-
-```bash
-export GDAL_HTTP_MERGE_CONSECUTIVE_RANGES="YES"
-export GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR"
-export GDAL_CACHEMAX="200" # 5% of RAM default
-export CPL_VSIL_CURL_CACHE_SIZE="200000000" # Global LRU cache
-export VSI_CACHE="TRUE"
-export VSI_CACHE_SIZE="5000000" # 5Mb per file handle
-export GDAL_HTTP_MULTIPLEX="YES" # Requires HTTP/2
-export GDAL_HTTP_VERSION="2"
-```
 
 ## Git Configuration
 
 Git is configured to ensure proper pulls and repository interactions:
 
+
 ```bash
-git config --global user.email "didenko_g@gmx.de"
+# copy ssh key to vps
+scp "$env:USERPROFILE\.ssh\github_deploy_key" gregor@$IP_VPS:/home/gregor/.ssh/github_deploy_key
+ssh gregor@$IP_VPS "chmod 600 ~/.ssh/github_deploy_key"
+# add a config file so the key gets used for git with this content: Host github.com
+#    HostName github.com
+#    User git
+#    IdentityFile ~/.ssh/github_deploy_key
+#    IdentitiesOnly yes
+ssh gregor@$IP_VPS "echo -e 'Host github.com\n HostName github.com\n User git\n IdentityFile ~/.ssh/github_deploy_key\n IdentitiesOnly yes' > ~/.ssh/config" 
+ssh gregor@$IP_VPS "chmod 600 ~/.ssh/config"
+```
+
+```bash
+# git config
+git config --global user.email "gregor@email.de"
 git config --global user.name "gregor d"
 git config --global pull.ff only
 ```
-
-A deploy key is used to access the repository securely from the VPS:
-
-```bash
-# Add config file to use key for GitHub
-echo -e 'Host github.com\n HostName github.com\n User git\n IdentityFile ~/.ssh/github_deploy_key\n IdentitiesOnly yes' > ~/.ssh/config
-chmod 600 ~/.ssh/config
-```
-
-## Strato
-
-For reference, the Strato SSH access is:
-`ssh stu952230246@59831152.ssh.w1.strato.hosting`
-Directory: `/alleinseinkarte`
