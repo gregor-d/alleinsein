@@ -2,7 +2,9 @@
 
 alleinsein.de is a spatial web application designed to help users visualize and explore isolation or "aloneness" through map data. The project utilizes high-performance Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https://developmentseed.org/titiler/) backend via FastAPI, combined with a frontend using MapLibre and/or Leaflet.
 
+
 # Table of Contents
+- [Scripts](#scripts)
 - [Technical Features](#technical-features)
 - [How to Run Locally](#how-to-run-locally)
   - [Running the Application](#running-the-application)
@@ -13,6 +15,28 @@ alleinsein.de is a spatial web application designed to help users visualize and 
   - [Copy to server](#copy-to-server)
 - [Production System Architecture](#production-system-architecture)
 - [Documentation](#documentation)
+
+# Scripts
+
+Each script has a Linux (`.sh`) and a Windows PowerShell (`.ps1`) variant with identical behaviour.
+
+**Development**
+
+| Script | Description |
+|---|---|
+| `scripts/setup_dev.sh` | First-time setup: installs GDAL and `uv`, runs `uv sync`, installs pre-commit hooks |
+| `scripts/dev.sh` / `.ps1` | Starts backend + frontend together; launches backend health |
+| `scripts/backend.sh` / `.ps1` | Starts FastAPI/Uvicorn backend on port 8000 |
+| `scripts/frontend.sh` / `.ps1` | Starts the browser-sync frontend dev server on port 5173 |
+| `scripts/docker.sh` / `.ps1` | Runs `docker compose up --force-recreate tiler` (containerised backend) |
+| `scripts/smoke-test.sh` / `.ps1` | Hits `/healthz` and a sample tile endpoint; exits non-zero on any non-200 response |
+| `raster/create_raster.sh` | Full pipeline entry point — runs all four stages below in sequence |
+| `raster/utils/cog_info.sh` | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/` |
+| `raster/utils/create_germany_mask.py` | Reads `input/bounds/germany.gpkg`, inverts it to a Germany mask and writes `frontend/static/germany-mask.geojson`  |
+
+[Raster Creation Pipeline](docs/raster_creation.md) for a details
+
+---
 
 
 # Technical Features

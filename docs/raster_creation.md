@@ -4,6 +4,20 @@ This document describes the full raster pipeline: data sources, configuration, e
 
 ## Overview
 
+
+| Script | Description |
+|---|---|
+| `raster/create_raster.sh` | Full pipeline entry point — runs all four stages below in sequence |
+| `raster/utils/create_gpkg.sh` | Extracts roads, paths, and railways from the OSM PBF into GeoPackage files |
+| `raster/utils/rasterize_all_road_lengths.sh` | Rasterizes the GeoPackages and produces a smoothed road-proximity heatmap |
+| `raster/utils/create_clc_raster.sh` | Remaps and stacks CLC 2018 land-cover classes into a 5-band one-hot raster |
+| `raster/utils/cog_info.sh` | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/` |
+| `raster/utils/export_bounds.py` | Geocodes an area name via OSMnx, writes a bounds GeoPackage, and prints the `MINX/MINY/MAXX/MAXY` values for `raster.conf` — run with `AREA=germany uv run raster/utils/export_bounds.py` |
+| `raster/utils/create_germany_mask.py` | Reads `input/bounds/germany.gpkg`, inverts it to a world-minus-Germany mask, simplifies, and writes `frontend/static/germany-mask.geojson` — run with `uv run raster/utils/create_germany_mask.py` |
+
+
+## Pipeline
+
 The pipeline converts two data sources — OpenStreetMap road/path/railway geometries and the CORINE Land Cover (CLC) 2018 dataset — into a single-band, web-optimized Cloud Optimized GeoTIFF (COG). Each pixel encodes both a land-cover class and a road-proximity score in a compact `Byte` value, so the frontend needs only one tile request per viewport instead of one per layer.
 
 Entry point: `raster/create_raster.sh`
