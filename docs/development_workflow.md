@@ -104,6 +104,6 @@ jobs:
    - If there are `BREAKING CHANGE` commits, it schedules a **Major** bump.
    - If there are `feat` commits, it schedules a **Minor** bump.
    - If there are only `fix` commits, it schedules a **Patch** bump.
-5. **Version Updates**: The Action writes the new version according to setting in pyproject.toml  to:
+5. **Version Updates**: The Action writes the new version according to setting in pyproject.toml to:
    - `pyproject.toml` (`[project]` table `version = "X.Y.Z"` via the PEP 621 provider).
    - `backend/_version.py` (`__version__ = "X.Y.Z"`).

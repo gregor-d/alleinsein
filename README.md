@@ -62,8 +62,8 @@ graph TD
 
 For details, see the [Architecture Docs](docs/architecture.md), [VPS and System Setup](docs/vps_setup.md), [Cloudflare Tunnel & Caching](docs/cloudflare_setup.md)
 
-
 # Raster Pipeline
+
 The raster creation pipeline utilises Osmium, GDAL and Python-Scripts.
 See details in [Raster Creation Pipeline](docs/raster_creation.md)
 
@@ -93,8 +93,6 @@ graph TD
     S5       --> COG
 ```
 
-
-
 # How to Run Locally
 
 To develop or test the application on your local machine, use `uv` for Python dependency management.
@@ -115,8 +113,6 @@ To develop or test the application on your local machine, use `uv` for Python de
    ```bash
    npx --yes browser-sync start --server "frontend/static" --files "frontend/static/*.html" "frontend/static/*.css" "frontend/static/themes/*.css" "frontend/static/*.js" --port 5173 --no-ui --no-open --host 127.0.0.1
    ```
-
-
 
 Once running:
 
@@ -144,7 +140,6 @@ Run the backend using Docker [docker-compose.yml](docker-compose.yaml).
 
 ### How to Use in Production
 
-
 1. **Deployment**:
    Git pull updates to the VPS.
 2. **Re-Starting the Service**:
@@ -157,16 +152,14 @@ Run the backend using Docker [docker-compose.yml](docker-compose.yaml).
 
 Each script has a Linux (`.sh`) and a Windows PowerShell (`.ps1`) variant with identical behaviour.
 
-
-| Script                                | Description                                                                                                       |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `scripts/setup_dev.sh`                | First-time setup: installs GDAL and `uv`, runs `uv sync`, installs pre-commit hooks                               |
-| `scripts/dev.sh` / `.ps1`             | Starts backend + frontend together; runs smoke test once backend is healthy                                       |
-| `scripts/backend.sh` / `.ps1`         | Starts FastAPI/Uvicorn backend on port 8000                                                                       |
-| `scripts/frontend.sh` / `.ps1`        | Starts the browser-sync frontend dev server on port 5173                                                          |
-| `scripts/docker.sh` / `.ps1`          | Runs `docker compose up -d --force-recreate tiler` (containerised backend)                                        |
-| `scripts/smoke-test.sh` / `.ps1`      | Hits `/healthz` and a sample tile endpoint; exits non-zero on any non-200 response                                |
-
+| Script                           | Description                                                                         |
+| -------------------------------- | ----------------------------------------------------------------------------------- |
+| `scripts/setup_dev.sh`           | First-time setup: installs GDAL and `uv`, runs `uv sync`, installs pre-commit hooks |
+| `scripts/dev.sh` / `.ps1`        | Starts backend + frontend together; runs smoke test once backend is healthy         |
+| `scripts/backend.sh` / `.ps1`    | Starts FastAPI/Uvicorn backend on port 8000                                         |
+| `scripts/frontend.sh` / `.ps1`   | Starts the browser-sync frontend dev server on port 5173                            |
+| `scripts/docker.sh` / `.ps1`     | Runs `docker compose up -d --force-recreate tiler` (containerised backend)          |
+| `scripts/smoke-test.sh` / `.ps1` | Hits `/healthz` and a sample tile endpoint; exits non-zero on any non-200 response  |
 
 ---
 
