@@ -4,18 +4,16 @@ This document describes the full raster pipeline: data sources, configuration, e
 
 ## Overview
 
-
-| Script | Description |
-|---|---|
-| `raster/create_raster.sh` | Full pipeline entry point — runs all five stages below in sequence |
-| `raster/utils/osm_filter_pbf.sh` | Pre-filters the OSM PBF to highway and railway ways using osmium-tool, producing a much smaller PBF for GDAL to process |
-| `raster/utils/osm_create_gpkg.sh` | Extracts roads, paths, and railways from the filtered OSM PBF into a single GeoPackage |
-| `raster/utils/osm_rasterize_roads.sh` | Rasterizes the GeoPackage and produces a smoothed road-proximity heatmap |
-| `raster/utils/clc_raster_create.sh` | Remaps and stacks CLC 2018 land-cover classes into a 5-band one-hot raster |
-| `raster/utils/cog_info.sh` | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/` |
-| `raster/utils/export_bounds.py` | Geocodes an area name via OSMnx, writes a bounds GeoPackage, and prints the `MINX/MINY/MAXX/MAXY` values for `raster.conf` — run with `AREA=germany uv run raster/utils/export_bounds.py` |
+| Script                                | Description                                                                                                                                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `raster/create_raster.sh`             | Full pipeline entry point — runs all five stages below in sequence                                                                                                                                 |
+| `raster/utils/osm_filter_pbf.sh`      | Pre-filters the OSM PBF to highway and railway ways using osmium-tool, producing a much smaller PBF for GDAL to process                                                                            |
+| `raster/utils/osm_create_gpkg.sh`     | Extracts roads, paths, and railways from the filtered OSM PBF into a single GeoPackage                                                                                                             |
+| `raster/utils/osm_rasterize_roads.sh` | Rasterizes the GeoPackage and produces a smoothed road-proximity heatmap                                                                                                                           |
+| `raster/utils/clc_raster_create.sh`   | Remaps and stacks CLC 2018 land-cover classes into a 5-band one-hot raster                                                                                                                         |
+| `raster/utils/cog_info.sh`            | Prints file sizes and `rio cogeo info` for all COGs in `raster/out/`                                                                                                                               |
+| `raster/utils/export_bounds.py`       | Geocodes an area name via OSMnx, writes a bounds GeoPackage, and prints the `MINX/MINY/MAXX/MAXY` values for `raster.conf` — run with `AREA=germany uv run raster/utils/export_bounds.py`          |
 | `raster/utils/create_germany_mask.py` | Reads `input/bounds/germany.gpkg`, inverts it to a world-minus-Germany mask, simplifies, and writes `frontend/static/germany-mask.geojson` — run with `uv run raster/utils/create_germany_mask.py` |
-
 
 ## Pipeline
 
@@ -44,11 +42,11 @@ CLC 2018 .tif
 
 ### Input data
 
-| File | Expected location | Source |
-|---|---|---|
-| OSM PBF extract | `raster/input/osm/<AREA>-latest.osm.pbf` | [Geofabrik](https://download.geofabrik.de/) |
+| File            | Expected location                               | Source                                                                               |
+| --------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+| OSM PBF extract | `raster/input/osm/<AREA>-latest.osm.pbf`        | [Geofabrik](https://download.geofabrik.de/)                                          |
 | CLC 2018 raster | `raster/input/clc/U2018_CLC2018_V2020_20u1.tif` | [Copernicus Land Service](https://land.copernicus.eu/pan-european/corine-land-cover) |
-| Area boundary | `raster/input/bounds/<AREA>.gpkg` | Manually prepared GeoPackage |
+| Area boundary   | `raster/input/bounds/<AREA>.gpkg`               | Manually prepared GeoPackage                                                         |
 
 ### System tools
 
@@ -136,6 +134,7 @@ Reads the pre-filtered OSM PBF using the GDAL OSM driver and writes a single Geo
 ### Feature filters
 
 Roads, paths, and railways are extracted based on the following combined query:
+
 - **Roads**: motorized carriageways and bicycle/pedestrian infrastructure sharing space with traffic (`residential`, `secondary`, `primary`, `tertiary`, `service`, `living_street`, `primary_link`, `secondary_link`, `tertiary_link`, `unclassified`, `trunk`, `motorway_link`, `trunk_link`, `motorway`, `road`, `ramp`, `pedestrian`, `cycleway`, `proposed`, `construction`)
 - **Paths**: off-carriageway routes (`footway`, `path`, `track`, `bridleway`, `trail`)
 - **Railways**: track-bearing lines (`rail`, `light_rail`, `tram`, `subway`, `narrow_gauge`, `funicular`, `monorail`, `miniature`, `preserved`, `construction`, `proposed`)
@@ -143,6 +142,7 @@ Roads, paths, and railways are extracted based on the following combined query:
 ### Performance and Size Optimizations
 
 To keep the GeoPackage file size minimal:
+
 - Only the geometry column is retained (`--fields _ogr_geometry_`).
 - Spatial index creation is disabled (`--lco SPATIAL_INDEX=NO`) since the rasterization step processes the vector layers line-by-line and does not require a spatial query index.
 
@@ -199,14 +199,14 @@ The resulting raster has values `1`–`10` where **1 = low road proximity** (rem
 
 The 44 original CLC classes are remapped to five custom classes using `input/clc/custom_classes.txt`:
 
-| CLC values | Custom class | Code |
-|---|---|---|
-| 1–9 | urban | 4 |
-| 10–11 | park | 3 |
-| 12–17, 19–22 | farm | 2 |
-| 18, 23–39 | nature | 1 |
-| 40–44 | water | 5 |
-| 48, DEFAULT | no data | 0 |
+| CLC values   | Custom class | Code |
+| ------------ | ------------ | ---- |
+| 1–9          | urban        | 4    |
+| 10–11        | park         | 3    |
+| 12–17, 19–22 | farm         | 2    |
+| 18, 23–39    | nature       | 1    |
+| 40–44        | water        | 5    |
+| 48, DEFAULT  | no data      | 0    |
 
 The full CLC-to-class mapping is in `input/clc/clc_classes_overview.csv`.
 
@@ -231,6 +231,7 @@ Each band is a binary mask: `1` = pixel belongs to that class, `0` = it does not
 ## Stage 5 — Value encoding and COG assembly (`create_raster.sh`)
 
 **Inputs:**
+
 - `input/osm/<AREA>_roads_smooth.tif` — road heatmap (A, values 1–10)
 - `input/clc/<AREA>_clc_classes_stack.tif` — 5-band one-hot stack (B–F)
 - `input/bounds/<AREA>.gpkg` — area boundary for clipping
@@ -243,25 +244,25 @@ Each band is a binary mask: `1` = pixel belongs to that class, `0` = it does not
 where(F==1, 200, A*B + (A+10)*C + (A+20)*D + (A+30)*E)
 ```
 
-| Variable | Raster | Meaning |
-|---|---|---|
-| A | roads_smooth | Road-proximity score (1–10) |
-| B | CLC band 1 | Nature mask (0 or 1) |
-| C | CLC band 2 | Farm mask (0 or 1) |
-| D | CLC band 3 | Park mask (0 or 1) |
-| E | CLC band 4 | Urban mask (0 or 1) |
-| F | CLC band 5 | Water mask (0 or 1) |
+| Variable | Raster       | Meaning                     |
+| -------- | ------------ | --------------------------- |
+| A        | roads_smooth | Road-proximity score (1–10) |
+| B        | CLC band 1   | Nature mask (0 or 1)        |
+| C        | CLC band 2   | Farm mask (0 or 1)          |
+| D        | CLC band 3   | Park mask (0 or 1)          |
+| E        | CLC band 4   | Urban mask (0 or 1)         |
+| F        | CLC band 5   | Water mask (0 or 1)         |
 
 This produces a single `Byte` pixel whose value encodes both the land-cover class and isolation score:
 
-| Pixel range | Class | Isolation (lower = more remote) |
-|---|---|---|
-| 0 | No data / unclassified | — |
-| 1–10 | Nature | 1 = remote, 10 = near roads |
-| 11–20 | Farm | 1 = remote, 10 = near roads |
-| 21–30 | Park | 1 = remote, 10 = near roads |
-| 31–40 | Urban | 1 = remote, 10 = near roads |
-| 200 | Water | — |
+| Pixel range | Class                  | Isolation (lower = more remote) |
+| ----------- | ---------------------- | ------------------------------- |
+| 0           | No data / unclassified | —                               |
+| 1–10        | Nature                 | 1 = remote, 10 = near roads     |
+| 11–20       | Farm                   | 1 = remote, 10 = near roads     |
+| 21–30       | Park                   | 1 = remote, 10 = near roads     |
+| 31–40       | Urban                  | 1 = remote, 10 = near roads     |
+| 200         | Water                  | —                               |
 
 The frontend recovers the class with `Math.floor(value / 10)` and the isolation score with `value % 10`.
 
@@ -301,11 +302,13 @@ bash raster/create_raster.sh
 ```
 
 Override the config path:
+
 ```bash
 RASTER_CONFIG_FILE=/path/to/custom.conf bash raster/create_raster.sh
 ```
 
 Run individual stages manually (useful for debugging):
+
 ```bash
 bash raster/utils/osm_filter_pbf.sh
 bash raster/utils/osm_create_gpkg.sh

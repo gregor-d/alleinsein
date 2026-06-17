@@ -9,7 +9,9 @@ This document describes the automated code quality controls, commit message veri
 We use `pre-commit` to run linting, formatting, type checking, and commit message analysis automatically before commits are finalized.
 
 ### Configuration (`.pre-commit-config.yaml`)
+
 The project configures local hooks using your virtual environment via `uv run --active`:
+
 - **`ruff-check`**: Lints and automatically fixes issues in Python files.
 - **`ruff-format-check`**: Automatically formats Python files according to the project's formatting standard.
 - **`ty-check`**: Runs static type-checking verification.
@@ -17,7 +19,9 @@ The project configures local hooks using your virtual environment via `uv run --
 - **`commitizen-check`**: Intercepts the commit message phase and blocks commits if the message does not adhere to the **Conventional Commits** specification.
 
 ### Setup and Installation
+
 To enable pre-commit checks locally, run:
+
 ```bash
 # Verify pre-commit is installed via dev dependencies
 uv sync
@@ -27,6 +31,7 @@ uv run pre-commit install --hook-type pre-commit --hook-type commit-msg
 ```
 
 To run all checks manually on the entire codebase:
+
 ```bash
 uv run pre-commit run --all-files
 ```
@@ -38,7 +43,9 @@ uv run pre-commit run --all-files
 To automate versioning, the project requires all commit messages to follow the **Conventional Commits** standard.
 
 ### Syntax Structure
+
 Commit messages must look like this:
+
 ```
 <type>(<scope>): <short summary>
 
@@ -46,7 +53,9 @@ Commit messages must look like this:
 
 [optional footer(s)]
 ```
+
 Where `<type>` is one of:
+
 - `feat`: A new feature (triggers a **minor** version bump, e.g., `0.1.0` -> `0.2.0`).
 - `fix`: A bug fix (triggers a **patch** version bump, e.g., `0.1.0` -> `0.1.1`).
 - `docs`: Documentation updates.
@@ -56,13 +65,16 @@ Where `<type>` is one of:
 - `test`: Adding missing tests or refactoring tests.
 - `chore`: Maintenance tasks, dependencies, build settings.
 
-*Note: Adding a `!` after the type (e.g. `feat!:`) or adding `BREAKING CHANGE:` in the footer triggers a **major** version bump (e.g., `0.1.0` -> `1.0.0`).*
+_Note: Adding a `!` after the type (e.g. `feat!:`) or adding `BREAKING CHANGE:` in the footer triggers a **major** version bump (e.g., `0.1.0` -> `1.0.0`)._
 
 ### Committing Locally
+
 Instead of raw `git commit`, use Commitizen's interactive CLI:
+
 ```bash
 uv run cz commit
 ```
+
 This launches a CLI wizard that helps you categorize and format your changes correctly.
 
 ---
@@ -72,7 +84,9 @@ This launches a CLI wizard that helps you categorize and format your changes cor
 On a push or pull-request merge to the `main` branch, a GitHub Action automatically bumps the version number, creates a release tag, and updates files.
 
 ### Workflow Configuration (`.github/workflows/version-bump.yml`)
+
 The action runs on Ubuntu runners and requires repository write permissions:
+
 ```yaml
 name: Version bump
 
@@ -108,6 +122,7 @@ jobs:
 ```
 
 ### How the Auto-Bump Logic Works
+
 1. **Branch Push**: A developer merges a pull request or pushes code to `main`.
 2. **Loop Check**: The workflow checks if the commit message starts with `bump:`. If it does, the workflow terminates immediately. This prevents infinite loops.
 3. **Commit Analysis**: The Commitizen Action checks all commits since the last Git tag.

@@ -19,7 +19,10 @@ dev = [
     "pytest>=9.0.3",
     "rio-cogeo>=7.0.2",
     "osmnx>=2.1.0",
+    "python-dotenv>=1.0.1",
     "gdal==3.12.3; sys_platform != 'win32'",
+    "shapely>=2.1.2",
+    "geopandas>=1.1.3",
 ]
 
 

@@ -94,12 +94,9 @@ source $HOME/.local/bin/env
 sudo apt install -y build-essential
 ```
 
-
-
 ## Git Configuration
 
 Git is configured to ensure proper pulls and repository interactions:
-
 
 ```bash
 # copy ssh key to vps
@@ -110,7 +107,7 @@ ssh gregor@$IP_VPS "chmod 600 ~/.ssh/github_deploy_key"
 #    User git
 #    IdentityFile ~/.ssh/github_deploy_key
 #    IdentitiesOnly yes
-ssh gregor@$IP_VPS "echo -e 'Host github.com\n HostName github.com\n User git\n IdentityFile ~/.ssh/github_deploy_key\n IdentitiesOnly yes' > ~/.ssh/config" 
+ssh gregor@$IP_VPS "echo -e 'Host github.com\n HostName github.com\n User git\n IdentityFile ~/.ssh/github_deploy_key\n IdentitiesOnly yes' > ~/.ssh/config"
 ssh gregor@$IP_VPS "chmod 600 ~/.ssh/config"
 ```
 

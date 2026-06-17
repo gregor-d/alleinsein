@@ -11,10 +11,28 @@ if ! command -v gdal --version &> /dev/null; then
         echo "sudo add-apt-repository ppa:ubuntugis/ppa"
         echo "sudo apt update"
         echo "sudo apt install gdal-bin libgdal-dev python3-gdal"
-        exit 1  
+        echo "Continuing without installing GDAL."
     fi  
 else
     echo "GDAL is already installed."
+fi
+
+# check that osmium-tool is installed and available if not install it
+if ! command -v osmium &> /dev/null; then
+    echo "Error: osmium-tool is not installed or not in the system PATH."
+    # install osmium-tool using apt-get
+    if command -v apt-get &> /dev/null; then
+        echo "Attempting to install osmium-tool using apt-get..."
+        sudo apt-get update
+        sudo apt-get install -y osmium-tool
+    else
+        echo "Error: apt-get is not available. Install osmium-tool manually."
+        echo "Ubuntu/Debian: sudo apt install osmium-tool"
+        echo "macOS/Homebrew: brew install osmium-tool"
+        echo "Continuing without installing osmium-tool."
+    fi
+else
+    echo "osmium-tool is already installed."
 fi
 
 # check if uv is installed

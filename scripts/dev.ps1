@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $backend = Start-Process uv `
-  -ArgumentList "run uvicorn backend.main:app --port 8000 --reload" `
+  -ArgumentList "run uvicorn backend.main:app --port 8000 --reload --reload-dir backend" `
   -PassThru -NoNewWindow
 
 do {
@@ -13,7 +13,7 @@ do {
 & "$PSScriptRoot\smoke-test.ps1"
 
 $frontend = Start-Process cmd `
-  -ArgumentList "/c npx --yes browser-sync start --server frontend/static --files `"frontend/static/*.html`" `"frontend/static/*.css`" `"frontend/static/themes/*.css`" `"frontend/static/*.js`" --port 5173 --no-ui --no-open --host 127.0.0.1" `
+  -ArgumentList "/c npx --yes browser-sync start --server frontend/static --files `"frontend/static/**/*`" --port 5173 --no-ui --no-open --host 127.0.0.1" `
   -PassThru -NoNewWindow
 
 try {

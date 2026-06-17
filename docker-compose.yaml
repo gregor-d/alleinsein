@@ -20,8 +20,8 @@ services:
       # GDAL_HTTP_VERSION: "2"
       # - PYTHONWARNINGS=ignore
       - VSI_CACHE=TRUE
-      - VSI_CACHE_SIZE=268435456 
-      # - VSI_CACHE_SIZE=518435456 
+      - VSI_CACHE_SIZE=268435456
+      # - VSI_CACHE_SIZE=518435456
       # App overrides here win over backend/${APP_ENV:-prod}.env.
       # APP_ENABLE_DOCS: "false"
       # APP_ALLOWED_TMS: "WebMercatorQuad"
