@@ -23,6 +23,7 @@ dev = [
     "gdal==3.12.3; sys_platform != 'win32'",
     "shapely>=2.1.2",
     "geopandas>=1.1.3",
+    "pytest-playwright>=0.7.0",
 ]
 
 

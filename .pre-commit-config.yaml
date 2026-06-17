@@ -47,3 +47,11 @@ repos:
         files: ^frontend/static/.*\.(html|css|js|json)$
         stages:
           - pre-commit
+
+      - id: frontend-tests
+        name: frontend tests
+        entry: uv run --active pytest tests/test_map_frontend.py tests/test_titiler.py tests/test_env.py
+        language: system
+        pass_filenames: false
+        stages:
+          - pre-commit
