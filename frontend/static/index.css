@@ -1394,6 +1394,47 @@ body:has(#settings-drawer.open) #settings-btn {
   background: #3b82f6;
 }
 
+/* ── LOCATION PROMPT ── */
+#location-prompt {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px 9px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius);
+  box-shadow: var(--box-shadow);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-hi);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.96);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+#location-prompt.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+#location-prompt > svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: var(--text-lo);
+}
+#location-prompt-yes {
+  flex: none;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
 /* Custom scale control dark mode styling */
 .leaflet-control-scale-line,
 .maplibregl-ctrl-scale {
