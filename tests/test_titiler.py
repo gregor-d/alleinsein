@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+
 from backend.main import app
 
 
@@ -10,7 +11,6 @@ def client():
         yield client
 
 
-# @pytest.mark.skip()
 def test_raster_default_endpoint(client):
     print("Testing default raster endpoint...")
     response = client.get("/tiles/WebMercatorQuad/0/0/0")
@@ -43,7 +43,7 @@ def test_raster_secure_endpoint(client):
     assert response.status_code == 500
 
 
-def test_tile_json_info(client):
+def test_directory_traversal(client):
     print("Testing raster endpoint with directory traversal...")
     response = client.get(
         "/tiles/WebMercatorQuad/0/0/0?raster=../tests/test_raster.tif"

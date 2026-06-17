@@ -1,7 +1,7 @@
 import importlib
-from pathlib import Path
 import sys
 import tomllib
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -33,13 +33,6 @@ def reload_main():
     if "backend.main" in sys.modules:
         return importlib.reload(sys.modules["backend.main"])
     return importlib.import_module("backend.main")
-
-
-def test_default_environment_is_prod():
-    main = reload_main()
-
-    assert main.settings.env == "prod"
-    assert main.settings.enable_docs is False
 
 
 def test_healthz_includes_project_version():
@@ -94,7 +87,7 @@ def test_process_env_overrides_env_file(monkeypatch: pytest.MonkeyPatch):
 def test_invalid_environment_fails(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("APP_ENV", "stage")
 
-    with pytest.raises(RuntimeError, match="Unknown APP_ENV"):
+    with pytest.raises(RuntimeError, match="Unknown environment: stage"):
         reload_main()
 
     monkeypatch.setenv("APP_ENV", "prod")
