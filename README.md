@@ -64,7 +64,7 @@ For details, see the [Architecture Docs](docs/architecture.md), [VPS and System 
 
 
 # Raster Pipeline
-
+The raster creation pipeline utilises Osmium, GDAL and Python-Scripts.
 See details in [Raster Creation Pipeline](docs/raster_creation.md)
 
 ```mermaid
