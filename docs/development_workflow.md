@@ -1,22 +1,8 @@
 # CI/CD Workflow: Pre-Commit, Commitizen & Auto-Bump
 
-This document describes the automated code quality controls, commit message verification, and version bumping pipeline configured in the `alleinsein` repository.
-
 ---
 
 ## 1. Local Code Hygiene: Pre-Commit Hooks
-
-We use `pre-commit` to run linting, formatting, type checking, and commit message analysis automatically before commits are finalized.
-
-### Configuration (`.pre-commit-config.yaml`)
-
-The project configures local hooks using your virtual environment via `uv run --active`:
-
-- **`ruff-check`**: Lints and automatically fixes issues in Python files.
-- **`ruff-format-check`**: Automatically formats Python files according to the project's formatting standard.
-- **`ty-check`**: Runs static type-checking verification.
-- **`prettier-check`**: Checks all frontend HTML, CSS, JavaScript, and JSON files inside `frontend/static/` to ensure code layout consistency.
-- **`commitizen-check`**: Intercepts the commit message phase and blocks commits if the message does not adhere to the **Conventional Commits** specification.
 
 ### Setup and Installation
 
@@ -66,18 +52,6 @@ Where `<type>` is one of:
 - `chore`: Maintenance tasks, dependencies, build settings.
 
 _Note: Adding a `!` after the type (e.g. `feat!:`) or adding `BREAKING CHANGE:` in the footer triggers a **major** version bump (e.g., `0.1.0` -> `1.0.0`)._
-
-### Committing Locally
-
-Instead of raw `git commit`, use Commitizen's interactive CLI:
-
-```bash
-uv run cz commit
-```
-
-This launches a CLI wizard that helps you categorize and format your changes correctly.
-
----
 
 ## 3. Automated Release: GitHub Version Bump Workflow
 
@@ -130,7 +104,6 @@ jobs:
    - If there are `BREAKING CHANGE` commits, it schedules a **Major** bump.
    - If there are `feat` commits, it schedules a **Minor** bump.
    - If there are only `fix` commits, it schedules a **Patch** bump.
-5. **Version Updates**: The Action writes the new version to:
+5. **Version Updates**: The Action writes the new version according to setting in pyproject.toml  to:
    - `pyproject.toml` (`[project]` table `version = "X.Y.Z"` via the PEP 621 provider).
    - `backend/_version.py` (`__version__ = "X.Y.Z"`).
-6. **Commit and Push**: The Action commits the changes with the message `bump: version X.Y.Z`, tags the commit as `vX.Y.Z`, and pushes both the commit and tag back to the `main` branch.

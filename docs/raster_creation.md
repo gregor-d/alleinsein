@@ -56,8 +56,6 @@ CLC 2018 .tif
 # Debian / Ubuntu
 sudo apt install osmium-tool
 
-# macOS
-brew install osmium-tool
 ```
 
 ### Python / GDAL environment
@@ -263,8 +261,6 @@ This produces a single `Byte` pixel whose value encodes both the land-cover clas
 | 21–30       | Park                   | 1 = remote, 10 = near roads     |
 | 31–40       | Urban                  | 1 = remote, 10 = near roads     |
 | 200         | Water                  | —                               |
-
-The frontend recovers the class with `Math.floor(value / 10)` and the isolation score with `value % 10`.
 
 ### Post-processing
 
