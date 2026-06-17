@@ -7,6 +7,7 @@ base_url="${base_url%/}"
 urls=(
   "${base_url}/healthz"
   "${base_url}/tiles/WebMercatorQuad/0/0/0?raster=test_raster.tif"
+  "${base_url}/tiles/WebMercatorQuad/0/0/0?raster=germany_raster_v3.tif"
 )
 
 for url in "${urls[@]}"; do
