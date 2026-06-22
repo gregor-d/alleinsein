@@ -5,7 +5,8 @@ const isLocal = window.location.hostname === 'localhost'
 const CONFIG = {
     fqdn: isLocal ? 'http://127.0.0.1:8000' : 'https://tiles.alleinseinkarte.de',
     tile_json_path: 'WebMercatorQuad/tilejson.json',
-    raster_name: 'germany_raster_v2.tif',
+    tile_size: 512,
+    raster_name: 'germany_raster_v3.tif',
     mask_opacity: 0.45,
     mask_color: '#111111',
     minimal_zoom: 6,
@@ -94,7 +95,7 @@ const BASEMAPS = {
 
 // ─── MUTABLE APP STATE ───
 let activeBasemapKey = 'osm';
-let basemapOpacity   = 1.0;
+let basemapOpacity   = 0.7;
 let dataLayerOpacity = 1.0;
 let boundsSet        = false;
 let hotspotMode      = false;

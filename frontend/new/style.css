@@ -628,11 +628,17 @@ html, body {
     letter-spacing: 0.01em;
 }
 .layer-tab-grad {
-    width: 34px;
-    height: 4px;
-    border-radius: 2px;
+    width: 42px;
+    height: 8px;
+    border-radius: 3px;
     background: var(--c-border);
     overflow: hidden;
+    cursor: pointer;
+    transition: filter var(--t), transform var(--t);
+}
+.layer-tab-grad:hover {
+    filter: brightness(1.1) saturate(1.1);
+    transform: scaleY(1.15);
 }
 
 /* ── MOBILE DRAWER ───────────────────────────── */
@@ -735,6 +741,33 @@ html, body {
     color: var(--c-text-muted);
 }
 
+/* ── MINI QUICK-SETTINGS PANEL ───────────────── */
+#mini-panel {
+    position: fixed;
+    bottom: calc(var(--bottombar-h) + var(--fab-sz) * 3 + var(--gap) * 2 + 12px);
+    right: 16px;
+    z-index: 160;
+    width: 244px;
+    max-height: 64vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r);
+    box-shadow: 0 6px 28px var(--c-shadow-md);
+    padding: 8px 12px 14px;
+}
+#mini-panel:not([hidden]) {
+    display: block;
+    animation: popover-in 0.15s ease;
+}
+.mini-title {
+    font-family: var(--font-brand);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--c-text);
+}
+
 /* ── MEDIA QUERIES ───────────────────────────── */
 @media (max-width: 767px) {
     #map               { bottom: var(--bottombar-h); }
@@ -743,7 +776,8 @@ html, body {
     #fab-group         { bottom: calc(var(--bottombar-h) + 12px); right: 12px; }
     #fab-settings      { display: flex; }
 
-    #search-popover {
+    #search-popover,
+    #mini-panel {
         bottom: calc(var(--bottombar-h) + var(--fab-sz) * 3 + var(--gap) * 2 + 14px);
         right: 12px;
     }
@@ -755,14 +789,16 @@ html, body {
     #drawer-backdrop   { display: none !important; }
     #fab-settings      { display: flex; }
 
-    #search-popover {
+    #search-popover,
+    #mini-panel {
         bottom: calc(var(--fab-sz) * 2 + var(--gap) + 24px);
     }
 
     /* panel-open class applied to body by JS */
     body.panel-open #map { right: var(--panel-w); }
     body.panel-open #fab-group { right: calc(var(--panel-w) + 12px); }
-    body.panel-open #search-popover { right: calc(var(--panel-w) + 12px); }
+    body.panel-open #search-popover,
+    body.panel-open #mini-panel { right: calc(var(--panel-w) + 12px); }
 }
 
 /* ── LEAFLET OVERRIDES ───────────────────────── */
@@ -844,76 +880,38 @@ html, body {
     border-radius: 2px;
 }
 
-/* ── COLORMAP PICKER ─────────────────────────── */
-#colormap-picker {
-    position: fixed;
-    z-index: 500;
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    border-radius: var(--r);
-    box-shadow: 0 6px 28px var(--c-shadow-md);
-    padding: 6px;
-    width: 210px;
+/* ── BUTTON DEPTH / SHADOWS ──────────────────── */
+/* Tactile press effect on controls (ported from static) */
+.seg-btn,
+.btn-go,
+.btn-full,
+.reverse-btn,
+.theme-seg-btn,
+.scheme-btn {
+    box-shadow: 0 1px 2px var(--c-shadow);
 }
-#colormap-picker:not([hidden]) {
-    display: block;
-    animation: popover-in 0.12s ease;
+.seg-btn:hover,
+.btn-go:hover,
+.btn-full:hover,
+.reverse-btn:hover,
+.theme-seg-btn:hover {
+    box-shadow: 0 2px 5px var(--c-shadow-md);
 }
-
-.cp-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 6px;
-    border-radius: var(--r-sm);
-    cursor: pointer;
-    transition: background var(--t);
+.seg-btn:active,
+.btn-go:active,
+.btn-full:active,
+.reverse-btn:active,
+.theme-seg-btn:active,
+.scheme-btn:active {
+    box-shadow: inset 0 1px 3px var(--c-shadow-md);
+    transform: translateY(1px);
 }
-.cp-row:hover {
-    background: var(--c-surface-2);
-}
-.cp-row.active {
-    background: rgba(74, 114, 56, 0.09);
-}
-[data-theme="dark"] .cp-row.active {
-    background: rgba(107, 154, 80, 0.11);
+.seg-btn.active,
+.theme-seg-btn.active {
+    box-shadow: inset 0 1px 3px var(--c-shadow-md);
 }
 
-.cp-swatch-bar {
-    width: 90px;
-    height: 14px;
-    border-radius: 3px;
-    flex-shrink: 0;
-    pointer-events: none;
-}
-
-.cp-name {
-    font-size: 11px;
-    color: var(--c-text-muted);
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: none;
-}
-.cp-row.active .cp-name {
-    color: var(--c-accent);
-    font-weight: 500;
-}
-
-.cp-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--c-accent);
-    flex-shrink: 0;
-    opacity: 0;
-    pointer-events: none;
-}
-.cp-row.active .cp-dot {
-    opacity: 1;
-}
-
+/* ── INLINE SCHEME DROPDOWN (side panel + drawer) ── */
 /* Make gradient bars clickable on category layers */
 .gradient-bar[data-ctrl="colormap-pick"] {
     cursor: pointer;
@@ -926,6 +924,169 @@ html, body {
 .gradient-bar[data-ctrl="colormap-pick"]:focus-visible {
     outline: 2px solid var(--c-accent);
     outline-offset: 2px;
+}
+
+.scheme-dropdown {
+    display: none;
+    padding: 6px 2px 2px;
+}
+.scheme-dropdown.open {
+    display: block;
+}
+
+.scheme-grid {
+    display: flex;
+    gap: 4px;
+}
+
+.scheme-btn {
+    flex: 1;
+    min-width: 0;
+    height: 20px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    padding: 0;
+    transition: transform var(--t), box-shadow var(--t), outline-color var(--t);
+    outline: 0 solid transparent;
+}
+.scheme-btn:hover {
+    transform: translateY(-1px);
+}
+.scheme-btn.active {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 1px;
+    border-color: var(--c-accent);
+}
+
+/* ── COLOR-RAMP BOTTOM SHEET (mobile) ────────── */
+#color-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 320;
+    background: var(--c-surface);
+    border-radius: 14px 14px 0 0;
+    border-top: 1px solid var(--c-border);
+    box-shadow: 0 -4px 24px var(--c-shadow-md);
+    transform: translateY(100%);
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+#color-sheet.open {
+    transform: translateY(0);
+}
+
+.sheet-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--c-border);
+    margin: 10px auto 4px;
+    flex-shrink: 0;
+}
+
+#color-sheet-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px 10px;
+    border-bottom: 1px solid var(--c-border);
+    flex-shrink: 0;
+}
+#color-sheet-header .layer-name {
+    flex: 0 0 auto;
+}
+.color-sheet-gradient-bar {
+    flex: 1;
+    height: 14px;
+    min-width: 40px;
+    border-radius: 3px;
+}
+
+#color-sheet-body {
+    padding: 14px 16px 24px;
+    overflow-y: auto;
+}
+.color-sheet-scheme-grid {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 14px;
+}
+.color-sheet-scheme-grid .scheme-btn {
+    height: 22px;
+}
+
+#color-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--c-overlay);
+    z-index: 315;
+    transition: opacity 0.28s;
+    opacity: 0;
+}
+#color-sheet-backdrop:not([hidden]) {
+    opacity: 1;
+    display: block;
+}
+
+/* ── LOCATION PROMPT POPUP ───────────────────── */
+#location-prompt {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 250;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px 7px 12px;
+    background: var(--c-glass);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r);
+    box-shadow: 0 8px 28px var(--c-shadow-md);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--c-text);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.96);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+#location-prompt.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+}
+#location-prompt > svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: var(--c-accent);
+}
+#location-prompt .btn-go {
+    padding: 4px 11px;
+}
+
+/* ── HOTSPOT TAB (bottom bar) ────────────────── */
+@keyframes hotspot-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    40%      { transform: scale(1.3); opacity: 0.7; }
+    60%      { transform: scale(1.2); opacity: 0.85; }
+}
+.layer-tab[data-tab-hotspot].active {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.08);
+}
+.layer-tab[data-tab-hotspot].active svg {
+    color: #ef4444;
+    transform-origin: center bottom;
+    animation: hotspot-pulse 1.4s ease-in-out 4;
 }
 
 /* ── FOCUS VISIBLE ───────────────────────────── */

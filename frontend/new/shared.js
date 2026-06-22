@@ -121,14 +121,6 @@ function afterEngineInit(isFirstLoad) {
     }
 
     if (isFirstLoad) {
-        getIpLocation().then(function(coords) {
-            if (coords && mapEngine) {
-                setTimeout(function() {
-                    if (mapEngine) {
-                        mapEngine.flyTo(coords, CONFIG.location_zoom);
-                    }
-                }, 1000);
-            }
-        });
+        showLocationPrompt();
     }
 }

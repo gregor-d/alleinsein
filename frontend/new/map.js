@@ -116,8 +116,9 @@ class LeafletEngine {
                     updateWhenZooming: false,
                     updateWhenIdle: true,
                     keepBuffer: 2,
+                    // workaround to be able to use 512-tilesize
                     zoomOffset: -1,
-                    tileSize: 512,
+                    tileSize: CONFIG.tile_size,
                     minZoom: tj.minzoom,
                     opacity: opacity
                 }).addTo(this.map);
@@ -389,7 +390,7 @@ class MapLibreEngine {
                     self.map.addSource('data-source', {
                         type: 'raster',
                         tiles: [tileUrl],
-                        tileSize: 512,
+                        tileSize: CONFIG.tile_size,
                         minzoom: tj.minzoom,
                         maxzoom: tj.maxzoom || 12
                     });
@@ -481,7 +482,7 @@ class MapLibreEngine {
                 this.map.addSource(sourceId, {
                     type: 'raster',
                     tiles: [def.url],
-                    tileSize: 256,
+                    tileSize: CONFIG.tile_size,
                     attribution: def.options.attribution || '',
                     maxzoom: def.options.maxZoom || 15
                 });

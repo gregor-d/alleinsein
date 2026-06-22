@@ -47,71 +47,44 @@ function layerGradientStyle(layer) {
     return 'background:' + buildGradient(layer.preset, layer.reverse) + ';';
 }
 
-function buildPanelHTML() {
-    var layersHTML = layerState.map(function (layer) {
-        var grad = layerGradientStyle(layer);
-        var checked = layer.visible ? 'checked' : '';
-        var isWater = layer.type === 'solid';
-        return [
-            '<div class="layer-row" data-layer="' + layer.id + '">',
-            '  <label class="toggle">',
-            '    <input type="checkbox" data-ctrl="layer-toggle" data-layer="' + layer.id + '" ' + checked + '>',
-            '    <span class="toggle-track"></span>',
-            '  </label>',
-            '  <span class="layer-name">' + layer.id + '</span>',
-            (isWater
-                ? '  <div class="gradient-bar" data-grad="' + layer.id + '" style="' + grad + '"></div>'
-                : '  <div class="gradient-bar" data-grad="' + layer.id + '" data-ctrl="colormap-pick" data-layer="' + layer.id + '" style="' + grad + '" role="button" tabindex="0" title="Farbschema wählen"></div>'
-            ),
-            '  <button class="reverse-btn' + (isWater ? ' hidden' : '') + '" data-ctrl="layer-reverse" data-layer="' + layer.id + '" title="Umkehren">⇄</button>',
-            '</div>'
-        ].join('');
+// Row of colour-ramp preset buttons for a layer's scheme picker (panel + sheet).
+function schemeButtonsHTML(layer) {
+    return Object.keys(COLORMAP_PRESETS).map(function (name) {
+        var active = layer.preset === name ? ' active' : '';
+        return '<button class="scheme-btn' + active + '" data-ctrl="scheme-pick" data-layer="' + layer.id + '" data-preset="' + name + '" title="' + name + '" style="background:' + buildGradient(name, false) + '"></button>';
     }).join('');
+}
 
-    var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-    var hotspotChecked = hotspotMode ? 'checked' : '';
-    var dataOpacityVal = Math.round(dataLayerOpacity * 100);
+// Repaints every live gradient bar, layer tab and scheme-button highlight for a layer.
+function applyLayerColor(layer) {
+    var grad = layerGradientStyle(layer);
+    document.querySelectorAll('[data-grad="' + layer.id + '"]').forEach(function (el) {
+        el.style.cssText = grad;
+    });
+    var tabGrad = document.querySelector('[data-tab-layer="' + layer.id + '"] .layer-tab-grad');
+    if (tabGrad) tabGrad.style.cssText = grad;
+    document.querySelectorAll('.scheme-btn[data-layer="' + layer.id + '"]').forEach(function (b) {
+        b.classList.toggle('active', b.dataset.preset === layer.preset);
+    });
+}
+
+// Data-layer opacity slider row (shared by full panel + mini panel + color sheet).
+function dataOpacityRowHTML(label) {
+    var v = Math.round(dataLayerOpacity * 100);
+    return [
+        '<div class="opacity-row">',
+        '  <span class="opacity-label">' + (label || 'Opacity') + '</span>',
+        '  <input type="range" data-ctrl="data-opacity" min="0" max="100" value="' + v + '">',
+        '  <span class="opacity-val" data-disp="data-opacity">' + v + '%</span>',
+        '</div>'
+    ].join('\n');
+}
+
+// BACKEND block: map engine, basemap (+ opacity), overlays (shared by full + mini panel).
+function backendSectionHTML() {
     var basemapOpacityVal = Math.round(basemapOpacity * 100);
     var basemapEnabled = activeBasemapKey !== 'none';
-
     return [
-        '<!-- Panel header with theme switcher -->',
-        '<div class="panel-header">',
-        '  <div class="theme-seg">',
-        '    <button class="theme-seg-btn' + (currentTheme === 'light' ? ' active' : '') + '" data-ctrl="theme" data-theme="light">Light</button>',
-        '    <button class="theme-seg-btn' + (currentTheme === 'dark'  ? ' active' : '') + '" data-ctrl="theme" data-theme="dark">Dark</button>',
-        '  </div>',
-        '  <button class="icon-btn" data-ctrl="panel-close" title="Schließen">',
-        '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
-        '  </button>',
-        '</div>',
-
-        '<!-- Hotspot mode -->',
-        '<div class="section-label">HOTSPOT MODE</div>',
-        '<div class="hotspot-row">',
-        '  <label class="toggle">',
-        '    <input type="checkbox" data-ctrl="hotspot" ' + hotspotChecked + '>',
-        '    <span class="toggle-track"></span>',
-        '  </label>',
-        '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg>',
-        '  <span class="row-name">Hotspot</span>',
-        '  <span class="row-hint">Top values only</span>',
-        '</div>',
-
-        '<div class="divider"></div>',
-
-        '<!-- Data layers -->',
-        '<div class="section-label">DATA LAYERS</div>',
-        layersHTML,
-        '<div class="opacity-row">',
-        '  <span class="opacity-label">Opacity</span>',
-        '  <input type="range" data-ctrl="data-opacity" min="0" max="100" value="' + dataOpacityVal + '">',
-        '  <span class="opacity-val" data-disp="data-opacity">' + dataOpacityVal + '%</span>',
-        '</div>',
-
-        '<div class="divider"></div>',
-
-        '<!-- Backend -->',
         '<div class="section-label">BACKEND</div>',
 
         '<div class="sub-card">',
@@ -148,7 +121,91 @@ function buildPanelHTML() {
         '    <button class="seg-btn' + (activeOverlays.hiking   ? ' toggled' : '') + '" data-ctrl="overlay" data-overlay="hiking">Hiking</button>',
         '    <button class="seg-btn' + (activeOverlays.cycling  ? ' toggled' : '') + '" data-ctrl="overlay" data-overlay="cycling">Cycling</button>',
         '  </div>',
+        '</div>'
+    ].join('\n');
+}
+
+// Compact quick-settings shown from the settings FAB: data-layer opacity + BACKEND only.
+function buildMiniPanelHTML() {
+    return [
+        '<div class="panel-header">',
+        '  <span class="mini-title">Schnelleinstellungen</span>',
+        '  <button class="icon-btn" data-ctrl="mini-close" title="Schließen">',
+        '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+        '  </button>',
         '</div>',
+        '<div class="section-label">DATA LAYER</div>',
+        dataOpacityRowHTML('Opacity'),
+        '<div class="divider"></div>',
+        backendSectionHTML()
+    ].join('\n');
+}
+
+function buildPanelHTML() {
+    var layersHTML = layerState.map(function (layer) {
+        var grad = layerGradientStyle(layer);
+        var checked = layer.visible ? 'checked' : '';
+        var isWater = layer.type === 'solid';
+        var rowHTML = [
+            '<div class="layer-row" data-layer="' + layer.id + '">',
+            '  <label class="toggle">',
+            '    <input type="checkbox" data-ctrl="layer-toggle" data-layer="' + layer.id + '" ' + checked + '>',
+            '    <span class="toggle-track"></span>',
+            '  </label>',
+            '  <span class="layer-name">' + layer.id + '</span>',
+            (isWater
+                ? '  <div class="gradient-bar" data-grad="' + layer.id + '" style="' + grad + '"></div>'
+                : '  <div class="gradient-bar" data-grad="' + layer.id + '" data-ctrl="colormap-pick" data-layer="' + layer.id + '" style="' + grad + '" role="button" tabindex="0" title="Farbschema wählen"></div>'
+            ),
+            '  <button class="reverse-btn' + (isWater ? ' hidden' : '') + '" data-ctrl="layer-reverse" data-layer="' + layer.id + '" title="Umkehren">⇄</button>',
+            '</div>'
+        ].join('');
+        var dropdownHTML = isWater ? '' : [
+            '<div class="scheme-dropdown" data-dropdown="' + layer.id + '">',
+            '  <div class="scheme-grid">' + schemeButtonsHTML(layer) + '</div>',
+            '</div>'
+        ].join('');
+        return '<div class="layer-block" data-block="' + layer.id + '">' + rowHTML + dropdownHTML + '</div>';
+    }).join('');
+
+    var currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    var hotspotChecked = hotspotMode ? 'checked' : '';
+
+    return [
+        '<!-- Panel header with theme switcher -->',
+        '<div class="panel-header">',
+        '  <div class="theme-seg">',
+        '    <button class="theme-seg-btn' + (currentTheme === 'light' ? ' active' : '') + '" data-ctrl="theme" data-theme="light">Light</button>',
+        '    <button class="theme-seg-btn' + (currentTheme === 'dark'  ? ' active' : '') + '" data-ctrl="theme" data-theme="dark">Dark</button>',
+        '  </div>',
+        '  <button class="icon-btn" data-ctrl="panel-close" title="Schließen">',
+        '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+        '  </button>',
+        '</div>',
+
+        '<!-- Hotspot mode -->',
+        '<div class="section-label">HOTSPOT MODE</div>',
+        '<div class="hotspot-row">',
+        '  <label class="toggle">',
+        '    <input type="checkbox" data-ctrl="hotspot" ' + hotspotChecked + '>',
+        '    <span class="toggle-track"></span>',
+        '  </label>',
+        '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+        '  <span class="row-name">Hotspot</span>',
+        '  <span class="row-hint">Top values only</span>',
+        '</div>',
+
+        '<div class="divider"></div>',
+
+        '<!-- Data layers -->',
+        '<div class="section-label">DATA LAYERS</div>',
+        layersHTML,
+        dataOpacityRowHTML('Opacity'),
+
+        '<div class="divider"></div>',
+
+        '<!-- Backend -->',
+        backendSectionHTML(),
 
         '<div class="divider"></div>',
 
@@ -268,8 +325,24 @@ function onControlClick(e) {
         closePanel();
     }
 
+    if (ctrl === 'mini-close') {
+        hideMiniPanel();
+    }
+
     if (ctrl === 'colormap-pick') {
-        openColormapPicker(btn, btn.dataset.layer);
+        toggleSchemeDropdown(btn.dataset.layer, btn);
+        return;
+    }
+
+    if (ctrl === 'scheme-pick') {
+        var sid = btn.dataset.layer;
+        var slayer = layerState.find(function (l) { return l.id === sid; });
+        if (!slayer) return;
+        slayer.preset = btn.dataset.preset;
+        applyLayerColor(slayer);
+        refreshDataLayer();
+        var dd = btn.closest('.scheme-dropdown');
+        if (dd) dd.classList.remove('open');
         return;
     }
 
@@ -278,10 +351,7 @@ function onControlClick(e) {
         var layer = layerState.find(function (l) { return l.id === id; });
         if (!layer) return;
         layer.reverse = !layer.reverse;
-        var grad = layerGradientStyle(layer);
-        document.querySelectorAll('[data-grad="' + id + '"]').forEach(function (el) {
-            el.style.cssText = grad;
-        });
+        applyLayerColor(layer);
         refreshDataLayer();
     }
 
@@ -380,7 +450,7 @@ var STRIP_LAYERS = ['Nature', 'Farm', 'Parks', 'Urban'];
 
 var EYE_ON  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 var EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-var FIRE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg>';
+var FIRE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
 
 function buildLayerStrip() {
     var strip = document.getElementById('layer-strip');
@@ -420,7 +490,6 @@ function buildLayerStrip() {
         if (tab.hasAttribute('data-tab-hotspot')) {
             hotspotMode = !hotspotMode;
             tab.classList.toggle('active', hotspotMode);
-            tab.querySelector('svg').outerHTML; // no change needed for fire icon
             document.querySelectorAll('[data-ctrl="hotspot"]').forEach(function (el) {
                 el.checked = hotspotMode;
             });
@@ -429,6 +498,13 @@ function buildLayerStrip() {
         }
 
         var id = tab.dataset.tabLayer;
+
+        // Tap on the colour ramp opens the colour-ramp sheet instead of toggling
+        if (e.target.closest('.layer-tab-grad')) {
+            openColorSheet(id);
+            return;
+        }
+
         var layer = layerState.find(function (l) { return l.id === id; });
         if (!layer) return;
         layer.visible = !layer.visible;
@@ -460,101 +536,103 @@ function updateHotspotTab(active) {
     if (tab) tab.classList.toggle('active', active);
 }
 
-// ─── COLORMAP PICKER ──────────────────────────
+// ─── COLORMAP PICKER (side panel — inline dropdown) ──
 
-var _cpLayerId = null;
+// Toggles the inline scheme dropdown below a layer row. Only one is open at a time.
+function toggleSchemeDropdown(layerId, gradEl) {
+    var block = gradEl.closest('.layer-block');
+    if (!block) return;
+    var dd = block.querySelector('.scheme-dropdown[data-dropdown="' + layerId + '"]');
+    if (!dd) return;
+    var willOpen = !dd.classList.contains('open');
+    document.querySelectorAll('.scheme-dropdown.open').forEach(function (d) {
+        d.classList.remove('open');
+    });
+    if (willOpen) dd.classList.add('open');
+}
 
-function openColormapPicker(triggerEl, layerId) {
+// ─── COLOR-RAMP SHEET (mobile bottom bar) ─────
+
+var _csLayerId = null;
+
+function openColorSheet(layerId) {
     var layer = layerState.find(function (l) { return l.id === layerId; });
     if (!layer || layer.type === 'solid') return;
+    _csLayerId = layerId;
 
-    _cpLayerId = layerId;
+    var header = document.getElementById('color-sheet-header');
+    var body = document.getElementById('color-sheet-body');
+    if (!header || !body) return;
 
-    var picker = document.getElementById('colormap-picker');
-    if (!picker) return;
+    var dataOpacityVal = Math.round(dataLayerOpacity * 100);
 
-    // Build swatch rows for every preset
-    picker.innerHTML = Object.keys(COLORMAP_PRESETS).map(function (name) {
-        var grad = buildGradient(name, layer.reverse);
-        var isActive = layer.preset === name;
-        return [
-            '<div class="cp-row' + (isActive ? ' active' : '') + '" data-preset="' + name + '">',
-            '  <div class="cp-swatch-bar" style="background:' + grad + '"></div>',
-            '  <span class="cp-name">' + name + '</span>',
-            '  <div class="cp-dot"></div>',
-            '</div>'
-        ].join('');
-    }).join('');
+    header.innerHTML = [
+        '<label class="toggle">',
+        '  <input type="checkbox" data-ctrl="layer-toggle" data-layer="' + layer.id + '" ' + (layer.visible ? 'checked' : '') + '>',
+        '  <span class="toggle-track"></span>',
+        '</label>',
+        '<span class="layer-name">' + layer.id + '</span>',
+        '<div class="color-sheet-gradient-bar" data-grad="' + layer.id + '" style="' + layerGradientStyle(layer) + '"></div>',
+        '<button class="reverse-btn" data-ctrl="layer-reverse" data-layer="' + layer.id + '" title="Umkehren">⇄</button>',
+        '<button class="icon-btn" id="cs-close" aria-label="Schließen">',
+        '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+        '</button>'
+    ].join('');
 
-    // Position: below the trigger element, clamped to viewport
-    var rect = triggerEl.getBoundingClientRect();
-    var pickerH = Object.keys(COLORMAP_PRESETS).length * 30 + 12;
-    var top = (rect.bottom + 6 + pickerH <= window.innerHeight)
-        ? rect.bottom + 6
-        : rect.top - pickerH - 6;
-    var left = Math.min(rect.left, window.innerWidth - 218);
+    body.innerHTML = [
+        '<div class="color-sheet-scheme-grid">' + schemeButtonsHTML(layer) + '</div>',
+        '<div class="opacity-row">',
+        '  <span class="opacity-label">Opacity</span>',
+        '  <input type="range" data-ctrl="data-opacity" min="0" max="100" value="' + dataOpacityVal + '">',
+        '  <span class="opacity-val" data-disp="data-opacity">' + dataOpacityVal + '%</span>',
+        '</div>'
+    ].join('');
 
-    picker.style.top  = Math.max(8, top)  + 'px';
-    picker.style.left = Math.max(8, left) + 'px';
-    picker.removeAttribute('hidden');
+    document.getElementById('cs-close').onclick = closeColorSheet;
 
-    // Close on next outside click
-    requestAnimationFrame(function () {
-        document.addEventListener('click', _cpOutsideHandler);
-    });
+    var sheet = document.getElementById('color-sheet');
+    var backdrop = document.getElementById('color-sheet-backdrop');
+    backdrop.removeAttribute('hidden');
+    sheet.classList.add('open');
+    backdrop.addEventListener('click', closeColorSheet, { once: true });
 }
 
-function _cpOutsideHandler(e) {
-    var picker = document.getElementById('colormap-picker');
-    if (picker && picker.contains(e.target)) return;
-    closeColormapPicker();
+function closeColorSheet() {
+    var sheet = document.getElementById('color-sheet');
+    var backdrop = document.getElementById('color-sheet-backdrop');
+    if (sheet) sheet.classList.remove('open');
+    if (backdrop) backdrop.setAttribute('hidden', '');
+    _csLayerId = null;
 }
-
-function closeColormapPicker() {
-    var picker = document.getElementById('colormap-picker');
-    if (picker) picker.setAttribute('hidden', '');
-    document.removeEventListener('click', _cpOutsideHandler);
-    _cpLayerId = null;
-}
-
-// Picker swatch clicks
-document.addEventListener('DOMContentLoaded', function () {
-    var picker = document.getElementById('colormap-picker');
-    if (!picker) return;
-    picker.addEventListener('click', function (e) {
-        var row = e.target.closest('.cp-row');
-        if (!row || !_cpLayerId) return;
-
-        var presetName = row.dataset.preset;
-        var layer = layerState.find(function (l) { return l.id === _cpLayerId; });
-        if (!layer) return;
-
-        layer.preset = presetName;
-
-        // Update all gradient bars for this layer in panel + drawer
-        var grad = layerGradientStyle(layer);
-        document.querySelectorAll('[data-grad="' + layer.id + '"]').forEach(function (el) {
-            el.style.cssText = grad;
-        });
-
-        // Update the layer tab strip gradient
-        var tabGrad = document.querySelector('[data-tab-layer="' + layer.id + '"] .layer-tab-grad');
-        if (tabGrad) tabGrad.style.cssText = grad;
-
-        refreshDataLayer();
-        closeColormapPicker();
-    });
-});
 
 // ─── TOP BAR ──────────────────────────────────
 
 function wireTopBar() {
     var btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-        var current = document.documentElement.getAttribute('data-theme');
-        setTheme(current === 'dark' ? 'light' : 'dark');
-    });
+    if (btn) {
+        btn.addEventListener('click', function () {
+            var current = document.documentElement.getAttribute('data-theme');
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        });
+    }
+
+    // Cog button opens the full settings panel (desktop) / drawer (mobile).
+    var cog = document.getElementById('settings-cog');
+    if (cog) {
+        cog.addEventListener('click', function () {
+            hideMiniPanel();
+            if (window.innerWidth >= 768) {
+                var panel = document.getElementById('settings-panel');
+                if (panel && panel.classList.contains('visible')) {
+                    closePanel();
+                } else {
+                    openPanel();
+                }
+            } else {
+                openDrawer();
+            }
+        });
+    }
 }
 
 // ─── FABs ─────────────────────────────────────
@@ -575,18 +653,27 @@ function wireFabs() {
     var fabSettings = document.getElementById('fab-settings');
     if (fabSettings) {
         fabSettings.addEventListener('click', function () {
-            if (window.innerWidth >= 768) {
-                var panel = document.getElementById('settings-panel');
-                if (panel && panel.classList.contains('visible')) {
-                    closePanel();
-                } else {
-                    openPanel();
-                }
-            } else {
-                openDrawer();
-            }
+            toggleMiniPanel();
         });
     }
+}
+
+// ─── MINI QUICK-SETTINGS PANEL ────────────────
+
+function toggleMiniPanel() {
+    var mp = document.getElementById('mini-panel');
+    if (!mp) return;
+    if (mp.hidden) {
+        mp.innerHTML = buildMiniPanelHTML();
+        mp.removeAttribute('hidden');
+    } else {
+        mp.setAttribute('hidden', '');
+    }
+}
+
+function hideMiniPanel() {
+    var mp = document.getElementById('mini-panel');
+    if (mp) mp.setAttribute('hidden', '');
 }
 
 // ─── MOBILE DRAWER ────────────────────────────

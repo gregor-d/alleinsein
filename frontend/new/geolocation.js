@@ -1,22 +1,35 @@
 // ─────────────────────────────────────────────
-//  GEOLOCATION.JS — IP & Browser Geolocation helpers
+//  GEOLOCATION.JS — Browser Geolocation helpers
 // ─────────────────────────────────────────────
 
 /**
- * Fetches the user's approximate location via the ipapi.co IP geolocation service.
- * Returns [longitude, latitude] on success, or null if the request fails.
+ * Shows a one-time-per-session prompt asking the user if they want to fly
+ * to their current location. Uses the browser Geolocation API on confirmation.
  */
-async function getIpLocation() {
-    try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        if (data && data.latitude && data.longitude) {
-            return [data.longitude, data.latitude];
-        }
-    } catch (e) {
-        console.info('IP Geolocation failed:', e);
+function showLocationPrompt() {
+    if (!navigator.geolocation) return;
+    if (sessionStorage.getItem('loc-prompt-dismissed')) return;
+
+    const prompt = document.getElementById('location-prompt');
+    if (!prompt) return;
+
+    function dismiss() {
+        prompt.classList.remove('open');
+        sessionStorage.setItem('loc-prompt-dismissed', '1');
     }
-    return null;
+
+    document.getElementById('location-prompt-yes').onclick = function() {
+        dismiss();
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            if (mapEngine) {
+                mapEngine.flyTo([pos.coords.longitude, pos.coords.latitude], CONFIG.location_zoom);
+            }
+        });
+    };
+
+    document.getElementById('location-prompt-no').onclick = dismiss;
+
+    prompt.classList.add('open');
 }
 
 /**
