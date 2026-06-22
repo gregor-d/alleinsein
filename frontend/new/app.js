@@ -190,22 +190,26 @@ function buildPanelHTML() {
 
         '<!-- Hotspot mode -->',
         '<div class="section-label">HOTSPOT MODE</div>',
-        '<div class="hotspot-row">',
-        '  <label class="toggle">',
-        '    <input type="checkbox" data-ctrl="hotspot" ' + hotspotChecked + '>',
-        '    <span class="toggle-track"></span>',
-        '  </label>',
-        '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
-        '  <span class="row-name">Hotspot</span>',
-        '  <span class="row-hint">Top values only</span>',
+        '<div class="sub-card">',
+        '  <div class="hotspot-row">',
+        '    <label class="toggle">',
+        '      <input type="checkbox" data-ctrl="hotspot" ' + hotspotChecked + '>',
+        '      <span class="toggle-track"></span>',
+        '    </label>',
+        '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+        '    <span class="row-name">Hotspot</span>',
+        '    <span class="row-hint">Top values only</span>',
+        '  </div>',
         '</div>',
 
         '<div class="divider"></div>',
 
         '<!-- Data layers -->',
         '<div class="section-label">DATA LAYERS</div>',
+        '<div class="sub-card">',
         layersHTML,
         dataOpacityRowHTML('Opacity'),
+        '</div>',
 
         '<div class="divider"></div>',
 
@@ -216,6 +220,7 @@ function buildPanelHTML() {
 
         '<!-- Location -->',
         '<div class="section-label">LOCATION</div>',
+        '<div class="sub-card">',
         '<div class="search-row">',
         '  <input type="text" data-ctrl="location-input" placeholder="Search location…" autocomplete="off">',
         '  <button class="btn-go" data-ctrl="location-go">Go</button>',
@@ -227,7 +232,8 @@ function buildPanelHTML() {
         '<button class="btn-full' + (measureActive ? ' active' : '') + '" data-ctrl="measure">',
         '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/></svg>',
         '  Measure Distance',
-        '</button>'
+        '</button>',
+        '</div>'
     ].join('\n');
 }
 
