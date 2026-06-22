@@ -110,6 +110,7 @@ class MapLibreEngine {
                 center: center,
                 zoom: MapLibreEngine.toCameraZoom(zoom),
                 minZoom: MapLibreEngine.toCameraZoom(CONFIG.minimal_zoom),
+                maxZoom: MapLibreEngine.toCameraZoom(CONFIG.maximal_zoom),
                 attributionControl: false
             });
             
@@ -200,6 +201,9 @@ class MapLibreEngine {
                         type: 'raster',
                         tiles: [tileUrl],
                         tileSize: CONFIG.tile_size,
+                        // Clip tile requests to the raster's actual extent so MapLibre
+                        // doesn't fetch (and 404) tiles outside the data footprint.
+                        bounds: tj.bounds || undefined,
                         minzoom: tj.minzoom,
                         maxzoom: tj.maxzoom || 12
                     });

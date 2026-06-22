@@ -11,6 +11,7 @@ const CONFIG = {
     mask_color: '#111111',
     measure_color: '#e6007e',
     minimal_zoom: 6,
+    maximal_zoom: 18,
     location_zoom: 12
 };
 
