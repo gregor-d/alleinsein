@@ -250,16 +250,13 @@ function buildAllPanels() {
         }
     }
 
-    var drawerScroll = document.querySelector('#mobile-drawer .drawer-scroll');
-    if (drawerScroll) drawerScroll.innerHTML = html;
-
     wireAllPanelEvents();
 }
 
 // ─── PANEL EVENTS (delegated) ──────────────────
 
 function wireAllPanelEvents() {
-    // Use document-level delegation so both panel and drawer work
+    // Use document-level delegation so the settings panel works on any layout
     document.addEventListener('change', onControlChange);
     document.addEventListener('input',  onControlInput);
     document.addEventListener('click',  onControlClick);
@@ -627,20 +624,16 @@ function wireTopBar() {
         });
     }
 
-    // Cog button opens the full settings panel (desktop) / drawer (mobile).
+    // Cog button toggles the settings panel (sidebar on desktop, bottom sheet on mobile).
     var cog = document.getElementById('settings-cog');
     if (cog) {
         cog.addEventListener('click', function () {
             hideMiniPanel();
-            if (window.innerWidth >= 768) {
-                var panel = document.getElementById('settings-panel');
-                if (panel && panel.classList.contains('visible')) {
-                    closePanel();
-                } else {
-                    openPanel();
-                }
+            var panel = document.getElementById('settings-panel');
+            if (panel && panel.classList.contains('visible')) {
+                closePanel();
             } else {
-                openDrawer();
+                openPanel();
             }
         });
     }
@@ -735,38 +728,6 @@ function hideMiniPanel() {
     if (mp) mp.setAttribute('hidden', '');
 }
 
-// ─── MOBILE DRAWER ────────────────────────────
-
-function openDrawer() {
-    var drawer = document.getElementById('mobile-drawer');
-    var backdrop = document.getElementById('drawer-backdrop');
-    if (!drawer) return;
-    drawer.removeAttribute('hidden');
-    backdrop.removeAttribute('hidden');
-    requestAnimationFrame(function () {
-        drawer.classList.add('open');
-    });
-    backdrop.addEventListener('click', closeDrawer, { once: true });
-}
-
-function closeDrawer() {
-    var drawer = document.getElementById('mobile-drawer');
-    var backdrop = document.getElementById('drawer-backdrop');
-    if (!drawer) return;
-    drawer.classList.remove('open');
-    setTimeout(function () {
-        drawer.setAttribute('hidden', '');
-        backdrop.setAttribute('hidden', '');
-    }, 300);
-}
-
-// Close drawer on close button (delegated, re-uses onControlClick → panel-close)
-document.addEventListener('click', function (e) {
-    if (e.target.closest('[data-ctrl="panel-close"]') && window.innerWidth < 768) {
-        closeDrawer();
-    }
-});
-
 // ─── SEARCH ───────────────────────────────────
 
 function wireSearch() {
@@ -851,7 +812,6 @@ window.addEventListener('resize', function () {
     var panel = document.getElementById('settings-panel');
     if (!panel) return;
     if (window.innerWidth >= 768) {
-        closeDrawer();
         if (!panel.classList.contains('visible')) {
             openPanel();
         }
