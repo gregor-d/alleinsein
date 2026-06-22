@@ -15,6 +15,56 @@ class MapLibreEngine {
     }
 
     /**
+     * Builds a MapLibre GL raster source spec from a BASEMAPS definition.
+     * Handles plain XYZ tile templates as well as WMS services (type: 'wms'),
+     * for which a GetMap tile URL is assembled from the entry's options.
+     */
+    static rasterSource(def) {
+        const opts     = def.options || {};
+        const tileSize = opts.tileSize || 256;
+
+        let tiles;
+        if (def.type === 'wms') {
+            const params = {
+                service:     'WMS',
+                version:     opts.version || '1.1.1',
+                request:     'GetMap',
+                layers:      opts.layers || '',
+                styles:      '',
+                format:      opts.format || 'image/png',
+                transparent: opts.transparent ? 'true' : 'false',
+                srs:         opts.srs || 'EPSG:3857',
+                width:       tileSize,
+                height:      tileSize
+            };
+            const query = Object.keys(params)
+                .map(function(k) { return k + '=' + encodeURIComponent(params[k]); })
+                .join('&');
+            // bbox placeholder must stay un-encoded so MapLibre can substitute it.
+            tiles = [def.url + '?' + query + '&bbox={bbox-epsg-3857}'];
+        } else {
+            tiles = [def.url];
+        }
+
+        return {
+            type: 'raster',
+            tiles: tiles,
+            tileSize: tileSize,
+            attribution: opts.attribution || '',
+            maxzoom: opts.maxZoom || 19
+        };
+    }
+
+    // The app speaks the classic OSM/Leaflet "slippy" zoom convention (world = one
+    // 256px tile at zoom 0), used by CONFIG.minimal_zoom, CONFIG.location_zoom,
+    // DEFAULT_ZOOM and any stored map position. MapLibre's camera zoom is defined on a
+    // 512px world tile, so it sits exactly one level lower for the same on-screen scale.
+    // These two helpers translate between the conventions so the rest of the app — and
+    // the config — can keep thinking purely in slippy zoom levels.
+    static toCameraZoom(slippyZoom) { return slippyZoom - 1; }
+    static toSlippyZoom(cameraZoom) { return cameraZoom + 1; }
+
+    /**
      * Initialises MapLibre GL with pre-defined basemap sources and layers (all hidden),
      * adds navigation, attribution and scale controls, and loads the Germany mask GeoJSON.
      * Returns a Promise that resolves once the map style has loaded.
@@ -29,29 +79,9 @@ class MapLibreEngine {
                 style: {
                     version: 8,
                     sources: {
-                        'basemap-osm': {
-                            type: 'raster',
-                            tiles: [BASEMAPS.osm.url],
-                            tileSize: 256,
-                            attribution: BASEMAPS.osm.options.attribution,
-                            maxzoom: BASEMAPS.osm.options.maxZoom
-                        },
-                        'basemap-satellite': {
-                            type: 'raster',
-                            tiles: [BASEMAPS.satellite.url],
-                            tileSize: 256,
-                            attribution: BASEMAPS.satellite.options.attribution,
-                            maxzoom: BASEMAPS.satellite.options.maxZoom
-                        },
-                        'basemap-schummerung': {
-                            type: 'raster',
-                            tiles: [
-                                'https://sgx.geodatenzentrum.de/wms_basemapde_schummerung?service=WMS&version=1.1.1&request=GetMap&layers=de_basemapde_web_raster_combshade&styles=&format=image/png&transparent=true&height=256&width=256&srs=EPSG:3857&bbox={bbox-epsg-3857}'
-                            ],
-                            tileSize: 256,
-                            attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
-                            maxzoom: 15
-                        }
+                        'basemap-osm':         MapLibreEngine.rasterSource(BASEMAPS.osm),
+                        'basemap-satellite':   MapLibreEngine.rasterSource(BASEMAPS.satellite),
+                        'basemap-schummerung': MapLibreEngine.rasterSource(BASEMAPS.schummerung)
                     },
                     layers: [
                         {
@@ -78,8 +108,8 @@ class MapLibreEngine {
                     ]
                 },
                 center: center,
-                zoom: zoom - 1,
-                minZoom: CONFIG.minimal_zoom - 1,
+                zoom: MapLibreEngine.toCameraZoom(zoom),
+                minZoom: MapLibreEngine.toCameraZoom(CONFIG.minimal_zoom),
                 attributionControl: false
             });
             
@@ -258,13 +288,7 @@ class MapLibreEngine {
             const def = BASEMAPS[key];
             if (!def) return;
             if (!this.map.getSource(sourceId)) {
-                this.map.addSource(sourceId, {
-                    type: 'raster',
-                    tiles: [def.url],
-                    tileSize: CONFIG.tile_size,
-                    attribution: def.options.attribution || '',
-                    maxzoom: def.options.maxZoom || 15
-                });
+                this.map.addSource(sourceId, MapLibreEngine.rasterSource(def));
             }
             if (!this.map.getLayer(layerId)) {
                 this.map.addLayer({
@@ -285,7 +309,7 @@ class MapLibreEngine {
      */
     flyTo(lngLat, zoom) {
         if (this.map) {
-            this.map.flyTo({ center: lngLat, zoom: zoom - 1, duration: 1200, essential: true });
+            this.map.flyTo({ center: lngLat, zoom: MapLibreEngine.toCameraZoom(zoom), duration: 1200, essential: true });
         }
     }
 
@@ -317,11 +341,12 @@ class MapLibreEngine {
     }
 
     /**
-     * Returns the current zoom level, adjusted for the 512-tile-size zoom offset.
+     * Returns the current zoom level in the app's slippy-zoom convention
+     * (see toCameraZoom / toSlippyZoom).
      */
     getZoom() {
         if (!this.map) return DEFAULT_ZOOM;
-        return this.map.getZoom() + 1;
+        return MapLibreEngine.toSlippyZoom(this.map.getZoom());
     }
 
     // ─── MEASURE DISTANCE ───

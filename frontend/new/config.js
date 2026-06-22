@@ -40,12 +40,19 @@ const layerState = [
 
 // ─── BASEMAP DEFINITIONS ───
 const BASEMAPS = {
+    // Tile sizes below are fixed by each provider:
+    //   • OSM standard tiles ...................... 256 px
+    //   • Esri World Imagery (ArcGIS XYZ) ......... 256 px
+    //   • Waymarked Trails (hiking/cycling) ....... 256 px
+    //   • basemap.de Schummerung WMS .............. any size via width/height (256 px requested)
+    // The titiler data raster uses CONFIG.tile_size (512) instead — that is separate.
     osm: {
         label: 'OpenStreetMap',
         url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         options: {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            maxZoom: 15
+            tileSize: 256,
+            maxZoom: 19
         }
     },
     satellite: {
@@ -53,7 +60,8 @@ const BASEMAPS = {
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
         options: {
             attribution: '&copy; <a href="https://www.esri.com/">Esri</a> · Sources: Esri, Maxar, Earthstar Geographics',
-            maxZoom: 15
+            tileSize: 256,
+            maxZoom: 19
         }
     },
     schummerung: {
@@ -64,8 +72,11 @@ const BASEMAPS = {
             layers: 'de_basemapde_web_raster_combshade',
             format: 'image/png',
             transparent: true,
+            version: '1.1.1',
+            srs: 'EPSG:3857',
             attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
-            maxZoom: 15
+            tileSize: 256,
+            maxZoom: 18
         }
     },
     hiking: {
@@ -74,7 +85,8 @@ const BASEMAPS = {
         url: 'https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png',
         options: {
             attribution: '&copy; <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>',
-            maxZoom: 15
+            tileSize: 256,
+            maxZoom: 18
         }
     },
     cycling: {
@@ -83,7 +95,8 @@ const BASEMAPS = {
         url: 'https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png',
         options: {
             attribution: '&copy; <a href="https://cycling.waymarkedtrails.org">Waymarked Trails</a>',
-            maxZoom: 15
+            tileSize: 256,
+            maxZoom: 18
         }
     }
 };
