@@ -82,14 +82,14 @@ class MapLibreEngine {
                 minZoom: CONFIG.minimal_zoom - 1,
                 attributionControl: false
             });
-
+            
+            self.map.addControl(
+            new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }),
+                'bottom-left'
+            );
             self.map.addControl(
                 new maplibregl.NavigationControl({ showCompass: true, showZoom: false }),
                 self._navPos
-            );
-            self.map.addControl(
-                new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }),
-                'bottom-left'
             );
             self.map.addControl(
                 new maplibregl.AttributionControl({ compact: false }),
