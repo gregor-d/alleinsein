@@ -51,20 +51,19 @@
 
 /* ── TOKENS ─────────────────────────────────── */
 :root {
-    --c-bg:           rgb(250, 0, 0);
+    --c-bg:           rgb(255, 255, 255);
     /* backgroung top bar bottom bar, input panel */
-    --c-surface:      rgb(240, 240, 240);
+    --c-surface:      rgb(245, 245, 245);
     /* surface of sub panels with interactive elements */
-    --c-button:    rgb(223, 223, 223);
-    /* active survace */
-    --c-border:       rgb(218, 214, 204);
-    --c-text:         rgb(37, 40, 32);
-    --c-text-muted:   rgb(124, 123, 114);
-    --c-accent:       rgb(79, 70, 229);
-    --c-accent-hover: rgb(102, 94, 252);;
+    --c-button:    rgb(215, 215, 215);
+    /* inactive bg surface of buttons */
+    --c-border:       rgb(0, 0, 0);
+    --c-text:         rgb(0, 0, 0);
+    --c-text-muted:   rgb(80, 80, 80);
+    --c-text-hi: white;
+    --c-accent:       rgb(85, 76, 255);
+    --c-accent-hover: rgba(85, 76, 255, 0.5);
     --c-shadow:       rgb(0, 0, 0);
-    --c-shadow-md:    rgb(0, 0, 0);
-    --shadow-hard-c:  rgb(37, 40, 32);
     --c-glass:        rgb(145, 145, 145);
     /* background settings panel, location prompt, bottom bar, top bar*/
     --c-overlay:      rgb(20, 25, 18);
@@ -77,7 +76,7 @@
     --fab-sz:         44px;
     --gap:            8px;
     --r:              7px;
-    --r-sm:           4px;
+    --r-sm:           7px;
     --t:              0.18s ease;
 
     --font-ui:        'Inter', system-ui, sans-serif;
@@ -95,8 +94,7 @@
     --c-accent:       #665efc;;
     --c-accent-hover: #4f46e5;
     --c-shadow:       rgb(0, 0, 0);
-    --c-shadow-md:    rgb(0, 0, 0);
-    --shadow-hard-c:  rgb(0, 0, 0);
+    --c-shadow:  rgb(0, 0, 0);
     --c-glass:        rgb(35, 41, 32);
     --c-overlay:      rgb(0, 0, 0);
 }
@@ -369,7 +367,7 @@ html, body {
     font-family: sans-serif;
 }
 .reverse-btn:hover {
-    background: var(--c-border);
+    border: 1px solid var(--c-accent);
     color: var(--c-text);
 }
 .reverse-btn.hidden {
@@ -439,7 +437,7 @@ html, body {
     border: 1px solid var(--c-border);
     border-radius: var(--r);
     padding: 8px 10px;
-    margin-bottom: 6px;
+    margin-bottom: 6px; box-shadow: 3px 3px 0 var(--c-shadow);
 }
 
 .sub-label {
@@ -472,7 +470,6 @@ html, body {
     flex: 1;
     min-width: 0;
     padding: 5px 4px;
-    border: 1px solid var(--c-border);
     border-radius: var(--r-sm);
     background: var(--c-button);
     color: var(--c-text-muted);
@@ -482,18 +479,21 @@ html, body {
     white-space: nowrap;
     transition: background var(--t), color var(--t), border-color var(--t);
     text-align: center;
+    box-shadow: 1px 1px 0 var(--c-border);
 }
-.seg-btn:hover {
+.seg-btn:hover, .reverse-btn:hover {
     color: var(--c-text);
-    border-color: var(--c-text-muted);
+    font-weight: 500;    
+    background: var(--c-accent-hover);
 }
 
-.seg-btn.active, .seg-btn.toggled {
-    border-color: var(--c-accent);
-    color: var(--c-accent);
-    background: var(--c-accent-hover);
+.seg-btn.active, .seg-btn.toggled {    
+    color: var(--c-text-hi);
+    background: var(--c-accent);
     font-weight: 500;
 }
+
+
 
 /* ── LOCATION SECTION ────────────────────────── */
 .search-row {
@@ -565,7 +565,7 @@ html, body {
 .btn-full.active {
     background: var(--c-accent);
     border-color: var(--c-accent);
-    color: #fff;
+    color: var(--c-text-hi);
 }
 .btn-full svg {
     width: 14px;
@@ -626,7 +626,7 @@ html, body {
     background: var(--c-button);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 3px 3px 0 var(--shadow-hard-c);
+    box-shadow: 3px 3px 0 var(--c-shadow);
     overflow: hidden;
 }
 .ctrl-btn {
@@ -692,13 +692,13 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 3px 3px 0 var(--shadow-hard-c);
+    box-shadow: 3px 3px 0 var(--c-shadow);
     transition: background var(--t), box-shadow var(--t), transform var(--t), border-color var(--t);
     padding: 0;
 }
 .fab:hover {
     background: var(--c-surface);
-    box-shadow: 3px 3px 0 var(--shadow-hard-c);
+    box-shadow: 3px 3px 0 var(--c-shadow);
     transform: translate(-1px, -1px);
 }
 
@@ -728,7 +728,7 @@ html, body {
     left: 0;
     right: 0;
     height: var(--bottombar-h);
-    background: var(--c-bg);
+    background: var(--c-surface);
     backdrop-filter: blur(14px) saturate(1.4);
     -webkit-backdrop-filter: blur(14px) saturate(1.4);
     border-top: 1px solid var(--c-border);
@@ -752,20 +752,25 @@ html, body {
     /* border: none; */
     /* border-right: 1px solid var(--c-border); */
     border: 1px solid var(--c-border);
-    box-shadow: 3px 3px 0 var(--shadow-hard-c);
     border-radius: var(--r-sm);
-    background: var(--c-bg);
+    background: var(--c-surface);
+    /* background: var(--c-button); */
     cursor: pointer;
-    color: var(--c-text-muted);
-    padding: 8px 4px 10px;
-    transition: color var(--t), background var(--t);
+    color: var(--c-text-muted);    
+    font-weight: 500;
+    /* padding: 8px 4px 10px; */
+    box-shadow: 3px 3px 0 var(--c-shadow);
+    transition: background var(--t), color var(--t), border-color var(--t),
+                box-shadow var(--t), transform var(--t);
 }
 .layer-tab:last-child {
     border-right: none;
 }
 .layer-tab.active {
-    color: var(--c-text);    
-    background: var(--c-accent);
+    color: var(--c-text);
+    font-weight: 700;
+    background: var(--c-button);
+    /* background: var(--c-accent-hover); */
 }
 
 .layer-tab svg {    
@@ -782,8 +787,7 @@ html, body {
 
 .layer-tab-name {
     font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    /* letter-spacing: 0.03em; */
 }
 .layer-tab-grad {
     width: 42px;
@@ -800,6 +804,24 @@ html, body {
     transform: scaleY(1.15);
 }
 
+/* ── HOTSPOT TAB (bottom bar) ────────────────── */
+@keyframes hotspot-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    40%      { transform: scale(1.3); opacity: 0.7; }
+    60%      { transform: scale(1.2); opacity: 0.85; }
+}
+.layer-tab[data-tab-hotspot].active {
+    color: var(--c-text-muted);
+    background: transparent;
+}
+.layer-tab[data-tab-hotspot].active svg {
+    color: #ef4444;
+    transform-origin: center bottom;
+    animation: hotspot-pulse 1.4s ease-in-out 4;
+}
+
+
+
 /* ── MOBILE DRAWER ───────────────────────────── */
 #mobile-drawer {
     position: fixed;
@@ -815,7 +837,6 @@ html, body {
     transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 -4px 24px var(--c-shadow-md);
 }
 #mobile-drawer:not([hidden]) {
     display: flex;
@@ -863,7 +884,7 @@ html, body {
     background: var(--c-surface);
     border: 1px solid var(--c-border);
     border-radius: var(--r);
-    box-shadow: 0 4px 20px var(--c-shadow-md);
+    box-shadow: 0 4px 20px var(--c-shadow);
     min-width: 240px;
 }
 #search-popover:not([hidden]) {
@@ -913,7 +934,7 @@ html, body {
     background: var(--c-surface);
     border: 1px solid var(--c-border);
     border-radius: var(--r);
-    box-shadow: 0 6px 28px var(--c-shadow-md);
+    box-shadow: 0 6px 28px var(--c-shadow);
     padding: 8px 12px 14px;
 }
 #mini-panel:not([hidden]) {
@@ -953,7 +974,7 @@ html, body {
         transform: translateX(-50%);
         border: 1px solid var(--c-border);
         border-radius: var(--r);
-        box-shadow: 3px 3px 0 var(--shadow-hard-c);
+        box-shadow: 3px 3px 0 var(--c-shadow);
         overflow: hidden;
     }
     #mobile-drawer     { display: none !important; }
@@ -1032,30 +1053,7 @@ html, body {
     border-radius: 2px;
 }
 
-/* ── BUTTON DEPTH / HARD SHADOWS ─────────────── */
-/* Neo-brutalist offset shadow + press effect (ported from static) */
-.seg-btn,
-.btn-go,
-.btn-full,
-.reverse-btn,
-.scheme-btn {
-    box-shadow: 3px 3px 0 var(--shadow-hard-c);
-    transition: background var(--t), color var(--t), border-color var(--t),
-                box-shadow var(--t), transform var(--t);
-}
-.seg-btn:hover,
-.btn-go:hover,
-.btn-full:hover,
-.reverse-btn:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 3px 3px 0 var(--shadow-hard-c);
-}
 
-.seg-btn.active,
-.seg-btn.toggled {
-    transform: translate(1px, 1px);
-    box-shadow: 1px 1px 0 var(--shadow-hard-c);
-}
 
 /* ── INLINE SCHEME DROPDOWN (side panel + drawer) ── */
 /* Make gradient bars clickable on category layers */
@@ -1115,7 +1113,6 @@ html, body {
     background: var(--c-surface);
     border-radius: 14px 14px 0 0;
     border-top: 1px solid var(--c-border);
-    box-shadow: 0 -4px 24px var(--c-shadow-md);
     transform: translateY(100%);
     transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
     max-height: 70vh;
@@ -1143,7 +1140,7 @@ html, body {
     border-bottom: 1px solid var(--c-border);
     flex-shrink: 0;
 }
-#color-sheet-header .layer-name {
+#color-sheet-header {
     flex: 0 0 auto;
 }
 .color-sheet-gradient-bar {
@@ -1194,7 +1191,7 @@ html, body {
     -webkit-backdrop-filter: blur(14px) saturate(1.4);
     border: 1px solid var(--c-border);
     border-radius: var(--r);
-    box-shadow: 3px 3px 0 var(--shadow-hard-c);
+    box-shadow: 3px 3px 0 var(--c-shadow);
     font-size: 13px;
     font-weight: 500;
     color: var(--c-text);
@@ -1219,21 +1216,6 @@ html, body {
     padding: 4px 11px;
 }
 
-/* ── HOTSPOT TAB (bottom bar) ────────────────── */
-@keyframes hotspot-pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    40%      { transform: scale(1.3); opacity: 0.7; }
-    60%      { transform: scale(1.2); opacity: 0.85; }
-}
-.layer-tab[data-tab-hotspot].active {
-    color: var(--c-text-muted);
-    background: transparent;
-}
-.layer-tab[data-tab-hotspot].active svg {
-    color: #ef4444;
-    transform-origin: center bottom;
-    animation: hotspot-pulse 1.4s ease-in-out 4;
-}
 
 /* ── FOCUS VISIBLE ───────────────────────────── */
 *:focus-visible {
