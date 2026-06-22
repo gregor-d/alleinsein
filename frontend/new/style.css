@@ -21,7 +21,7 @@
 
     --c-measure:      #e6007e;
 
-    --panel-w:        222px;
+    --panel-w:        240px;
     --topbar-h:       40px;
     --bottombar-h:    70px;
     --fab-sz:         40px;
@@ -174,6 +174,7 @@ html, body {
     padding: 3px 10px;
     font-size: 11px;
 }
+
 .panel-intro {
     color: var(--c-text-muted);
     font-size: 13px;
@@ -256,7 +257,7 @@ html, body {
     flex: 1;
 }
 .hotspot-row .row-hint {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--c-text-muted);
 }
 .hotspot-row svg {
@@ -684,6 +685,7 @@ html, body {
     border-top: 1px solid var(--c-border);
     z-index: 100;
     display: block;
+    transition: opacity var(--t);
 }
 
 #layer-strip {
@@ -849,19 +851,24 @@ html, body {
 
     /* Settings panel becomes a bottom sheet instead of a right sidebar. */
     #settings-panel {
-        top: auto;
-        left: 0;
-        right: 0;
-        width: auto;
-        max-height: 82vh;
+        /* top: auto; */
+        /* left: 0; */
+        /* right: 0; */
+        width: var(--panel-w);
+        /* max-height: calc(99vh - var(--bottombar-h) - var(--topbar-h)); */
         z-index: 310;
-        border-left: none;
-        border-top: 1px solid var(--c-border);
-        border-radius: 14px 14px 0 0;
-        padding: 16px 16px 32px;
+        /* border-left: none; */
+        /* border-bottom: 3px solid var(--c-border); */
+        /* border-radius: 7px 0px 0px 7px; */
+        /* margin-bottom: 5px; */
     }
     #settings-panel.sliding-out {
         transform: translateY(100%);
+    }
+    /* Grey out the bottom layer strip while the settings panel is open. */
+    body.panel-open #bottom-bar {
+        opacity: 0.35;
+        pointer-events: none;
     }
 
     #search-popover,
@@ -1009,15 +1016,6 @@ html, body {
 }
 #color-sheet.open {
     transform: translateY(0);
-}
-
-.sheet-handle {
-    width: 36px;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--c-border);
-    margin: 10px auto 4px;
-    flex-shrink: 0;
 }
 
 #color-sheet-header {
