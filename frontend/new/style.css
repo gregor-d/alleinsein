@@ -815,10 +815,11 @@ html, body {
 }
 
 /* ── MINI QUICK-SETTINGS PANEL ───────────────── */
+/* Opens to the LEFT of the settings FAB (bottom of the fab-group). */
 #mini-panel {
     position: fixed;
-    bottom: calc(var(--fab-sz) * 7 + var(--gap) * 2 + 24px);
-    right: 16px;
+    bottom: 30px;
+    right: calc(16px + var(--fab-sz) + var(--gap));
     z-index: 160;
     width: 244px;
     max-height: 64vh;
@@ -871,10 +872,14 @@ html, body {
         pointer-events: none;
     }
 
-    #search-popover,
-    #mini-panel {
+    #search-popover {
         bottom: calc(var(--bottombar-h) + var(--fab-sz) * 7 + var(--gap) * 2 + 16px);
         right: 12px;
+    }
+    /* Mini panel still opens left of the settings FAB on mobile. */
+    #mini-panel {
+        bottom: calc(var(--bottombar-h) + 12px);
+        right: calc(12px + var(--fab-sz) + var(--gap));
     }
 }
 
@@ -888,8 +893,10 @@ html, body {
     body.panel-open #bottom-bar { left: calc((100vw - var(--panel-w)) / 2); }
     body.panel-open #fab-group { right: calc(var(--panel-w) + 12px); }
     body.panel-open #settings-cog { right: calc(var(--panel-w) + 12px); }
-    body.panel-open #search-popover,
-    body.panel-open #mini-panel { right: calc(var(--panel-w) + 12px); }
+    body.panel-open #search-popover { right: calc(var(--panel-w) + 12px); }
+    body.panel-open #mini-panel {
+        right: calc(var(--panel-w) + 12px + var(--fab-sz) + var(--gap));
+    }
 }
 
 /* ── MAPLIBRE OVERRIDES ──────────────────────── */

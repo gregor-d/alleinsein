@@ -357,8 +357,6 @@ function onControlClick(e) {
         slayer.preset = btn.dataset.preset;
         applyLayerColor(slayer);
         refreshDataLayer();
-        var dd = btn.closest('.scheme-dropdown');
-        if (dd) dd.classList.remove('open');
         return;
     }
 
