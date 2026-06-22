@@ -510,6 +510,7 @@ html, body {
     justify-content: center;
     gap: 6px;
     transition: background var(--t), border-color var(--t);
+    margin-bottom: 5px;
 }
 .btn-full:hover {
     background: var(--c-surface);
