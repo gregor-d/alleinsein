@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alleinseinkarte</title>
+    <meta name="description" content="Karte von Orten mit geringer Menschendichte in Deutschland" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="config.js"></script>
+    <script src="geolocation.js"></script>
+    <script src="map.js"></script>
+    <script src="shared.js"></script>
+</head>
+
+<body>
+
+    <!-- Top bar -->
+    <header id="top-bar">
+        <span class="site-name">Alleinseinkarte</span>
+        <nav class="top-nav">
+            <a href="/impressum.html">Impressum</a>
+            <a href="mailto:kontakt@alleinseinkarte.de">Kontakt</a>
+            <button id="theme-toggle" class="icon-btn" aria-label="Theme wechseln">
+                <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- Settings panel (desktop sidebar) -->
+    <aside id="settings-panel" aria-label="Karteneinstellungen"></aside>
+
+    <!-- Mobile settings drawer -->
+    <div id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Einstellungen" hidden>
+        <div class="drawer-handle"></div>
+        <div class="drawer-scroll"></div>
+    </div>
+    <div id="drawer-backdrop" hidden></div>
+
+    <!-- FAB group -->
+    <div id="fab-group">
+        <button class="fab" id="fab-location" aria-label="Mein Standort">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L19 21L12 18L5 21Z"/></svg>
+        </button>
+        <button class="fab" id="fab-search" aria-label="Ort suchen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21L16.65 16.65"/></svg>
+        </button>
+        <button class="fab" id="fab-settings" aria-label="Einstellungen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+    </div>
+
+    <!-- Mobile bottom layer strip -->
+    <div id="bottom-bar">
+        <div id="layer-strip"></div>
+    </div>
+
+    <!-- Colormap preset picker -->
+    <div id="colormap-picker" hidden></div>
+
+    <!-- Search popover (shared by FAB + panel) -->
+    <div id="search-popover" hidden>
+        <div class="search-popover-inner">
+            <input type="text" id="search-popover-input" placeholder="Ort suchen…" autocomplete="off" />
+            <button class="btn-go" id="search-popover-go">Los</button>
+            <button class="icon-btn" id="search-popover-close" aria-label="Schließen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
