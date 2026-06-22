@@ -2,52 +2,6 @@
    ALLEINSEINKARTE — UI
    ═══════════════════════════════════════════════ */
 
-/* :root {
-  --bg-deep: #0f1117;
-  --bg-button-active: rgba(15, 17, 23, 1);
-  --bg-button-inactive: rgba(15, 17, 23, 0.7);
-  --bg-card: #1a1d27;
-  --bg-hover: rgba(255, 255, 255, 0.13);
-  --border: rgba(90, 92, 219, 0.22);
-  --border-hi: #171923;
-  --text-hi: #dcdada;
-  --text-mid: #b8b8b8;
-  --text-lo: #979797;
-  --accent: #4f46e5;
-  --accent2: #cb63f1;
-  --accent-dim: rgba(99, 102, 241, 0.14);
-  --accent-glow: rgba(99, 102, 241, 0.48);
-  --box-shadow: 3px 3px 0 #000000;
-  --box-shadow-hover: -1px -1px 0 #000000;
-  --radius: 5px;
-  --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-  --bg-toggle-inactive: #414141;
-} */
-
-
-/* Theme: Neo-Brutalist — hard edges, stark contrast, offset shadows */
-/* :root {
-  --bg-deep: #ffffff;
-  --bg-button-active: rgba(255, 255, 255, 1);
-  --bg-button-inactive: rgba(255, 255, 255, 0.7);
-  --bg-card: #f0f0f0;
-  --bg-hover: #e0e0e0;
-  --border: #000000;
-  --border-hi: #000000;
-  --text-hi: #000000;
-  --text-mid: #333333;
-  --text-lo: #666666;
-  --accent: #4f46e5;
-  --accent2: #cb63f1;
-  --accent-dim: rgba(255, 34, 0, 0.1);
-  --accent-glow: rgba(255, 34, 0, 0.3);
-  --box-shadow: 3px 3px 0 #000000;
-  --box-shadow-hover: -1px -1px 0 #000000;
-  --radius: 5px;
-  --transition: 0.1s linear;
-  --bg-toggle-inactive: #0d1117;
-} */
-
 
 /* ── TOKENS ─────────────────────────────────── */
 :root {
@@ -64,16 +18,13 @@
     --c-accent:       rgb(85, 76, 255);
     --c-accent-hover: rgba(85, 76, 255, 0.5);
     --c-shadow:       rgb(0, 0, 0);
-    --c-glass:        rgb(145, 145, 145);
-    /* background settings panel, location prompt, bottom bar, top bar*/
-    --c-overlay:      rgb(20, 25, 18);
 
     --c-measure:      #e6007e;
 
     --panel-w:        222px;
     --topbar-h:       40px;
-    --bottombar-h:    76px;
-    --fab-sz:         44px;
+    --bottombar-h:    70px;
+    --fab-sz:         40px;
     --gap:            8px;
     --r:              7px;
     --r-sm:           7px;
@@ -85,18 +36,16 @@
 }
 
 [data-theme="dark"] {
-    --c-bg:           #191D16;
-    --c-surface:      #232920;
-    --c-button:    #1B1F18;
-    --c-border:       #363B30;
-    --c-text:         #E0DDD4;
-    --c-text-muted:   #7A8070;
-    --c-accent:       #665efc;;
-    --c-accent-hover: #4f46e5;
+    --c-bg:          rgb(0, 0, 0);
+    --c-surface:     rgb(15, 15, 15);
+    --c-button:    rgb(30, 30, 30);
+    --c-border:       rgba(255, 255, 255, 0.496);
+    --c-text:          rgb(255, 255, 255);
+    --c-text-muted:   rgb(180, 180, 180);
+    --c-text-hi: rgb(0, 0, 0);
+   --c-accent:       rgb(129, 122, 248);
+    --c-accent-hover: rgba(85, 76, 255, 0.5);
     --c-shadow:       rgb(0, 0, 0);
-    --c-shadow:  rgb(0, 0, 0);
-    --c-glass:        rgb(35, 41, 32);
-    --c-overlay:      rgb(0, 0, 0);
 }
 
 /* ── RESET ───────────────────────────────────── */
@@ -437,7 +386,8 @@ html, body {
     border: 1px solid var(--c-border);
     border-radius: var(--r);
     padding: 8px 10px;
-    margin-bottom: 6px; box-shadow: 3px 3px 0 var(--c-shadow);
+    margin-bottom: 6px;
+    box-shadow: 3px 3px 0 var(--c-shadow);
 }
 
 .sub-label {
@@ -729,7 +679,7 @@ html, body {
     right: 0;
     height: var(--bottombar-h);
     background: var(--c-surface);
-    backdrop-filter: blur(14px) saturate(1.4);
+    /* backdrop-filter: blur(14px) saturate(1.4); */
     -webkit-backdrop-filter: blur(14px) saturate(1.4);
     border-top: 1px solid var(--c-border);
     z-index: 100;
@@ -738,7 +688,7 @@ html, body {
 
 #layer-strip {
     display: flex;
-    height: 100%;
+    height: 67px;
 }
 
 .layer-tab {
@@ -747,7 +697,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 4px 4px 4px 4px;
+    margin: 3px 3px 3px 3px;
     /* gap: 4px; */
     /* border: none; */
     /* border-right: 1px solid var(--c-border); */
@@ -763,9 +713,7 @@ html, body {
     transition: background var(--t), color var(--t), border-color var(--t),
                 box-shadow var(--t), transform var(--t);
 }
-.layer-tab:last-child {
-    border-right: none;
-}
+
 .layer-tab.active {
     color: var(--c-text);
     font-weight: 700;
@@ -790,11 +738,10 @@ html, body {
     /* letter-spacing: 0.03em; */
 }
 .layer-tab-grad {
-    width: 42px;
+    width: calc(100% - 8px);
     margin-top: 5px;
-    height: 12px;
-    border-radius: 3px;
-    background: var(--c-border);
+    height: 10px;
+    border-radius: 7px;
     overflow: hidden;
     cursor: pointer;
     transition: filter var(--t), transform var(--t);
@@ -810,10 +757,7 @@ html, body {
     40%      { transform: scale(1.3); opacity: 0.7; }
     60%      { transform: scale(1.2); opacity: 0.85; }
 }
-.layer-tab[data-tab-hotspot].active {
-    color: var(--c-text-muted);
-    background: transparent;
-}
+
 .layer-tab[data-tab-hotspot].active svg {
     color: #ef4444;
     transform-origin: center bottom;
@@ -965,18 +909,7 @@ html, body {
 }
 
 @media (min-width: 768px) {
-    #bottom-bar {
-        display: block;
-        left: 50%;
-        right: auto;
-        bottom: 12px;
-        width: min(560px, calc(100vw - 32px));
-        transform: translateX(-50%);
-        border: 1px solid var(--c-border);
-        border-radius: var(--r);
-        box-shadow: 3px 3px 0 var(--c-shadow);
-        overflow: hidden;
-    }
+    #bottom-bar  { display: none !important; }
     #mobile-drawer     { display: none !important; }
     #drawer-backdrop   { display: none !important; }
     #fab-settings      { display: flex; }
@@ -1021,22 +954,19 @@ html, body {
     transform: translateX(-50%);
 }
 .maplibregl-ctrl-scale {
-    /* background: var(--c-glass) !important; */
-    border-color: var(--c-text) !important;
+    border-color: black !important;
     border-style: none solid solid solid !important;
-    border-width: 0 2px 2px 2px !important;
+    /* border-width: 0 2px 2px 2px !important; */
     box-sizing: border-box;
-    color: var(--c-text-muted) !important;
-    font-family: var(--font-mono) !important;
+    color: black !important;
     font-size: 10px !important;
     line-height: 1.25;
     padding: 1px 6px 2px !important;
     text-align: center;
-    backdrop-filter: blur(8px);
+    background-color: white;
 }
 .maplibregl-ctrl-attrib {
     background: transparent !important;
-    font-family: var(--font-mono) !important;
     font-size: 10px !important;
     backdrop-filter: blur(8px);
     color: var(--c-text-muted) !important;
@@ -1186,7 +1116,7 @@ html, body {
     align-items: center;
     gap: 8px;
     padding: 7px 8px 7px 12px;
-    background: var(--c-glass);
+    background: var(--c-surface);
     backdrop-filter: blur(14px) saturate(1.4);
     -webkit-backdrop-filter: blur(14px) saturate(1.4);
     border: 1px solid var(--c-border);

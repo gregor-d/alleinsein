@@ -487,7 +487,6 @@ function buildLayerStrip() {
         '<button class="layer-tab' + hotspotActive + '" data-tab-hotspot aria-label="Hotspot">',
         '  ' + FIRE_ICON,
         '  <span class="layer-tab-name">Hotspot</span>',
-        '  <div class="layer-tab-grad" style="background: var(--c-border);"></div>',
         '</button>'
     ].join('');
 
