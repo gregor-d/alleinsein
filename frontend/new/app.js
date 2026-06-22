@@ -31,7 +31,7 @@ function setTheme(t, save) {
 
 function initMapEngine() {
     mapEngine = new MapLibreEngine();
-    mapEngine.init('map', DEFAULT_CENTER, DEFAULT_ZOOM, 'top-left')
+    mapEngine.init('map', DEFAULT_CENTER, DEFAULT_ZOOM)
         .then(function () {
             afterEngineInit(true);
             wireLocationButtons();
@@ -662,6 +662,17 @@ function wireFabs() {
             toggleMiniPanel();
         });
     }
+
+    var zoomIn = document.getElementById('ctrl-zoom-in');
+    if (zoomIn) {
+        zoomIn.addEventListener('click', function () { if (mapEngine) mapEngine.zoomIn(); });
+    }
+
+    var zoomOut = document.getElementById('ctrl-zoom-out');
+    if (zoomOut) {
+        zoomOut.addEventListener('click', function () { if (mapEngine) mapEngine.zoomOut(); });
+    }
+  
 }
 
 // ─── MEASURE DISTANCE ─────────────────────────

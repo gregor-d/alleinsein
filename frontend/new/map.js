@@ -83,7 +83,7 @@ class MapLibreEngine {
             });
 
             self.map.addControl(
-                new maplibregl.NavigationControl({ showCompass: true }),
+                new maplibregl.NavigationControl({ showCompass: true, showZoom: false }),
                 self._navPos
             );
             self.map.addControl(
@@ -281,6 +281,24 @@ class MapLibreEngine {
     flyTo(lngLat, zoom) {
         if (this.map) {
             this.map.flyTo({ center: lngLat, zoom: zoom - 1, duration: 1200, essential: true });
+        }
+    }
+
+    /**
+     * Smoothly zooms the map in by one level from the custom zoom control.
+     */
+    zoomIn() {
+        if (this.map) {
+            this.map.zoomIn({ duration: 250, essential: true });
+        }
+    }
+
+    /**
+     * Smoothly zooms the map out by one level from the custom zoom control.
+     */
+    zoomOut() {
+        if (this.map) {
+            this.map.zoomOut({ duration: 250, essential: true });
         }
     }
 

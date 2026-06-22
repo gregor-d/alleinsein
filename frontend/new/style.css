@@ -564,8 +564,60 @@ html, body {
     z-index: 150;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: var(--gap);
     transition: right var(--t), bottom var(--t);
+}
+
+/* Connected map-engine control capsule (zoom · zoom · locate · measure) */
+.ctrl-rail {
+    display: flex;
+    flex-direction: column;
+    width: var(--fab-sz);
+    border: 1px solid var(--c-border);
+    border-radius: calc(var(--fab-sz) / 2);
+    background: var(--c-glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 2px 2px 0 var(--shadow-hard-c);
+    overflow: hidden;
+}
+.ctrl-btn {
+    width: var(--fab-sz);
+    height: var(--fab-sz);
+    border: none;
+    background: transparent;
+    color: var(--c-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background var(--t), color var(--t);
+}
+.ctrl-btn + .ctrl-btn {
+    border-top: 1px solid var(--c-border);
+}
+.ctrl-btn svg {
+    width: 18px;
+    height: 18px;
+}
+#compass-needle {
+    transition: transform 0.1s linear;
+}
+#compass-needle .compass-n {
+    fill: var(--c-accent);
+    stroke: none;
+}
+.ctrl-btn:hover {
+    background: var(--c-surface);
+}
+.ctrl-btn:active {
+    background: var(--c-surface-2);
+}
+.ctrl-btn.active {
+    background: var(--c-accent);
+    color: #fff;
 }
 
 /* Measure-distance label — pinned to the last point of the ruler */
@@ -754,7 +806,7 @@ html, body {
 /* ── SEARCH POPOVER ──────────────────────────── */
 #search-popover {
     position: fixed;
-    bottom: calc(var(--bottombar-h) + var(--fab-sz) * 4 + var(--gap) * 3 + 12px);
+    bottom: calc(var(--fab-sz) * 7 + var(--gap) * 2 + 24px);
     right: 16px;
     z-index: 160;
     background: var(--c-surface);
@@ -800,7 +852,7 @@ html, body {
 /* ── MINI QUICK-SETTINGS PANEL ───────────────── */
 #mini-panel {
     position: fixed;
-    bottom: calc(var(--bottombar-h) + var(--fab-sz) * 4 + var(--gap) * 3 + 12px);
+    bottom: calc(var(--fab-sz) * 7 + var(--gap) * 2 + 24px);
     right: 16px;
     z-index: 160;
     width: 244px;
@@ -835,7 +887,7 @@ html, body {
 
     #search-popover,
     #mini-panel {
-        bottom: calc(var(--bottombar-h) + var(--fab-sz) * 4 + var(--gap) * 3 + 14px);
+        bottom: calc(var(--bottombar-h) + var(--fab-sz) * 7 + var(--gap) * 2 + 16px);
         right: 12px;
     }
 }
@@ -846,12 +898,8 @@ html, body {
     #drawer-backdrop   { display: none !important; }
     #fab-settings      { display: flex; }
 
-    #search-popover,
-    #mini-panel {
-        bottom: calc(var(--fab-sz) * 2 + var(--gap) + 24px);
-    }
-
-    /* panel-open class applied to body by JS */
+    /* panel-open class applied to body by JS — shift the right-anchored
+       controls so the opening side panel doesn't cover them. */
     body.panel-open #map { right: var(--panel-w); }
     body.panel-open #fab-group { right: calc(var(--panel-w) + 12px); }
     body.panel-open #settings-cog { right: calc(var(--panel-w) + 12px); }
@@ -860,24 +908,6 @@ html, body {
 }
 
 /* ── MAPLIBRE OVERRIDES ──────────────────────── */
-.maplibregl-ctrl-group {
-    background: var(--c-glass) !important;
-    border: 1px solid var(--c-border) !important;
-    border-radius: var(--r) !important;
-    box-shadow: 2px 2px 0 var(--shadow-hard-c) !important;
-    overflow: hidden;
-}
-.maplibregl-ctrl-group button {
-    background: transparent !important;
-    width: 30px !important;
-    height: 30px !important;
-}
-.maplibregl-ctrl-group button + button {
-    border-top-color: var(--c-border) !important;
-}
-.maplibregl-ctrl-group button:hover {
-    background: var(--c-surface-2) !important;
-}
 .maplibregl-ctrl-scale {
     background: var(--c-glass) !important;
     border-color: var(--c-text-muted) !important;
