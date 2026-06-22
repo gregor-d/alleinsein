@@ -79,7 +79,8 @@ class MapLibreEngine {
                 },
                 center: center,
                 zoom: zoom - 1,
-                minZoom: CONFIG.minimal_zoom - 1
+                minZoom: CONFIG.minimal_zoom - 1,
+                attributionControl: false
             });
 
             self.map.addControl(
@@ -89,6 +90,10 @@ class MapLibreEngine {
             self.map.addControl(
                 new maplibregl.ScaleControl({ maxWidth: 80, unit: 'metric' }),
                 'bottom-left'
+            );
+            self.map.addControl(
+                new maplibregl.AttributionControl({ compact: false }),
+                'bottom-right'
             );
 
             self.map.on('load', function() {
