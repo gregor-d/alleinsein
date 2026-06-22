@@ -21,7 +21,7 @@ function loadTheme() {
 function setTheme(t, save) {
     document.documentElement.setAttribute('data-theme', t);
     if (save !== false) localStorage.setItem('theme', t);
-    document.querySelectorAll('.theme-seg-btn').forEach(function (btn) {
+    document.querySelectorAll('[data-ctrl="theme"]').forEach(function (btn) {
         btn.classList.toggle('active', btn.dataset.theme === t);
     });
 }
@@ -73,9 +73,11 @@ function dataOpacityRowHTML(label) {
     var v = Math.round(dataLayerOpacity * 100);
     return [
         '<div class="opacity-row">',
-        '  <span class="opacity-label">' + (label || 'Opacity') + '</span>',
+        '  <div class="opacity-head">',
+        '    <span class="opacity-label">' + (label || 'Opacity') + '</span>',
+        '    <span class="opacity-val" data-disp="data-opacity">' + v + '%</span>',
+        '  </div>',
         '  <input type="range" data-ctrl="data-opacity" min="0" max="100" value="' + v + '">',
-        '  <span class="opacity-val" data-disp="data-opacity">' + v + '%</span>',
         '</div>'
     ].join('\n');
 }
@@ -109,9 +111,11 @@ function backendSectionHTML() {
         '    <button class="seg-btn' + (activeBasemapKey === 'schummerung' ? ' active' : '') + '" data-ctrl="basemap" data-basemap="schummerung">Relief</button>',
         '  </div>',
         '  <div class="opacity-row">',
-        '    <span class="opacity-label">Opacity</span>',
+        '    <div class="opacity-head">',
+        '      <span class="opacity-label">Opacity</span>',
+        '      <span class="opacity-val" data-disp="basemap-opacity">' + basemapOpacityVal + '%</span>',
+        '    </div>',
         '    <input type="range" data-ctrl="basemap-opacity" min="0" max="100" value="' + basemapOpacityVal + '">',
-        '    <span class="opacity-val" data-disp="basemap-opacity">' + basemapOpacityVal + '%</span>',
         '  </div>',
         '</div>',
 
@@ -129,8 +133,8 @@ function backendSectionHTML() {
 function buildMiniPanelHTML() {
     return [
         '<div class="panel-header">',
-        '  <span class="mini-title">Schnelleinstellungen</span>',
-        '  <button class="icon-btn" data-ctrl="mini-close" title="Schließen">',
+        '  <span class="mini-title">Quick Settings</span>',
+        '  <button class="icon-btn" data-ctrl="mini-close" title="Close">',
         '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
         '  </button>',
         '</div>',
@@ -172,15 +176,24 @@ function buildPanelHTML() {
     var hotspotChecked = hotspotMode ? 'checked' : '';
 
     return [
-        '<!-- Panel header with theme switcher -->',
-        '<div class="panel-header">',
-        '  <div class="theme-seg">',
-        '    <button class="theme-seg-btn' + (currentTheme === 'light' ? ' active' : '') + '" data-ctrl="theme" data-theme="light">Light</button>',
-        '    <button class="theme-seg-btn' + (currentTheme === 'dark'  ? ' active' : '') + '" data-ctrl="theme" data-theme="dark">Dark</button>',
-        '  </div>',
-        '  <button class="icon-btn" data-ctrl="panel-close" title="Schließen">',
+        '<!-- Panel header -->',
+        '<div class="panel-header panel-header--end">',
+        '  <button class="icon-btn" data-ctrl="panel-close" title="Close">',
         '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
         '  </button>',
+        '</div>',
+
+        '<!-- Intro -->',
+        '<p class="panel-intro">',
+        '  <a href="https://alleinseinkarte.de" target="_blank" rel="noopener noreferrer">alleinseinkarte.de</a>',
+        '  is a map for finding places where you can be alone. It shows you areas which have the lowest chance of having other people around.',
+        '</p>',
+
+        '<!-- Theme -->',
+        '<div class="section-label">Theme</div>',
+        '<div class="btn-group">',
+        '  <button class="seg-btn' + (currentTheme === 'light' ? ' active' : '') + '" data-ctrl="theme" data-theme="light">Light</button>',
+        '  <button class="seg-btn' + (currentTheme === 'dark'  ? ' active' : '') + '" data-ctrl="theme" data-theme="dark">Dark</button>',
         '</div>',
 
         '<!-- Hotspot mode -->',
@@ -212,12 +225,12 @@ function buildPanelHTML() {
         '<!-- Location -->',
         '<div class="section-label">LOCATION</div>',
         '<div class="search-row">',
-        '  <input type="text" data-ctrl="location-input" placeholder="Ort suchen…" autocomplete="off">',
+        '  <input type="text" data-ctrl="location-input" placeholder="Search location…" autocomplete="off">',
         '  <button class="btn-go" data-ctrl="location-go">Go</button>',
         '</div>',
         '<button class="btn-full" data-ctrl="my-location">',
-        '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L19 21L12 18L5 21Z"/></svg>',
-        '  Mein Standort',
+        '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
+        '  My Location',
         '</button>'
     ].join('\n');
 }
@@ -574,7 +587,7 @@ function openColorSheet(layerId) {
         '<span class="layer-name">' + layer.id + '</span>',
         '<div class="color-sheet-gradient-bar" data-grad="' + layer.id + '" style="' + layerGradientStyle(layer) + '"></div>',
         '<button class="reverse-btn" data-ctrl="layer-reverse" data-layer="' + layer.id + '" title="Umkehren">⇄</button>',
-        '<button class="icon-btn" id="cs-close" aria-label="Schließen">',
+        '<button class="icon-btn" id="cs-close" aria-label="Close">',
         '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
         '</button>'
     ].join('');
@@ -582,9 +595,11 @@ function openColorSheet(layerId) {
     body.innerHTML = [
         '<div class="color-sheet-scheme-grid">' + schemeButtonsHTML(layer) + '</div>',
         '<div class="opacity-row">',
-        '  <span class="opacity-label">Opacity</span>',
+        '  <div class="opacity-head">',
+        '    <span class="opacity-label">Opacity</span>',
+        '    <span class="opacity-val" data-disp="data-opacity">' + dataOpacityVal + '%</span>',
+        '  </div>',
         '  <input type="range" data-ctrl="data-opacity" min="0" max="100" value="' + dataOpacityVal + '">',
-        '  <span class="opacity-val" data-disp="data-opacity">' + dataOpacityVal + '%</span>',
         '</div>'
     ].join('');
 

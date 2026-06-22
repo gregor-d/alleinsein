@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="light">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alleinseinkarte</title>
-    <meta name="description" content="Karte von Orten mit geringer Menschendichte in Deutschland" />
+    <meta name="description" content="Map of places with low population density in Germany" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,11 +31,8 @@
         <span class="site-name">Alleinseinkarte</span>
         <nav class="top-nav">
             <a href="/impressum.html">Impressum</a>
-            <a href="mailto:kontakt@alleinseinkarte.de">Kontakt</a>
-            <button id="settings-cog" class="icon-btn" aria-label="Einstellungen">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V12a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </button>
-            <button id="theme-toggle" class="icon-btn" aria-label="Theme wechseln">
+            <a href="mailto:kontakt@alleinseinkarte.de">Contact</a>
+            <button id="theme-toggle" class="icon-btn" aria-label="Switch theme">
                 <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
                 <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             </button>
@@ -45,11 +42,16 @@
     <!-- Map container -->
     <div id="map"></div>
 
+    <!-- Settings cog (top-right of map, FAB style) -->
+    <button class="fab" id="settings-cog" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+
     <!-- Settings panel (desktop sidebar) -->
-    <aside id="settings-panel" aria-label="Karteneinstellungen"></aside>
+    <aside id="settings-panel" aria-label="Map settings"></aside>
 
     <!-- Mobile settings drawer -->
-    <div id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Einstellungen" hidden>
+    <div id="mobile-drawer" role="dialog" aria-modal="true" aria-label="Settings" hidden>
         <div class="drawer-handle"></div>
         <div class="drawer-scroll"></div>
     </div>
@@ -57,13 +59,13 @@
 
     <!-- FAB group -->
     <div id="fab-group">
-        <button class="fab" id="fab-location" aria-label="Mein Standort">
+        <button class="fab" id="fab-location" aria-label="My location">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
         </button>
-        <button class="fab" id="fab-search" aria-label="Ort suchen">
+        <button class="fab" id="fab-search" aria-label="Search location">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21L16.65 16.65"/></svg>
         </button>
-        <button class="fab" id="fab-settings" aria-label="Schnelleinstellungen">
+        <button class="fab" id="fab-settings" aria-label="Quick settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
         </button>
     </div>
@@ -79,9 +81,9 @@
     <!-- Location prompt popup (one-time per session) -->
     <div id="location-prompt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2L19 21L12 18L5 21Z"/></svg>
-        <span>Zu deinem Standort?</span>
-        <button id="location-prompt-yes" class="btn-go">Ja</button>
-        <button id="location-prompt-no" class="icon-btn" aria-label="Schließen">
+        <span>Go to your location?</span>
+        <button id="location-prompt-yes" class="btn-go">Yes</button>
+        <button id="location-prompt-no" class="icon-btn" aria-label="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
     </div>
@@ -97,9 +99,9 @@
     <!-- Search popover (shared by FAB + panel) -->
     <div id="search-popover" hidden>
         <div class="search-popover-inner">
-            <input type="text" id="search-popover-input" placeholder="Ort suchen…" autocomplete="off" />
-            <button class="btn-go" id="search-popover-go">Los</button>
-            <button class="icon-btn" id="search-popover-close" aria-label="Schließen">
+            <input type="text" id="search-popover-input" placeholder="Search location…" autocomplete="off" />
+            <button class="btn-go" id="search-popover-go">Go</button>
+            <button class="icon-btn" id="search-popover-close" aria-label="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
         </div>
