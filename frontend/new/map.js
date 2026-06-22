@@ -6,6 +6,12 @@ class MapLibreEngine {
     constructor() {
         this.map = null;
         this.debounceTimer = null;
+        this.measureActive = false;
+        this.measurePoints = [];
+        this._measureClick = null;
+        this._measureContext = null;
+        this._measureLabel = null;
+        this._labelAdded = false;
     }
 
     /**
@@ -293,6 +299,144 @@ class MapLibreEngine {
     getZoom() {
         if (!this.map) return DEFAULT_ZOOM;
         return this.map.getZoom() + 1;
+    }
+
+    // ─── MEASURE DISTANCE ───
+
+    /**
+     * Enters distance-measuring mode. Left-click adds a point, right-click removes
+     * the last one. The cumulative distance is shown in a label pinned to the most
+     * recently added point.
+     */
+    startMeasure() {
+        if (!this.map || !this.map.isStyleLoaded() || this.measureActive) return false;
+        this.measureActive = true;
+        this.measurePoints = [];
+
+        if (!this.map.getSource('measure-source')) {
+            this.map.addSource('measure-source', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+            this.map.addLayer({
+                id: 'measure-line',
+                type: 'line',
+                source: 'measure-source',
+                filter: ['==', '$type', 'LineString'],
+                layout: { 'line-cap': 'round', 'line-join': 'round' },
+                paint: {
+                    'line-color': CONFIG.measure_color,
+                    'line-width': 2.5,
+                    'line-dasharray': [2, 1.5]
+                }
+            });
+            this.map.addLayer({
+                id: 'measure-points',
+                type: 'circle',
+                source: 'measure-source',
+                filter: ['==', '$type', 'Point'],
+                paint: {
+                    'circle-radius': 5,
+                    'circle-color': '#ffffff',
+                    'circle-stroke-color': CONFIG.measure_color,
+                    'circle-stroke-width': 2.5
+                }
+            });
+        }
+
+        this.map.getCanvas().style.cursor = 'crosshair';
+
+        const self = this;
+        this._measureClick = function(e) {
+            self.measurePoints.push([e.lngLat.lng, e.lngLat.lat]);
+            self._renderMeasure();
+        };
+        this._measureContext = function(e) {
+            e.preventDefault();
+            self.measurePoints.pop();
+            self._renderMeasure();
+        };
+        this.map.on('click', this._measureClick);
+        this.map.on('contextmenu', this._measureContext);
+
+        this._renderMeasure();
+        return true;
+    }
+
+    /**
+     * Exits measuring mode, removes all drawn points/lines and restores the cursor.
+     */
+    stopMeasure() {
+        if (!this.map) return;
+        this.measureActive = false;
+
+        if (this._measureClick)   this.map.off('click', this._measureClick);
+        if (this._measureContext) this.map.off('contextmenu', this._measureContext);
+        this._measureClick = null;
+        this._measureContext = null;
+
+        this.measurePoints = [];
+        const src = this.map.getSource('measure-source');
+        if (src) src.setData({ type: 'FeatureCollection', features: [] });
+
+        if (this._measureLabel) {
+            this._measureLabel.remove();
+            this._labelAdded = false;
+        }
+
+        this.map.getCanvas().style.cursor = '';
+    }
+
+    /**
+     * Rebuilds the measure GeoJSON (points + connecting line) and updates the
+     * distance label pinned to the last point with the cumulative great-circle distance.
+     */
+    _renderMeasure() {
+        const features = this.measurePoints.map(function(p) {
+            return { type: 'Feature', geometry: { type: 'Point', coordinates: p } };
+        });
+        if (this.measurePoints.length >= 2) {
+            features.push({
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: this.measurePoints }
+            });
+        }
+
+        const src = this.map.getSource('measure-source');
+        if (src) src.setData({ type: 'FeatureCollection', features: features });
+
+        this._updateMeasureLabel();
+    }
+
+    /**
+     * Places (or hides) a small label at the last point showing the total distance.
+     */
+    _updateMeasureLabel() {
+        if (this.measurePoints.length < 2) {
+            if (this._measureLabel && this._labelAdded) {
+                this._measureLabel.remove();
+                this._labelAdded = false;
+            }
+            return;
+        }
+
+        let total = 0;
+        for (let i = 1; i < this.measurePoints.length; i++) {
+            total += haversineMeters(this.measurePoints[i - 1], this.measurePoints[i]);
+        }
+
+        if (!this._measureLabel) {
+            const el = document.createElement('div');
+            el.className = 'measure-label';
+            this._measureLabel = new maplibregl.Marker({ element: el, anchor: 'left', offset: [12, 0] });
+        }
+
+        this._measureLabel.getElement().textContent = formatDistance(total);
+        this._measureLabel.setLngLat(this.measurePoints[this.measurePoints.length - 1]);
+        if (!this._labelAdded) {
+            this._measureLabel.addTo(this.map);
+            this._labelAdded = true;
+        }
     }
 }
 

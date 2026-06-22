@@ -71,6 +71,31 @@ function refreshDataLayer() {
     if (mapEngine) mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
 }
 
+// ─── GEO HELPERS ───
+
+/**
+ * Great-circle distance in metres between two [lng, lat] points (haversine).
+ */
+function haversineMeters(a, b) {
+    const R = 6371000;
+    const toRad = Math.PI / 180;
+    const lat1 = a[1] * toRad;
+    const lat2 = b[1] * toRad;
+    const dLat = (b[1] - a[1]) * toRad;
+    const dLng = (b[0] - a[0]) * toRad;
+    const h = Math.sin(dLat / 2) ** 2
+        + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Formats a distance in metres as a human-readable string (m below 1 km, otherwise km).
+ */
+function formatDistance(meters) {
+    if (meters < 1000) return Math.round(meters) + ' m';
+    return (meters / 1000).toFixed(meters < 10000 ? 2 : 1) + ' km';
+}
+
 // ─── ENGINE STATE ───
 
 let mapEngine = null;

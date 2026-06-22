@@ -18,6 +18,8 @@
     --c-glass:        rgba(255, 255, 255, 0.90);
     --c-overlay:      rgba(20, 25, 18, 0.40);
 
+    --c-measure:      #e6007e;
+
     --panel-w:        222px;
     --topbar-h:       40px;
     --bottombar-h:    76px;
@@ -513,6 +515,11 @@ html, body {
     background: var(--c-surface);
     border-color: var(--c-accent);
 }
+.btn-full.active {
+    background: var(--c-accent);
+    border-color: var(--c-accent);
+    color: #fff;
+}
 .btn-full svg {
     width: 14px;
     height: 14px;
@@ -559,6 +566,21 @@ html, body {
     flex-direction: column;
     gap: var(--gap);
     transition: right var(--t), bottom var(--t);
+}
+
+/* Measure-distance label — pinned to the last point of the ruler */
+.measure-label {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1;
+    color: #fff;
+    background: var(--c-measure);
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
 }
 
 .fab {
@@ -732,7 +754,7 @@ html, body {
 /* ── SEARCH POPOVER ──────────────────────────── */
 #search-popover {
     position: fixed;
-    bottom: calc(var(--bottombar-h) + var(--fab-sz) * 3 + var(--gap) * 2 + 12px);
+    bottom: calc(var(--bottombar-h) + var(--fab-sz) * 4 + var(--gap) * 3 + 12px);
     right: 16px;
     z-index: 160;
     background: var(--c-surface);
@@ -778,7 +800,7 @@ html, body {
 /* ── MINI QUICK-SETTINGS PANEL ───────────────── */
 #mini-panel {
     position: fixed;
-    bottom: calc(var(--bottombar-h) + var(--fab-sz) * 3 + var(--gap) * 2 + 12px);
+    bottom: calc(var(--bottombar-h) + var(--fab-sz) * 4 + var(--gap) * 3 + 12px);
     right: 16px;
     z-index: 160;
     width: 244px;
@@ -813,7 +835,7 @@ html, body {
 
     #search-popover,
     #mini-panel {
-        bottom: calc(var(--bottombar-h) + var(--fab-sz) * 3 + var(--gap) * 2 + 14px);
+        bottom: calc(var(--bottombar-h) + var(--fab-sz) * 4 + var(--gap) * 3 + 14px);
         right: 12px;
     }
 }

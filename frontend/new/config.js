@@ -9,6 +9,7 @@ const CONFIG = {
     raster_name: 'germany_raster_v3.tif',
     mask_opacity: 0.45,
     mask_color: '#111111',
+    measure_color: '#e6007e',
     minimal_zoom: 6,
     location_zoom: 12
 };

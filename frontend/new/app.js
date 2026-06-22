@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     buildLayerStrip();
     wireTopBar();
     wireFabs();
+    wireMeasure();
     wireSearch();
     initMapEngine();
 });
@@ -222,6 +223,10 @@ function buildPanelHTML() {
         '<button class="btn-full" data-ctrl="my-location">',
         '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
         '  My Location',
+        '</button>',
+        '<button class="btn-full' + (measureActive ? ' active' : '') + '" data-ctrl="measure">',
+        '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/></svg>',
+        '  Measure Distance',
         '</button>'
     ].join('\n');
 }
@@ -331,6 +336,10 @@ function onControlClick(e) {
 
     if (ctrl === 'mini-close') {
         hideMiniPanel();
+    }
+
+    if (ctrl === 'measure') {
+        toggleMeasure();
     }
 
     if (ctrl === 'colormap-pick') {
@@ -653,6 +662,43 @@ function wireFabs() {
             toggleMiniPanel();
         });
     }
+}
+
+// ─── MEASURE DISTANCE ─────────────────────────
+
+var measureActive = false;
+
+function wireMeasure() {
+    var fab = document.getElementById('fab-measure');
+    if (fab) fab.addEventListener('click', toggleMeasure);
+}
+
+function toggleMeasure() {
+    measureActive ? stopMeasure() : startMeasure();
+}
+
+function startMeasure() {
+    if (!mapEngine || !mapEngine.startMeasure()) return;
+    measureActive = true;
+    syncMeasureButtons();
+}
+
+function stopMeasure() {
+    measureActive = false;
+    syncMeasureButtons();
+    if (mapEngine) mapEngine.stopMeasure();
+}
+
+// Reflects the current measuring state on the FAB and the sidebar/drawer buttons.
+function syncMeasureButtons() {
+    var fab = document.getElementById('fab-measure');
+    if (fab) {
+        fab.classList.toggle('active', measureActive);
+        fab.setAttribute('aria-pressed', measureActive ? 'true' : 'false');
+    }
+    document.querySelectorAll('[data-ctrl="measure"]').forEach(function (btn) {
+        btn.classList.toggle('active', measureActive);
+    });
 }
 
 // ─── MINI QUICK-SETTINGS PANEL ────────────────
