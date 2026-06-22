@@ -29,9 +29,8 @@ function setTheme(t, save) {
 // ─── MAP INIT ─────────────────────────────────
 
 function initMapEngine() {
-    var ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-    mapEngine = new ctor();
-    mapEngine.init('map', DEFAULT_CENTER, DEFAULT_ZOOM, NAV_CONTROL_POSITIONS[activeEngine])
+    mapEngine = new MapLibreEngine();
+    mapEngine.init('map', DEFAULT_CENTER, DEFAULT_ZOOM, 'top-left')
         .then(function () {
             afterEngineInit(true);
             wireLocationButtons();
@@ -88,14 +87,6 @@ function backendSectionHTML() {
     var basemapEnabled = activeBasemapKey !== 'none';
     return [
         '<div class="section-label">BACKEND</div>',
-
-        '<div class="sub-card">',
-        '  <div class="sub-label">MAP ENGINE</div>',
-        '  <div class="btn-group">',
-        '    <button class="seg-btn' + (activeEngine === 'leaflet'   ? ' active' : '') + '" data-ctrl="engine" data-engine="leaflet">Leaflet</button>',
-        '    <button class="seg-btn' + (activeEngine === 'maplibre'  ? ' active' : '') + '" data-ctrl="engine" data-engine="maplibre">MapLibre</button>',
-        '  </div>',
-        '</div>',
 
         '<div class="sub-card">',
         '  <div class="sub-label-row">',
@@ -177,7 +168,14 @@ function buildPanelHTML() {
 
     return [
         '<!-- Panel header -->',
-        '<div class="panel-header panel-header--end">',
+        '<div class="panel-header">',
+        '  <div class="theme-switch">',
+        '    <span class="theme-switch-label">THEME</span>',
+        '    <div class="btn-group">',
+        '      <button class="seg-btn' + (currentTheme === 'light' ? ' active' : '') + '" data-ctrl="theme" data-theme="light">Light</button>',
+        '      <button class="seg-btn' + (currentTheme === 'dark'  ? ' active' : '') + '" data-ctrl="theme" data-theme="dark">Dark</button>',
+        '    </div>',
+        '  </div>',
         '  <button class="icon-btn" data-ctrl="panel-close" title="Close">',
         '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
         '  </button>',
@@ -188,13 +186,6 @@ function buildPanelHTML() {
         '  <a href="https://alleinseinkarte.de" target="_blank" rel="noopener noreferrer">alleinseinkarte.de</a>',
         '  is a map for finding places where you can be alone. It shows you areas which have the lowest chance of having other people around.',
         '</p>',
-
-        '<!-- Theme -->',
-        '<div class="section-label">Theme</div>',
-        '<div class="btn-group">',
-        '  <button class="seg-btn' + (currentTheme === 'light' ? ' active' : '') + '" data-ctrl="theme" data-theme="light">Light</button>',
-        '  <button class="seg-btn' + (currentTheme === 'dark'  ? ' active' : '') + '" data-ctrl="theme" data-theme="dark">Dark</button>',
-        '</div>',
 
         '<!-- Hotspot mode -->',
         '<div class="section-label">HOTSPOT MODE</div>',
@@ -368,15 +359,6 @@ function onControlClick(e) {
         refreshDataLayer();
     }
 
-    if (ctrl === 'engine') {
-        var eng = btn.dataset.engine;
-        if (eng === activeEngine) return;
-        syncActiveBtn('engine', eng);
-        switchEngine(eng);
-        // rebind location buttons after engine switch
-        setTimeout(wireLocationButtons, 1200);
-    }
-
     if (ctrl === 'basemap') {
         var bm = btn.dataset.basemap;
         activeBasemapKey = bm;
@@ -431,7 +413,7 @@ function syncCheckboxes(ctrl, layer, checked) {
 }
 
 function syncActiveBtn(ctrl, value) {
-    var attr = ctrl === 'engine' ? 'data-engine' : 'data-basemap';
+    var attr = 'data-' + ctrl;
     document.querySelectorAll('[data-ctrl="' + ctrl + '"]').forEach(function (el) {
         el.classList.toggle('active', el.getAttribute(attr) === value);
     });

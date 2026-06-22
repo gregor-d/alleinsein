@@ -17,12 +17,6 @@ const CONFIG = {
 const DEFAULT_CENTER = [13.3, 51.0];
 const DEFAULT_ZOOM = 8;
 
-// Zoom-control position strings differ between Leaflet and MapLibre.
-const NAV_CONTROL_POSITIONS = {
-    leaflet: 'topleft',
-    maplibre: 'top-left'
-};
-
 const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
 
 // ─── COLORMAP PRESETS ───

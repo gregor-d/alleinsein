@@ -154,6 +154,26 @@ html, body {
 .panel-header--end {
     justify-content: flex-end;
 }
+.theme-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.theme-switch-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+}
+.theme-switch .btn-group {
+    flex-wrap: nowrap;
+}
+.theme-switch .seg-btn {
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    font-size: 11px;
+}
 .panel-intro {
     color: var(--c-text-muted);
     font-size: 13px;
@@ -816,41 +836,6 @@ html, body {
     body.panel-open #search-popover,
     body.panel-open #mini-panel { right: calc(var(--panel-w) + 12px); }
 }
-
-/* ── LEAFLET OVERRIDES ───────────────────────── */
-.leaflet-control-zoom {
-    border: 1px solid var(--c-border) !important;
-    border-radius: var(--r) !important;
-    overflow: hidden;
-    box-shadow: 2px 2px 0 var(--shadow-hard-c) !important;
-}
-.leaflet-control-zoom a {
-    background: var(--c-glass) !important;
-    backdrop-filter: blur(8px);
-    color: var(--c-text) !important;
-    border-color: var(--c-border) !important;
-    width: 30px !important;
-    height: 30px !important;
-    line-height: 30px !important;
-}
-.leaflet-control-zoom a:hover {
-    background: var(--c-surface) !important;
-}
-.leaflet-control-scale-line {
-    background: var(--c-glass) !important;
-    border-color: var(--c-text-muted) !important;
-    color: var(--c-text-muted) !important;
-    font-family: var(--font-mono) !important;
-    font-size: 10px !important;
-    padding: 1px 5px !important;
-}
-.leaflet-control-attribution {
-    background: var(--c-glass) !important;
-    color: var(--c-text-muted) !important;
-    font-size: 10px !important;
-    backdrop-filter: blur(8px);
-}
-.leaflet-control-attribution a { color: var(--c-accent) !important; }
 
 /* ── MAPLIBRE OVERRIDES ──────────────────────── */
 .maplibregl-ctrl-group {

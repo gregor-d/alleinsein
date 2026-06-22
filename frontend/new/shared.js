@@ -73,37 +73,7 @@ function refreshDataLayer() {
 
 // ─── ENGINE STATE ───
 
-let activeEngine = localStorage.getItem('map-engine') || 'leaflet';
 let mapEngine = null;
-
-/**
- * Switches the active map engine to newKey ('leaflet' or 'maplibre').
- * Preserves the current center and zoom, destroys the old engine,
- * re-creates the map container element, and initialises the new engine.
- */
-function switchEngine(newKey) {
-    if (newKey === activeEngine && mapEngine) return;
-
-    let center = DEFAULT_CENTER;
-    let zoom   = DEFAULT_ZOOM;
-    if (mapEngine) {
-        center = mapEngine.getCenter();
-        zoom   = mapEngine.getZoom();
-        mapEngine.destroy();
-    }
-
-    const oldEl = document.getElementById('map');
-    oldEl.parentNode.replaceChild(oldEl.cloneNode(false), oldEl);
-
-    activeEngine = newKey;
-    localStorage.setItem('map-engine', activeEngine);
-
-    const ctor = activeEngine === 'leaflet' ? LeafletEngine : MapLibreEngine;
-    mapEngine = new ctor();
-    mapEngine.init('map', center, zoom, NAV_CONTROL_POSITIONS[activeEngine])
-        .then(function() { afterEngineInit(false); });
-
-}
 
 /**
  * Runs after every engine initialisation: applies the active basemap,

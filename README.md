@@ -1,3 +1,10 @@
+only keep maplibre as mapping-engine. remove everything related to leaflet.
+
+
+add new map controls: - measure-distance between points. 
+
+on pc-layout have the controll cog at the 
+
 # [alleinseinkarte.de](https://alleinseinkarte.de)
 
 [alleinseinkarte.de](https://alleinseinkarte.de) is a map for finding places where you can be alone. By visualizing areas where there is the lowest chance of meeting other people, it guides you to spots where you can escape and have a good time with yourself.
