@@ -91,9 +91,6 @@ def select_tier_raster(z: int | None) -> str:
 
 
 def get_raster_path(z: int | None = None, raster: str | None = None) -> Path:
-    # `z` is bound from the tile route's {z} path param (and is absent — None —
-    # for the tilejson route). When an explicit `raster` is given it wins and
-    # zoom tiering is bypassed; otherwise the tier for this zoom is selected.
     name = raster if raster else select_tier_raster(z)
 
     # prevent directory traversal or access to subdirectories
