@@ -6,6 +6,7 @@ class MapLibreEngine {
   constructor() {
     this.map = null;
     this.debounceTimer = null;
+    this.dataReqSeq = 0;
     this.measureActive = false;
     this.measurePoints = [];
     this._measureClick = null;
@@ -203,12 +204,17 @@ class MapLibreEngine {
 
     const self = this;
     this.debounceTimer = setTimeout(async function () {
+      const reqId = ++self.dataReqSeq;
       TILE_JSON_URL.searchParams.set("raster", CONFIG.raster_name);
       TILE_JSON_URL.searchParams.set("colormap", colormapJson);
 
       try {
         const res = await fetch(TILE_JSON_URL.toString());
         const tj = await res.json();
+
+        // A newer request was issued while this one was in flight; its
+        // response must win, so discard this (now stale) one.
+        if (reqId !== self.dataReqSeq) return;
 
         if (!tj.tiles || tj.tiles.length === 0) return;
 
@@ -265,7 +271,8 @@ class MapLibreEngine {
           self.map.setPaintProperty("data-layer", "raster-opacity", opacity);
         }
       } catch (e) {
-        console.error("Error fetching TileJSON in MapLibre:", e);
+        if (reqId === self.dataReqSeq)
+          console.error("Error fetching TileJSON in MapLibre:", e);
       }
     }, 50);
   }
