@@ -2,7 +2,6 @@
 
 import functools
 import http.server
-import re
 import threading
 from pathlib import Path
 
@@ -26,7 +25,8 @@ def frontend_url():
     server.shutdown()
 
 
-def test_map_is_displayed(page: Page, frontend_url: str):
+def test_front_is_displayed(page: Page, frontend_url: str):
+    # map is displayed
     page.goto(frontend_url)
     map_el = page.locator("#map")
     expect(map_el).to_be_visible()
@@ -35,14 +35,12 @@ def test_map_is_displayed(page: Page, frontend_url: str):
     assert box["width"] > 0 and box["height"] > 0
     assert page.locator("#map canvas").count() > 0
 
-
-def test_bottom_bar_visible_on_mobile(page: Page, frontend_url: str):
+    # test_bottom_bar_visible_on_mobile
     page.set_viewport_size({"width": 375, "height": 812})
     page.goto(frontend_url)
     expect(page.locator("#bottom-bar")).to_be_visible()
 
-
-def test_settings_drawer_opens_on_pc(page: Page, frontend_url: str):
+    # test_settings_drawer_opens_on_pc
     page.set_viewport_size({"width": 1280, "height": 800})
     page.goto(frontend_url)
-    expect(page.locator("#settings-drawer")).to_have_class(re.compile(r"\bopen\b"))
+    expect(page.locator("#settings-panel")).to_have_class("visible")

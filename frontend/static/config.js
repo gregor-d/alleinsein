@@ -10,19 +10,15 @@ const CONFIG = {
   raster_name: "germany_raster_v3.tif",
   mask_opacity: 0.45,
   mask_color: "#111111",
-  minimal_zoom: 6,
+  measure_color: "#e6007e",
+  minimal_zoom: 7,
+  maximal_zoom: 18,
   location_zoom: 12,
 };
 
 // Default map view used when no stored position is available.
 const DEFAULT_CENTER = [13.3, 51.0];
-const DEFAULT_ZOOM = 8;
-
-// Zoom-control position strings differ between Leaflet and MapLibre.
-const NAV_CONTROL_POSITIONS = {
-  leaflet: "topleft",
-  maplibre: "top-left",
-};
+const DEFAULT_ZOOM = 7;
 
 const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
 
@@ -131,13 +127,20 @@ const layerState = [
 
 // ─── BASEMAP DEFINITIONS ───
 const BASEMAPS = {
+  // Tile sizes below are fixed by each provider:
+  //   • OSM standard tiles ...................... 256 px
+  //   • Esri World Imagery (ArcGIS XYZ) ......... 256 px
+  //   • Waymarked Trails (hiking/cycling) ....... 256 px
+  //   • basemap.de Schummerung WMS .............. any size via width/height (256 px requested)
+  // The titiler data raster uses CONFIG.tile_size (512) instead — that is separate.
   osm: {
     label: "OpenStreetMap",
     url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     options: {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 15,
+      tileSize: 256,
+      maxZoom: 19,
     },
   },
   satellite: {
@@ -146,7 +149,8 @@ const BASEMAPS = {
     options: {
       attribution:
         '&copy; <a href="https://www.esri.com/">Esri</a> · Sources: Esri, Maxar, Earthstar Geographics',
-      maxZoom: 15,
+      tileSize: 256,
+      maxZoom: 19,
     },
   },
   schummerung: {
@@ -157,8 +161,11 @@ const BASEMAPS = {
       layers: "de_basemapde_web_raster_combshade",
       format: "image/png",
       transparent: true,
+      version: "1.1.1",
+      srs: "EPSG:3857",
       attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
-      maxZoom: 15,
+      tileSize: 256,
+      maxZoom: 18,
     },
   },
   hiking: {
@@ -168,7 +175,8 @@ const BASEMAPS = {
     options: {
       attribution:
         '&copy; <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>',
-      maxZoom: 15,
+      tileSize: 256,
+      maxZoom: 18,
     },
   },
   cycling: {
@@ -178,14 +186,15 @@ const BASEMAPS = {
     options: {
       attribution:
         '&copy; <a href="https://cycling.waymarkedtrails.org">Waymarked Trails</a>',
-      maxZoom: 15,
+      tileSize: 256,
+      maxZoom: 18,
     },
   },
 };
 
 // ─── MUTABLE APP STATE ───
 let activeBasemapKey = "osm";
-let basemapOpacity = 0.7;
+let basemapOpacity = 0.8;
 let dataLayerOpacity = 1.0;
 let boundsSet = false;
 let hotspotMode = false;

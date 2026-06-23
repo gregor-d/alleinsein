@@ -35,14 +35,22 @@ def reload_main():
     return importlib.import_module("backend.main")
 
 
-def test_healthz_includes_project_version():
+@pytest.mark.parametrize(
+    ("env"),
+    [
+        ("prod"),
+        ("dev"),
+    ],
+)
+def test_health_endpoints(env, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("APP_ENV", env)
     main = reload_main()
 
     with TestClient(main.app, raise_server_exceptions=False) as client:
         response = client.get("/healthz")
-
-    assert response.status_code == 200
-    assert response.json()["version"] == __version__
+        assert response.status_code == 200
+        assert response.json()["env"] == env
+        assert response.json()["version"] == __version__
 
 
 def test_backend_version_matches_project_version():
@@ -53,23 +61,29 @@ def test_backend_version_matches_project_version():
 
 
 @pytest.mark.parametrize(
-    ("env", "dev_route_status"),
+    ("env", "tile", "tileset", "info", "statistics"),
     [
-        ("prod", 404),
-        ("dev", 200),
+        ("prod", 200, 200, 404, 404),
+        ("dev", 200, 200, 200, 200),
     ],
 )
-def test_environments(env, dev_route_status, monkeypatch: pytest.MonkeyPatch):
+def test_environments(
+    env, tile, tileset, info, statistics, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setenv("APP_ENV", env)
     main = reload_main()
 
     with TestClient(main.app, raise_server_exceptions=False) as client:
-        response = client.get("/healthz")
-        assert response.status_code == 200
-        assert response.json()["env"] == env
-
-        resp = client.get("/map")
-        assert resp.status_code == dev_route_status
+        assert client.get("/healthz").status_code == 200
+        assert (
+            client.get(
+                "/tiles/WebMercatorQuad/0/0/0?raster=test_raster.tif"
+            ).status_code
+            == tile
+        )
+        assert client.get("/WebMercatorQuad/tilejson.json").status_code == tileset
+        assert client.get("/info").status_code == info
+        assert client.get("/statistics").status_code == statistics
 
 
 def test_process_env_overrides_env_file(monkeypatch: pytest.MonkeyPatch):

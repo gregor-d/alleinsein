@@ -1,23 +1,20 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Raster Explorer</title>
+    <title>Alleinseinkarte</title>
     <meta
       name="description"
-      content="Interactive raster viewer supporting Leaflet and MapLibre GL JS."
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
+      content="Map of places with low population density in Germany"
     />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <link
       href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
@@ -25,93 +22,54 @@
     />
     <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
 
-    <link rel="stylesheet" href="index.css" />
-    <link id="theme-link" rel="stylesheet" href="themes/theme_glass.css" />
-    <script>
-      (function () {
-        const themes = ["brutalist", "dark"];
-        const saved = localStorage.getItem("map-theme");
-        const systemDefault = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
-          ? "dark"
-          : "brutalist";
-        const t = themes.includes(saved) ? saved : systemDefault;
-        localStorage.setItem("map-theme", t);
-        document.getElementById("theme-link").href = `themes/theme_${t}.css`;
-      })();
-    </script>
+    <link rel="stylesheet" href="style.css" />
+
     <script src="config.js"></script>
     <script src="geolocation.js"></script>
     <script src="map.js"></script>
     <script src="shared.js"></script>
-    <script src="dev-drawer.js"></script>
   </head>
 
   <body>
+    <!-- Top bar -->
+    <header id="top-bar">
+      <span class="site-name">Alleinseinkarte</span>
+      <nav class="top-nav">
+        <a href="/impressum.html">Impressum</a>
+        <a href="mailto:kontakt@alleinseinkarte.de">Contact</a>
+        <button id="theme-toggle" class="icon-btn" aria-label="Switch theme">
+          <svg
+            class="icon-sun"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+            />
+          </svg>
+          <svg
+            class="icon-moon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Map container -->
     <div id="map"></div>
 
-    <div id="bottom-bar">
-      <div id="layer-strip" class="control-options"></div>
-    </div>
-
-    <div id="fab-group">
-      <button class="fab" id="loc-btn" title="My location">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <polygon points="3 11 22 2 13 21 11 13 3 11" />
-        </svg>
-      </button>
-      <button class="fab" id="search-btn" title="Search location">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="10" cy="10" r="7" />
-          <line x1="21" y1="21" x2="15" y2="15" />
-        </svg>
-      </button>
-      <button class="fab" id="settings-btn" title="Settings">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="12" cy="12" r="3" />
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-          />
-        </svg>
-      </button>
-      <button class="fab" id="basemap-btn" title="Basemap">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21 3 6" />
-          <line x1="9" y1="3" x2="9" y2="18" />
-          <line x1="15" y1="6" x2="15" y2="21" />
-        </svg>
-      </button>
-    </div>
-
-    <div id="location-prompt">
+    <!-- Settings cog (top-right of map, FAB style) -->
+    <button class="fab" id="settings-cog" aria-label="Settings">
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -119,13 +77,91 @@
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        aria-hidden="true"
       >
-        <polygon points="3 11 22 2 13 21 11 13 3 11" />
+        <circle cx="12" cy="12" r="3"></circle>
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+        ></path>
       </svg>
-      <span>Go to your location?</span>
-      <button id="location-prompt-yes" class="control-btn">Yes</button>
-      <button id="location-prompt-no" class="icon-btn" title="Dismiss">
+    </button>
+
+    <!-- Settings panel (desktop sidebar / mobile bottom sheet) -->
+    <aside id="settings-panel" aria-label="Map settings"></aside>
+
+    <!-- FAB group -->
+    <div id="fab-group">
+      <!-- Overlay openers (round) -->
+      <button class="fab" id="fab-search" aria-label="Search location">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21L16.65 16.65" />
+        </svg>
+      </button>
+
+      <!-- Direct map-engine controls (connected capsule) -->
+      <div class="ctrl-rail" role="group" aria-label="Map controls">
+        <button class="ctrl-btn" id="ctrl-zoom-in" aria-label="Zoom in">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+        <button class="ctrl-btn" id="ctrl-zoom-out" aria-label="Zoom out">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M5 12h14" />
+          </svg>
+        </button>
+        <button class="ctrl-btn" id="fab-location" aria-label="My location">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+          </svg>
+        </button>
+        <button
+          class="ctrl-btn"
+          id="fab-measure"
+          aria-label="Measure distance"
+          aria-pressed="false"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="2" y="8" width="20" height="8" rx="1" />
+            <path d="M6 8v3M10 8v4M14 8v3M18 8v4" />
+          </svg>
+        </button>
+      </div>
+
+      <button class="fab" id="fab-settings" aria-label="Quick settings">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -134,83 +170,80 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         >
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
         </svg>
       </button>
     </div>
 
-    <div id="basemap-popup" class="fab-popup"></div>
+    <!-- Mobile bottom layer strip -->
+    <div id="bottom-bar">
+      <div id="layer-strip"></div>
+    </div>
 
-    <div id="settings-drawer">
-      <div class="drawer-header">
-        <div class="drawer-header-group drawer-header-group--inline">
-          <span class="drawer-header-label">Theme</span>
-          <div class="drawer-theme-group">
-            <button class="dev-theme-btn" data-theme="brutalist">Light</button>
-            <button class="dev-theme-btn" data-theme="dark">Dark</button>
-          </div>
-        </div>
-        <button
-          id="drawer-close"
-          class="icon-btn"
-          style="margin-left: auto"
-          title="Close"
+    <!-- Mini quick-settings popover (opened by settings FAB) -->
+    <div id="mini-panel" hidden></div>
+
+    <!-- Location prompt popup (one-time per session) -->
+    <div id="location-prompt">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 2L19 21L12 18L5 21Z" />
+      </svg>
+      <span>Go to your location?</span>
+      <button id="location-prompt-yes" class="btn-go">Yes</button>
+      <button id="location-prompt-no" class="icon-btn" aria-label="Close">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
         >
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Colormap preset picker (mobile bottom-bar color-ramp sheet) -->
+    <div id="color-sheet">
+      <div id="color-sheet-header"></div>
+      <div id="color-sheet-body"></div>
+    </div>
+    <div id="color-sheet-backdrop" hidden></div>
+
+    <!-- Search popover (shared by FAB + panel) -->
+    <div id="search-popover" hidden>
+      <div class="search-popover-inner">
+        <input
+          type="text"
+          id="search-popover-input"
+          placeholder="Search location…"
+          autocomplete="off"
+        />
+        <button class="btn-go" id="search-popover-go">Go</button>
+        <button class="icon-btn" id="search-popover-close" aria-label="Close">
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
             stroke-linecap="round"
-            stroke-linejoin="round"
           >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
+            <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
       </div>
-      <div class="drawer-body" id="drawer-body"></div>
     </div>
-    <div id="settings-backdrop" class="drawer-backdrop"></div>
 
-    <div id="color-sheet" class="bottom-sheet">
-      <div class="sheet-handle"></div>
-      <div id="color-sheet-header" class="layer-header"></div>
-      <div class="sheet-body" id="color-sheet-body"></div>
-    </div>
-    <div id="color-sheet-backdrop" class="sheet-backdrop"></div>
-
-    <div id="search-sheet" class="search-popup">
-      <div class="sheet-header">
-        <span>Search Location</span>
-        <button id="search-sheet-close" class="icon-btn">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </div>
-      <div class="sheet-body">
-        <div class="search-input-row">
-          <input
-            id="search-input"
-            type="text"
-            placeholder="Search location..."
-            autocomplete="off"
-          />
-          <button id="search-go" class="search-go-btn">Go</button>
-        </div>
-        <ul id="search-results" class="search-results"></ul>
-      </div>
-    </div>
-    <div id="search-sheet-backdrop" class="sheet-backdrop"></div>
+    <script src="app.js"></script>
   </body>
 </html>

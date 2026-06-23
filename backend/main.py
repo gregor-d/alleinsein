@@ -1,15 +1,15 @@
 from pathlib import Path
 from typing import cast
 
-from backend._version import __version__
+import morecantile
 from fastapi import FastAPI
+from morecantile.defaults import TileMatrixSets
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.cors import CORSMiddleware
-import morecantile
-from morecantile.defaults import TileMatrixSets
-
-from titiler.core.factory import TilerFactory
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
+from titiler.core.factory import TilerFactory
+
+from backend._version import __version__
 
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = APP_DIR.parent
@@ -86,7 +86,6 @@ if settings.env == "prod":
     class CustomTiler(TilerFactory):
         def register_routes(self):
             self.tile()
-
             self.tilejson()
 elif settings.env == "dev":
 
