@@ -1,12 +1,3 @@
-only keep maplibre as mapping-engine. remove everything related to leaflet.
-change mapcontrols, all should be on the left bottom side
-
-
-change mapcontrols, all should be on the left bottom side.  with the fab-group. group together the controls that directly interact with the map-engine without a popup in a good sexy way 
-
-
-on pc-layout have the controll cog at the 
-
 # [alleinseinkarte.de](https://alleinseinkarte.de)
 
 [alleinseinkarte.de](https://alleinseinkarte.de) is a map for finding places where you can be alone. By visualizing areas where there is the lowest chance of meeting other people, it guides you to spots where you can escape and have a good time with yourself.
