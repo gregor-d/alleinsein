@@ -13,7 +13,7 @@ bounds_gpkg="${SCRIPT_DIR}/input/bounds/${AREA}.gpkg"
 
 # output files
 output_dir="${SCRIPT_DIR}/out"
-base_name="${AREA}_raster"
+base_name="${AREA}_20m"
 version=1
 # increase existing version number by 1
 while [[ -f "${output_dir}/${base_name}_v${version}.tif" ]]; do
@@ -95,7 +95,7 @@ echo "-------------------------------------------------------"
 
 echo "Creating web-optimized COG with overviews..."
 # use riotiler web-optimized, this has the tif aligned to Web Mercator tile matrix and this leads to less reads.
-# rio cogeo create --web-optimized "$calc_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling nearest --blocksize 512 --overview-blocksize 512
+rio cogeo create --web-optimized "$calc_reprojected_raster" "$output_cog" --resampling nearest --overview-resampling nearest --blocksize 512 --overview-blocksize 512
 
 # Alternative:
 # add overviews and create COG
