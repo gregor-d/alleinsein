@@ -10,14 +10,14 @@ const CONFIG = {
     mask_opacity: 0.45,
     mask_color: '#111111',
     measure_color: '#e6007e',
-    minimal_zoom: 6,
+    minimal_zoom: 7,
     maximal_zoom: 18,
     location_zoom: 12
 };
 
 // Default map view used when no stored position is available.
 const DEFAULT_CENTER = [13.3, 51.0];
-const DEFAULT_ZOOM = 8;
+const DEFAULT_ZOOM = 7;
 
 const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
 
@@ -104,7 +104,7 @@ const BASEMAPS = {
 
 // ─── MUTABLE APP STATE ───
 let activeBasemapKey = 'osm';
-let basemapOpacity   = 0.7;
+let basemapOpacity   = 0.8;
 let dataLayerOpacity = 1.0;
 let boundsSet        = false;
 let hotspotMode      = false;

@@ -1,7 +1,9 @@
 only keep maplibre as mapping-engine. remove everything related to leaflet.
+change mapcontrols, all should be on the left bottom side
 
 
-add new map controls: - measure-distance between points. 
+change mapcontrols, all should be on the left bottom side.  with the fab-group. group together the controls that directly interact with the map-engine without a popup in a good sexy way 
+
 
 on pc-layout have the controll cog at the 
 
