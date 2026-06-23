@@ -870,7 +870,8 @@ function hideMiniPanel() {
   if (mp) mp.setAttribute("hidden", "");
 }
 
-// ─── SEARCH ───────────────────────────────────
+// ─── SEARCH UI ────────────────────────────────
+// The geocoding lookup itself (doSearch) lives in location.js.
 
 function wireSearch() {
   var goBtn = document.getElementById("search-popover-go");
@@ -904,26 +905,6 @@ function toggleSearchPopover() {
 function hideSearchPopover() {
   var pop = document.getElementById("search-popover");
   if (pop) pop.setAttribute("hidden", "");
-}
-
-async function doSearch(query) {
-  if (!query || !mapEngine) return;
-  try {
-    var url =
-      "https://nominatim.openstreetmap.org/search?q=" +
-      encodeURIComponent(query) +
-      "&format=json&limit=1&countrycodes=de&email=kontakt@alleinseinkarte.de";
-    var res = await fetch(url, { headers: { "Accept-Language": "de" } });
-    var data = await res.json();
-    if (data && data.length > 0) {
-      var lon = parseFloat(data[0].lon);
-      var lat = parseFloat(data[0].lat);
-      mapEngine.flyTo([lon, lat], CONFIG.location_zoom);
-      hideSearchPopover();
-    }
-  } catch (err) {
-    console.warn("Search failed:", err);
-  }
 }
 
 // ─── LOCATION BUTTON ──────────────────────────

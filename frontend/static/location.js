@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-//  GEOLOCATION.JS — Browser Geolocation helpers
+//  LOCATION.JS — Geolocation (GPS) + place search
 // ─────────────────────────────────────────────
 
 /**
@@ -61,4 +61,26 @@ function bindLocBtn(id) {
       },
     );
   };
+}
+
+// ─── PLACE SEARCH (geocoding) ─────────────────
+
+async function doSearch(query) {
+  if (!query || !mapEngine) return;
+  try {
+    var url =
+      "https://nominatim.openstreetmap.org/search?q=" +
+      encodeURIComponent(query) +
+      "&format=json&limit=1&countrycodes=de&email=kontakt@alleinseinkarte.de";
+    var res = await fetch(url, { headers: { "Accept-Language": "de" } });
+    var data = await res.json();
+    if (data && data.length > 0) {
+      var lon = parseFloat(data[0].lon);
+      var lat = parseFloat(data[0].lat);
+      mapEngine.flyTo([lon, lat], CONFIG.location_zoom);
+      hideSearchPopover();
+    }
+  } catch (err) {
+    console.warn("Search failed:", err);
+  }
 }
