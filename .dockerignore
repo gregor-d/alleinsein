@@ -1,0 +1,12 @@
+# Never bake local env files into the image — a stray dev .env baked via
+# `COPY backend /backend` would silently override the prod code defaults.
+# Prod runs on the code defaults; dev is opted into with a local backend/.env.
+**/.env
+**/.env.*
+
+# Python / build cruft
+**/__pycache__/
+**/*.pyc
+.venv/
+.git/
+.pytest_cache/

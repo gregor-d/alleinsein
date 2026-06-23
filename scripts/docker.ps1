@@ -1,1 +1,1 @@
-docker compose up -d --force-recreate tiler
+docker compose up -d --build --force-recreate tiler
