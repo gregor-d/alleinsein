@@ -24,7 +24,7 @@ const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
 
 // ─── COLORMAP PRESETS ───
 const COLORMAP_PRESETS = {
-  "Thai Lily": [
+  green_pink: [
     "#3a7300ff",
     "#478d00ff",
     "#53a600ff",
@@ -35,7 +35,7 @@ const COLORMAP_PRESETS = {
     "#c62ca0ff",
     "#ab0080ff",
   ],
-  "Halloween Morning": [
+  orange_cyan: [
     "#ffaa00ff",
     "#f28e00ff",
     "#e67500ff",
@@ -46,7 +46,7 @@ const COLORMAP_PRESETS = {
     "#00d9b4ff",
     "#00ffd4ff",
   ],
-  "Blue 2": [
+  blues: [
     "#fffcd4ff",
     "#cde0caff",
     "#b4d2c6ff",
@@ -86,33 +86,33 @@ const layerState = [
   {
     id: "Nature",
     start: 1,
-    preset: "viridis",
+    preset: "green_pink",
     visible: true,
-    reverse: false,
+    reverse: true,
     type: "category",
   },
   {
     id: "Farm",
     start: 11,
-    preset: "Halloween Morning",
+    preset: "orange_cyan",
     visible: false,
-    reverse: false,
+    reverse: true,
     type: "category",
   },
   {
     id: "Parks",
     start: 21,
-    preset: "Blue 2",
-    visible: false,
+    preset: "magma",
+    visible: true,
     reverse: false,
     type: "category",
   },
   {
     id: "Urban",
     start: 31,
-    preset: "magma",
+    preset: "viridis",
     visible: false,
-    reverse: false,
+    reverse: true,
     type: "category",
   },
   {
