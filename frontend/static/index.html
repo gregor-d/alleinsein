@@ -187,19 +187,6 @@
 
     <!-- Location prompt popup (one-time per session) -->
     <div id="location-prompt">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M12 2L19 21L12 18L5 21Z" />
-      </svg>
-      <span>Go to your location?</span>
-      <button id="location-prompt-yes" class="btn-go">Yes</button>
       <button id="location-prompt-no" class="icon-btn" aria-label="Close">
         <svg
           viewBox="0 0 24 24"
@@ -211,6 +198,26 @@
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
       </button>
+      <p class="location-prompt-intro">
+        <b>alleinseinkarte.de</b> is a map for finding places where you can be
+        alone. It shows you areas which have the lowest chance of having other
+        people around.
+      </p>
+      <div class="location-prompt-row">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 2L19 21L12 18L5 21Z" />
+        </svg>
+        <span>Go to your location?</span>
+        <button id="location-prompt-yes" class="btn-go">Yes</button>
+      </div>
     </div>
 
     <!-- Colormap preset picker (mobile bottom-bar color-ramp sheet) -->
