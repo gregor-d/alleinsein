@@ -4,6 +4,7 @@ from typing import cast
 import morecantile
 from fastapi import FastAPI
 from morecantile.defaults import TileMatrixSets
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.cors import CORSMiddleware
 from titiler.core.errors import DEFAULT_STATUS_CODES, add_exception_handlers
@@ -15,15 +16,40 @@ APP_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = APP_DIR.parent
 
 
+class RasterTier(BaseModel):
+    """One zoom band of the data product. `raster` is served for every tile
+    whose WebMercatorQuad zoom is <= `max_zoom`. Note this z is the tile-matrix
+    zoom titiler receives, which equals the frontend's slippy zoom minus 1"""
+
+    raster: str
+    max_zoom: int
+
+
 class Settings(BaseSettings):
     env: str = "prod"
-    enable_docs: bool = False
     cors_origins: list[str] = [
         "https://alleinseinkarte.de",
         "https://www.alleinseinkarte.de",
     ]
     allowed_tms: str = "WebMercatorQuad"
     raster_path: str = "raster/out"
+    raster_file_z6: str = "germany_1280m_v3.tif"
+    raster_file_z7: str = "germany_640m_v3.tif"
+    raster_file_z8: str = "germany_320m_v3.tif"
+    raster_file_z99: str = "germany_20m_v3.tif"
+
+    @property
+    def raster_tiers(self) -> list[RasterTier]:
+        """Combine the per-tier raster files with their fixed zoom breaks,
+        coarsest first / ascending max_zoom."""
+        return [
+            RasterTier(raster=self.raster_file_z6, max_zoom=6),
+            RasterTier(raster=self.raster_file_z7, max_zoom=7),
+            RasterTier(raster=self.raster_file_z8, max_zoom=8),
+            RasterTier(raster=self.raster_file_z99, max_zoom=99),
+        ]
+
+    enable_docs: bool = False
     add_preview: bool = False
     add_part: bool = False
     add_viewer: bool = False
@@ -51,13 +77,31 @@ def build_supported_tms(name: str) -> TileMatrixSets:
     return TileMatrixSets(result)
 
 
-def get_raster_path(raster: str = "test_raster.tif") -> Path:
-    # prevent directory traversal or access to subdirectories
-    if not raster or "/" in raster or "\\" in raster or raster.startswith("."):
-        # should raise 404 to prevent information disclosure about the existence of files
-        raise FileNotFoundError(f"Rasters file not found: {raster}")
+def select_tier_raster(z: int | None) -> str:
+    """Pick the raster for a tile zoom from the configured tiers. `z is None`
+    (the tilejson endpoint, which has no z) returns the finest tier so its
+    metadata advertises full detail and the complete data footprint."""
+    tiers = settings.raster_tiers
+    if z is None:
+        return tiers[-1].raster
+    for tier in tiers:
+        if z <= tier.max_zoom:
+            return tier.raster
+    return tiers[-1].raster
 
-    target_path = PROJECT_DIR / settings.raster_path / raster
+
+def get_raster_path(z: int | None = None, raster: str | None = None) -> Path:
+    # `z` is bound from the tile route's {z} path param (and is absent — None —
+    # for the tilejson route). When an explicit `raster` is given it wins and
+    # zoom tiering is bypassed; otherwise the tier for this zoom is selected.
+    name = raster if raster else select_tier_raster(z)
+
+    # prevent directory traversal or access to subdirectories
+    if not name or "/" in name or "\\" in name or name.startswith("."):
+        # should raise 404 to prevent information disclosure about the existence of files
+        raise FileNotFoundError(f"Rasters file not found: {name}")
+
+    target_path = PROJECT_DIR / settings.raster_path / name
     if not target_path.is_file():
         raise FileNotFoundError(f"Raster file not found: {target_path}")
     return target_path

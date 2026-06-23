@@ -7,7 +7,9 @@ const CONFIG = {
   fqdn: isLocal ? "http://127.0.0.1:8000" : "https://tiles.alleinseinkarte.de",
   tile_json_path: "WebMercatorQuad/tilejson.json",
   tile_size: 512,
-  raster_name: "germany_raster_v3.tif",
+  // Optional: pin a single raster (e.g. "germany_raster_v3.tif") bypassing the backend's per-zoom
+  // tiering. Leave null/empty to let the backend tier by zoom (the default).
+  raster_override: null,
   mask_opacity: 0.45,
   mask_color: "#111111",
   measure_color: "#e6007e",

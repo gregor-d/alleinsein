@@ -187,7 +187,10 @@ class MapLibreEngine {
 
   /**
    * Debounces and applies a colormap update to the raster data source.
-   * Creates the source and layer on the first call; updates the tile URL on subsequent calls.
+   *
+   * Uses a single source/layer: the backend picks the coarse-vs-fine raster
+   * per tile zoom (see backend/main.py raster_tiers), so the client just
+   * requests one tiled source.
    * Removes the layer entirely when the colormap is empty.
    */
   updateDataLayer(colormapJson, opacity) {
@@ -205,11 +208,25 @@ class MapLibreEngine {
     const self = this;
     this.debounceTimer = setTimeout(async function () {
       const reqId = ++self.dataReqSeq;
-      TILE_JSON_URL.searchParams.set("raster", CONFIG.raster_name);
-      TILE_JSON_URL.searchParams.set("colormap", colormapJson);
+      const url = new URL(TILE_JSON_URL.toString());
+      url.searchParams.set("colormap", colormapJson);
+
+      if (CONFIG.raster_override) {
+        // Pin a single raster, bypasses the backend's per-zoom tiering entirely.
+        url.searchParams.set("raster", CONFIG.raster_override);
+      } else {
+        // Omitting `raster` lets the backend select the tier by zoom. Advertise
+        // the full zoom span (in titiler/camera-zoom terms) so MapLibre requests
+        // tiles down into the coarse band, not just the range the finest
+        // raster's own overviews would report.
+        url.searchParams.set(
+          "minzoom",
+          MapLibreEngine.toCameraZoom(CONFIG.minimal_zoom),
+        );
+      }
 
       try {
-        const res = await fetch(TILE_JSON_URL.toString());
+        const res = await fetch(url.toString());
         const tj = await res.json();
 
         // A newer request was issued while this one was in flight; its
