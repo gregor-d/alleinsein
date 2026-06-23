@@ -61,7 +61,7 @@ function schemeButtonsHTML(layer) {
         '" title="' +
         name +
         '" style="background:' +
-        buildGradient(name, false) +
+        buildGradient(name, false, { forceFull: true }) +
         '"></button>'
       );
     })
@@ -85,6 +85,17 @@ function applyLayerColor(layer) {
     .forEach(function (b) {
       b.classList.toggle("active", b.dataset.preset === layer.preset);
     });
+}
+
+// Repaints the live gradient swatches (layer bars, tabs and the colour-sheet
+// bar). Needed when hotspot mode toggles, since buildGradient collapses these to
+// a solid swatch in hotspot mode but the backgrounds are baked in at render time.
+// The scheme-picker buttons are intentionally left alone — they always show the
+// full ramp (forceFull) regardless of hotspot mode.
+function repaintAllGradients() {
+  layerState.forEach(function (layer) {
+    applyLayerColor(layer);
+  });
 }
 
 // Data-layer opacity slider row (shared by full panel + mini panel + color sheet).
@@ -355,6 +366,7 @@ function onControlChange(e) {
     syncCheckboxes("hotspot", null, e.target.checked);
     refreshDataLayer();
     updateHotspotTab(hotspotMode);
+    repaintAllGradients();
   }
 
   if (ctrl === "basemap-toggle") {
@@ -602,6 +614,7 @@ function buildLayerStrip() {
         el.checked = hotspotMode;
       });
       refreshDataLayer();
+      repaintAllGradients();
       return;
     }
 
