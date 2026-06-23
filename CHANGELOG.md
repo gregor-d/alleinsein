@@ -1,3 +1,9 @@
+## v1.1.0 (2026-06-23)
+
+### Feat
+
+- enable changelog generation on version bump
+
 ## v1.0.0 (2026-06-23)
 
 ### BREAKING CHANGE
