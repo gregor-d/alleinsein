@@ -914,14 +914,45 @@ body {
   color: var(--c-text-muted);
   margin-top: 2px;
 }
-.search-results .result-empty {
-  text-align: center;
-  color: var(--c-text-muted);
-  font-size: 13px;
-  padding: 14px 0;
-  border: none;
+/* Header row: status/count text on the left, close (×) button on the right.
+   Overrides the generic result-item look (no card background, border or hover). */
+.search-results .result-header,
+.search-results .result-header:hover {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 2px 4px;
   background: transparent;
+  border: none;
   cursor: default;
+}
+.result-status {
+  font-size: 11px;
+  color: var(--c-text-muted);
+}
+.result-close {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--c-text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--t),
+    color var(--t);
+}
+.result-close:hover {
+  background: var(--c-accent-hover);
+  color: var(--c-text);
 }
 
 /* ── MINI QUICK-SETTINGS PANEL ───────────────── */

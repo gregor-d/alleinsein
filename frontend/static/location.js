@@ -65,6 +65,24 @@ function bindLocBtn(id) {
 
 // ─── PLACE SEARCH (geocoding) ─────────────────
 
+// Resets a results list to a single header row carrying a close (×) button that
+// clears the list when clicked. Returns the header so callers can append to it.
+function resetResultsList(list, label) {
+  list.innerHTML = "";
+  var header = document.createElement("li");
+  header.className = "result-header";
+  header.innerHTML =
+    '<span class="result-status">' +
+    (label || "") +
+    "</span>" +
+    '<button type="button" class="result-close" aria-label="Close results">×</button>';
+  header.querySelector(".result-close").addEventListener("click", function () {
+    list.innerHTML = "";
+  });
+  list.appendChild(header);
+  return header;
+}
+
 // Geocodes the query via Nominatim and renders up to 5 matches into the given
 // results list (defaults to the FAB popover's list). Picking a result flies the
 // map there and runs the optional onSelect callback (e.g. close the popover).
@@ -74,7 +92,7 @@ async function doSearch(query, list, onSelect) {
   list = list || document.getElementById("search-popover-results");
   if (!list) return;
 
-  list.innerHTML = '<li class="result-empty">Searching…</li>';
+  resetResultsList(list, "Searching…");
 
   try {
     var url =
@@ -84,11 +102,15 @@ async function doSearch(query, list, onSelect) {
     var res = await fetch(url, { headers: { "Accept-Language": "de" } });
     var data = await res.json();
 
-    list.innerHTML = "";
     if (!data || !data.length) {
-      list.innerHTML = '<li class="result-empty">No results found.</li>';
+      resetResultsList(list, "No results found.");
       return;
     }
+
+    resetResultsList(
+      list,
+      data.length + (data.length === 1 ? " result" : " results"),
+    );
 
     data.forEach(function (item) {
       var parts = item.display_name.split(",");
@@ -116,6 +138,6 @@ async function doSearch(query, list, onSelect) {
     });
   } catch (err) {
     console.warn("Search failed:", err);
-    list.innerHTML = '<li class="result-empty">Search failed.</li>';
+    resetResultsList(list, "Search failed.");
   }
 }

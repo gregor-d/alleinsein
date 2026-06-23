@@ -307,6 +307,9 @@ function buildPanelHTML() {
     '  <button class="btn-go" data-ctrl="location-go">Go</button>',
     "</div>",
     '<ul class="search-results" data-ctrl="location-results"></ul>',
+    "</div>",
+
+    '<div class="sub-card">',
     '<button class="btn-full" data-ctrl="my-location">',
     '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
     "  My Location",
@@ -502,17 +505,15 @@ function onControlClick(e) {
 }
 
 // Runs a search from the settings-panel LOCATION section, rendering results
-// into that section's own list and closing the panel once a result is picked.
+// into that section's own list. Picking a result flies the map there but leaves
+// the panel (and the results list) open — the list has its own close button.
 function runPanelSearch(input) {
   if (!input || !input.value.trim()) return;
   var card = input.closest(".sub-card");
   var results = card
     ? card.querySelector('[data-ctrl="location-results"]')
     : null;
-  doSearch(input.value.trim(), results, function () {
-    if (results) results.innerHTML = "";
-    closePanel();
-  });
+  doSearch(input.value.trim(), results);
 }
 
 // Enter key on location inputs
