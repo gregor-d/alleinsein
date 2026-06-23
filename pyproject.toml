@@ -40,4 +40,4 @@ tag_format = "v$version"
 version_files = [
     "backend/_version.py:^__version__",
 ]
-update_changelog_on_bump = false
+update_changelog_on_bump = true

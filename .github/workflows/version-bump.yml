@@ -24,7 +24,7 @@ jobs:
         uses: commitizen-tools/commitizen-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          changelog: false
+          changelog: true
           no_raise: 21
           check_consistency: true
 
