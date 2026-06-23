@@ -872,6 +872,57 @@ body {
 .search-popover-inner input::placeholder {
   color: var(--c-text-muted);
 }
+.search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.search-results:empty {
+  display: none;
+}
+.search-results:not(:empty) {
+  padding-bottom: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.search-results li {
+  padding: 8px 10px;
+  background: var(--c-button);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition:
+    background var(--t),
+    border-color var(--t);
+}
+.search-results li:hover {
+  background: var(--c-accent-hover);
+  border-color: var(--c-accent);
+}
+.search-results .result-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text);
+}
+.search-results .result-detail {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--c-text-muted);
+  margin-top: 2px;
+}
+.search-results .result-empty {
+  text-align: center;
+  color: var(--c-text-muted);
+  font-size: 13px;
+  padding: 14px 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
 
 /* ── MINI QUICK-SETTINGS PANEL ───────────────── */
 /* Opens to the LEFT of the settings FAB (bottom of the fab-group). */

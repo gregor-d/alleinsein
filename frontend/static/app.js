@@ -306,6 +306,7 @@ function buildPanelHTML() {
     '  <input type="text" data-ctrl="location-input" placeholder="Search location…" autocomplete="off">',
     '  <button class="btn-go" data-ctrl="location-go">Go</button>',
     "</div>",
+    '<ul class="search-results" data-ctrl="location-results"></ul>',
     '<button class="btn-full" data-ctrl="my-location">',
     '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
     "  My Location",
@@ -494,11 +495,24 @@ function onControlClick(e) {
   }
 
   if (ctrl === "location-go") {
-    var input = btn.parentElement.querySelector('[data-ctrl="location-input"]');
-    if (input && input.value.trim()) {
-      doSearch(input.value.trim());
-    }
+    runPanelSearch(
+      btn.parentElement.querySelector('[data-ctrl="location-input"]'),
+    );
   }
+}
+
+// Runs a search from the settings-panel LOCATION section, rendering results
+// into that section's own list and closing the panel once a result is picked.
+function runPanelSearch(input) {
+  if (!input || !input.value.trim()) return;
+  var card = input.closest(".sub-card");
+  var results = card
+    ? card.querySelector('[data-ctrl="location-results"]')
+    : null;
+  doSearch(input.value.trim(), results, function () {
+    if (results) results.innerHTML = "";
+    closePanel();
+  });
 }
 
 // Enter key on location inputs
@@ -506,10 +520,16 @@ document.addEventListener("keydown", function (e) {
   if (e.key !== "Enter") return;
   var ctrl = e.target.dataset.ctrl;
   if (ctrl === "location-input") {
-    if (e.target.value.trim()) doSearch(e.target.value.trim());
+    runPanelSearch(e.target);
   }
   if (e.target.id === "search-popover-input") {
-    if (e.target.value.trim()) doSearch(e.target.value.trim());
+    if (e.target.value.trim()) {
+      doSearch(
+        e.target.value.trim(),
+        document.getElementById("search-popover-results"),
+        hideSearchPopover,
+      );
+    }
   }
 });
 
@@ -878,7 +898,13 @@ function wireSearch() {
   if (goBtn) {
     goBtn.addEventListener("click", function () {
       var input = document.getElementById("search-popover-input");
-      if (input && input.value.trim()) doSearch(input.value.trim());
+      if (input && input.value.trim()) {
+        doSearch(
+          input.value.trim(),
+          document.getElementById("search-popover-results"),
+          hideSearchPopover,
+        );
+      }
     });
   }
 
@@ -905,6 +931,8 @@ function toggleSearchPopover() {
 function hideSearchPopover() {
   var pop = document.getElementById("search-popover");
   if (pop) pop.setAttribute("hidden", "");
+  var results = document.getElementById("search-popover-results");
+  if (results) results.innerHTML = "";
 }
 
 // ─── LOCATION BUTTON ──────────────────────────

@@ -65,22 +65,57 @@ function bindLocBtn(id) {
 
 // ─── PLACE SEARCH (geocoding) ─────────────────
 
-async function doSearch(query) {
+// Geocodes the query via Nominatim and renders up to 5 matches into the given
+// results list (defaults to the FAB popover's list). Picking a result flies the
+// map there and runs the optional onSelect callback (e.g. close the popover).
+async function doSearch(query, list, onSelect) {
   if (!query || !mapEngine) return;
+
+  list = list || document.getElementById("search-popover-results");
+  if (!list) return;
+
+  list.innerHTML = '<li class="result-empty">Searching…</li>';
+
   try {
     var url =
       "https://nominatim.openstreetmap.org/search?q=" +
       encodeURIComponent(query) +
-      "&format=json&limit=1&countrycodes=de&email=kontakt@alleinseinkarte.de";
+      "&format=json&limit=5&countrycodes=de&email=kontakt@alleinseinkarte.de";
     var res = await fetch(url, { headers: { "Accept-Language": "de" } });
     var data = await res.json();
-    if (data && data.length > 0) {
-      var lon = parseFloat(data[0].lon);
-      var lat = parseFloat(data[0].lat);
-      mapEngine.flyTo([lon, lat], CONFIG.location_zoom);
-      hideSearchPopover();
+
+    list.innerHTML = "";
+    if (!data || !data.length) {
+      list.innerHTML = '<li class="result-empty">No results found.</li>';
+      return;
     }
+
+    data.forEach(function (item) {
+      var parts = item.display_name.split(",");
+      var li = document.createElement("li");
+      li.innerHTML =
+        '<div class="result-name">' +
+        parts[0].trim() +
+        "</div>" +
+        '<div class="result-detail">' +
+        parts
+          .slice(1, 3)
+          .map(function (s) {
+            return s.trim();
+          })
+          .join(", ") +
+        "</div>";
+      li.addEventListener("click", function () {
+        mapEngine.flyTo(
+          [parseFloat(item.lon), parseFloat(item.lat)],
+          CONFIG.location_zoom,
+        );
+        if (typeof onSelect === "function") onSelect();
+      });
+      list.appendChild(li);
+    });
   } catch (err) {
     console.warn("Search failed:", err);
+    list.innerHTML = '<li class="result-empty">Search failed.</li>';
   }
 }
