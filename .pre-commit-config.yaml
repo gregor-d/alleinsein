@@ -50,7 +50,7 @@ repos:
 
       - id: frontend-tests
         name: frontend tests
-        entry: uv run --active pytest tests/test_map_frontend.py tests/test_titiler.py tests/test_env.py
+        entry: uv run --active pytest tests --ignore=tests/benchmark
         language: system
         pass_filenames: false
         stages:

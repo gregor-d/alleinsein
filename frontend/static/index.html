@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alleinseinkarte</title>
+    <meta
+      name="description"
+      content="Map of places with low population density in Germany"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="config.js"></script>
+    <script src="geolocation.js"></script>
+    <script src="map.js"></script>
+    <script src="shared.js"></script>
+  </head>
+
+  <body>
+    <!-- Top bar -->
+    <header id="top-bar">
+      <span class="site-name">Alleinseinkarte</span>
+      <nav class="top-nav">
+        <a href="/impressum.html">Impressum</a>
+        <a href="mailto:kontakt@alleinseinkarte.de">Contact</a>
+        <button id="theme-toggle" class="icon-btn" aria-label="Switch theme">
+          <svg
+            class="icon-sun"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+            />
+          </svg>
+          <svg
+            class="icon-moon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- Settings cog (top-right of map, FAB style) -->
+    <button class="fab" id="settings-cog" aria-label="Settings">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="3"></circle>
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+        ></path>
+      </svg>
+    </button>
+
+    <!-- Settings panel (desktop sidebar / mobile bottom sheet) -->
+    <aside id="settings-panel" aria-label="Map settings"></aside>
+
+    <!-- FAB group -->
+    <div id="fab-group">
+      <!-- Overlay openers (round) -->
+      <button class="fab" id="fab-search" aria-label="Search location">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21L16.65 16.65" />
+        </svg>
+      </button>
+
+      <!-- Direct map-engine controls (connected capsule) -->
+      <div class="ctrl-rail" role="group" aria-label="Map controls">
+        <button class="ctrl-btn" id="ctrl-zoom-in" aria-label="Zoom in">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+        <button class="ctrl-btn" id="ctrl-zoom-out" aria-label="Zoom out">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M5 12h14" />
+          </svg>
+        </button>
+        <button class="ctrl-btn" id="fab-location" aria-label="My location">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+          </svg>
+        </button>
+        <button
+          class="ctrl-btn"
+          id="fab-measure"
+          aria-label="Measure distance"
+          aria-pressed="false"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="2" y="8" width="20" height="8" rx="1" />
+            <path d="M6 8v3M10 8v4M14 8v3M18 8v4" />
+          </svg>
+        </button>
+      </div>
+
+      <button class="fab" id="fab-settings" aria-label="Quick settings">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile bottom layer strip -->
+    <div id="bottom-bar">
+      <div id="layer-strip"></div>
+    </div>
+
+    <!-- Mini quick-settings popover (opened by settings FAB) -->
+    <div id="mini-panel" hidden></div>
+
+    <!-- Location prompt popup (one-time per session) -->
+    <div id="location-prompt">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 2L19 21L12 18L5 21Z" />
+      </svg>
+      <span>Go to your location?</span>
+      <button id="location-prompt-yes" class="btn-go">Yes</button>
+      <button id="location-prompt-no" class="icon-btn" aria-label="Close">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Colormap preset picker (mobile bottom-bar color-ramp sheet) -->
+    <div id="color-sheet">
+      <div id="color-sheet-header"></div>
+      <div id="color-sheet-body"></div>
+    </div>
+    <div id="color-sheet-backdrop" hidden></div>
+
+    <!-- Search popover (shared by FAB + panel) -->
+    <div id="search-popover" hidden>
+      <div class="search-popover-inner">
+        <input
+          type="text"
+          id="search-popover-input"
+          placeholder="Search location…"
+          autocomplete="off"
+        />
+        <button class="btn-go" id="search-popover-go">Go</button>
+        <button class="icon-btn" id="search-popover-close" aria-label="Close">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
