@@ -1,3 +1,11 @@
+## v1.2.0 (2026-06-23)
+
+### Feat
+
+- enhance location search results with a header and close button
+- implement location search functionality with results display
+- enable changelog generation on version bump
+
 ## v1.1.0 (2026-06-23)
 
 ### Feat
