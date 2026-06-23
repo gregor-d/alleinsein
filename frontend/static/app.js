@@ -306,6 +306,10 @@ function buildPanelHTML() {
     '  <input type="text" data-ctrl="location-input" placeholder="Search location…" autocomplete="off">',
     '  <button class="btn-go" data-ctrl="location-go">Go</button>',
     "</div>",
+    '<ul class="search-results" data-ctrl="location-results"></ul>',
+    "</div>",
+
+    '<div class="sub-card">',
     '<button class="btn-full" data-ctrl="my-location">',
     '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
     "  My Location",
@@ -494,11 +498,22 @@ function onControlClick(e) {
   }
 
   if (ctrl === "location-go") {
-    var input = btn.parentElement.querySelector('[data-ctrl="location-input"]');
-    if (input && input.value.trim()) {
-      doSearch(input.value.trim());
-    }
+    runPanelSearch(
+      btn.parentElement.querySelector('[data-ctrl="location-input"]'),
+    );
   }
+}
+
+// Runs a search from the settings-panel LOCATION section, rendering results
+// into that section's own list. Picking a result flies the map there but leaves
+// the panel (and the results list) open — the list has its own close button.
+function runPanelSearch(input) {
+  if (!input || !input.value.trim()) return;
+  var card = input.closest(".sub-card");
+  var results = card
+    ? card.querySelector('[data-ctrl="location-results"]')
+    : null;
+  doSearch(input.value.trim(), results);
 }
 
 // Enter key on location inputs
@@ -506,10 +521,16 @@ document.addEventListener("keydown", function (e) {
   if (e.key !== "Enter") return;
   var ctrl = e.target.dataset.ctrl;
   if (ctrl === "location-input") {
-    if (e.target.value.trim()) doSearch(e.target.value.trim());
+    runPanelSearch(e.target);
   }
   if (e.target.id === "search-popover-input") {
-    if (e.target.value.trim()) doSearch(e.target.value.trim());
+    if (e.target.value.trim()) {
+      doSearch(
+        e.target.value.trim(),
+        document.getElementById("search-popover-results"),
+        hideSearchPopover,
+      );
+    }
   }
 });
 
@@ -870,14 +891,21 @@ function hideMiniPanel() {
   if (mp) mp.setAttribute("hidden", "");
 }
 
-// ─── SEARCH ───────────────────────────────────
+// ─── SEARCH UI ────────────────────────────────
+// The geocoding lookup itself (doSearch) lives in location.js.
 
 function wireSearch() {
   var goBtn = document.getElementById("search-popover-go");
   if (goBtn) {
     goBtn.addEventListener("click", function () {
       var input = document.getElementById("search-popover-input");
-      if (input && input.value.trim()) doSearch(input.value.trim());
+      if (input && input.value.trim()) {
+        doSearch(
+          input.value.trim(),
+          document.getElementById("search-popover-results"),
+          hideSearchPopover,
+        );
+      }
     });
   }
 
@@ -904,26 +932,8 @@ function toggleSearchPopover() {
 function hideSearchPopover() {
   var pop = document.getElementById("search-popover");
   if (pop) pop.setAttribute("hidden", "");
-}
-
-async function doSearch(query) {
-  if (!query || !mapEngine) return;
-  try {
-    var url =
-      "https://nominatim.openstreetmap.org/search?q=" +
-      encodeURIComponent(query) +
-      "&format=json&limit=1&countrycodes=de&email=kontakt@alleinseinkarte.de";
-    var res = await fetch(url, { headers: { "Accept-Language": "de" } });
-    var data = await res.json();
-    if (data && data.length > 0) {
-      var lon = parseFloat(data[0].lon);
-      var lat = parseFloat(data[0].lat);
-      mapEngine.flyTo([lon, lat], CONFIG.location_zoom);
-      hideSearchPopover();
-    }
-  } catch (err) {
-    console.warn("Search failed:", err);
-  }
+  var results = document.getElementById("search-popover-results");
+  if (results) results.innerHTML = "";
 }
 
 // ─── LOCATION BUTTON ──────────────────────────
