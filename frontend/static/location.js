@@ -31,6 +31,7 @@ function showLocationPrompt() {
   };
 
   document.getElementById("location-prompt-no").onclick = dismiss;
+  document.getElementById("location-prompt-no-btn").onclick = dismiss;
 
   prompt.classList.add("open");
 }

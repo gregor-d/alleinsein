@@ -85,13 +85,34 @@ body {
   padding: 0 14px;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
 .site-name {
   font-family: var(--font-brand);
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--c-text);
-  flex: 1;
+}
+
+.brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-text-muted);
+  transition: color var(--t);
+}
+.brand-icon:hover {
+  color: var(--c-text);
+}
+.brand-icon svg {
+  width: 17px;
+  height: 17px;
 }
 
 .top-nav {
@@ -550,6 +571,37 @@ body {
 .btn-full svg {
   width: 14px;
   height: 14px;
+  flex-shrink: 0;
+}
+
+/* ── PANEL FOOTER (pinned to bottom of panel) ── */
+.panel-footer {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+/* ── PANEL LINKS (About section) ─────────────── */
+.panel-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 4px;
+  color: var(--c-text);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  text-decoration: none;
+  /* border-radius: var(--r-sm); */
+  transition: color var(--t);
+}
+.panel-link + .panel-link {
+  border-top: 1px solid var(--c-border);
+}
+.panel-link:hover {
+  color: var(--c-accent);
+}
+.panel-link svg {
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 
@@ -1324,6 +1376,28 @@ body {
 }
 #location-prompt .btn-go {
   padding: 4px 11px;
+}
+
+.btn-ghost {
+  padding: 4px 11px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  background: var(--c-button);
+  color: var(--c-text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    background var(--t),
+    color var(--t),
+    border-color var(--t);
+}
+.btn-ghost:hover {
+  background: var(--c-button);
+  color: var(--c-text);
 }
 
 /* ── FOCUS VISIBLE ───────────────────────────── */
