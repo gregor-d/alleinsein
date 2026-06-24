@@ -1,3 +1,9 @@
+## v2.1.0 (2026-06-24)
+
+### Feat
+
+- add data-layer raster source mode default config tiering
+
 ## v2.0.0 (2026-06-24)
 
 ### Feat
