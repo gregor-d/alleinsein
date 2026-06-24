@@ -38,6 +38,7 @@ htmlcov/
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Editor settings
 .vscode/*
@@ -58,5 +59,4 @@ Thumbs.db
 
 # UV specific environment files
 uv.lock
-input_data/transformed/raster_stack_dataframe.csv
 cloud-config.env.txt

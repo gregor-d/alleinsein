@@ -44,7 +44,7 @@ repos:
         name: prettier check
         entry: npx --yes prettier --check
         language: system
-        files: ^frontend/static/.*\.(html|css|js|json)$
+        files: ^(frontend/static|docs)/.*\.(html|css|js|json|md)$
         stages:
           - pre-commit
 

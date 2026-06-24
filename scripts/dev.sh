@@ -17,7 +17,7 @@ bash "$(dirname "$0")/smoke-test.sh"
 npx --yes browser-sync start \
   --server frontend/static \
   --files "frontend/static/**/*" \
-  --port 5173 --no-ui --no-open --host 127.0.0.1 &
+  --port 5173 --host 127.0.0.1 &
 frontend_pid=$!
 
 wait

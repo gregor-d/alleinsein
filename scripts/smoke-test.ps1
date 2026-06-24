@@ -8,7 +8,7 @@ $BaseUrl = $BaseUrl.TrimEnd("/")
 $urls = @(
     "$BaseUrl/healthz"
     "$BaseUrl/tiles/WebMercatorQuad/0/0/0?raster=test_raster.tif"
-    "$BaseUrl/tiles/WebMercatorQuad/0/0/0?raster=germany_raster_v3.tif"
+    "$BaseUrl/tiles/WebMercatorQuad/0/0/0"
 )
 
 foreach ($url in $urls) {

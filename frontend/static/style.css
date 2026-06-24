@@ -6,7 +6,7 @@
 :root {
   --c-bg: rgb(255, 255, 255);
   /* backgroung top bar bottom bar, input panel */
-  --c-surface: rgb(245, 245, 245);
+  --c-surface: rgb(235, 235, 235);
   /* surface of sub panels with interactive elements */
   --c-button: rgb(215, 215, 215);
   /* inactive bg surface of buttons */
@@ -36,9 +36,9 @@
 
 [data-theme="dark"] {
   --c-bg: rgb(0, 0, 0);
-  --c-surface: rgb(15, 15, 15);
-  --c-button: rgb(30, 30, 30);
-  --c-border: rgba(255, 255, 255, 0.496);
+  --c-surface: rgb(20, 20, 20);
+  --c-button: rgb(40, 40, 40);
+  --c-border: rgba(255, 255, 255, 0.205);
   --c-text: rgb(255, 255, 255);
   --c-text-muted: rgb(180, 180, 180);
   --c-text-hi: rgb(0, 0, 0);
@@ -419,6 +419,17 @@ body {
 }
 .sub-label-row .sub-label {
   margin-bottom: 0;
+}
+.raster-source-row {
+  margin-top: 10px;
+}
+.raster-source-row .btn-group {
+  flex-wrap: nowrap;
+}
+.raster-source-row .seg-btn {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  font-size: 11px;
 }
 
 /* ── BUTTON GROUP ────────────────────────────── */
@@ -966,7 +977,7 @@ body {
   max-height: 64vh;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--c-surface);
+  background: var(--c-bg);
   border: 1px solid var(--c-border);
   border-radius: var(--r);
   box-shadow: 0 6px 28px var(--c-shadow);

@@ -8,34 +8,45 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    # use ./backend/.env.example to create env-file for dev-mode
+    env_file:
+      - path: ./.env
+        required: false
     environment:
       # GDAL config
       - CPL_TMPDIR=/tmp
       - GDAL_CACHEMAX=256
-      # - GDAL_CACHEMAX=512
       - GDAL_INGESTED_BYTES_AT_OPEN=32768
       - GDAL_DISABLE_READDIR_ON_OPEN=EMPTY_DIR
-      # - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES
-      # GDAL_HTTP_MULTIPLEX: "YES"
-      # GDAL_HTTP_VERSION: "2"
-      # - PYTHONWARNINGS=ignore
       - VSI_CACHE=TRUE
       - VSI_CACHE_SIZE=268435456
-      # - VSI_CACHE_SIZE=518435456
-      # App overrides here win over backend/${APP_ENV:-prod}.env.
-      # APP_ENABLE_DOCS: "false"
-      # APP_ALLOWED_TMS: "WebMercatorQuad"
+      # - GDAL_HTTP_MERGE_CONSECUTIVE_RANGES=YES
+      # - GDAL_HTTP_MULTIPLEX: "YES"
+      # - GDAL_HTTP_VERSION: "2"
+      # - PYTHONWARNINGS=ignore
 
     volumes:
-      - ./backend:/backend
       - ./raster/out:/raster/out
 
-    # run uvicorn app
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips "*"
+    # Start command is the image default (see CMD in dockerfile/Dockerfile).
+    # Override for development (auto-reload, single worker) with:
+    # command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    # command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips "*"
 
-    healthcheck:
-      test: ["CMD", "bash", "/scripts/smoke-test.sh"]
-      interval: 120s
-      timeout: 10s
-      retries: 2
-      start_period: 15s
+  smoke-test:
+    image: base_alleinsein
+    depends_on:
+      - tiler
+    restart: "no"
+    # Wait for the tiler to answer, then run the smoke test against it. smoke-test.sh
+    # itself has no retry, so poll /healthz first to avoid a startup race.
+    command:
+      - bash
+      - -c
+      - |
+        sleep 3
+        for _ in $(seq 1 60); do
+          curl -fsS http://tiler:8000/healthz && break
+          sleep 1
+        done
+        exec bash /scripts/smoke-test.sh http://tiler:8000

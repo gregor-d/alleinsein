@@ -82,7 +82,10 @@ function getCombinedColormapJson() {
 
     const colors = resolveColors(layer.preset, layer.reverse);
     if (hotspotMode) {
+      // Hotspot mode highlights the two highest buckets, each in its own colour.
       cmap[layer.start] = hexToRgba(colors[0]);
+      // cmap[layer.start + 1] = hexToRgba(colors[1]);
+      cmap[layer.start + 1] = hexToRgba(colors[0]);
     } else {
       colors.forEach(function (color, i) {
         cmap[layer.start + i] = hexToRgba(color);
