@@ -211,7 +211,7 @@ class MapLibreEngine {
       const url = new URL(TILE_JSON_URL.toString());
       url.searchParams.set("colormap", colormapJson);
 
-      if (CONFIG.raster_override) {
+      if (useRasterOverride && CONFIG.raster_override) {
         // Pin a single raster, bypasses the backend's per-zoom tiering entirely.
         url.searchParams.set("raster", CONFIG.raster_override);
       } else {

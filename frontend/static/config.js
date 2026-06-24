@@ -200,6 +200,7 @@ let basemapOpacity = 0.8;
 let dataLayerOpacity = 1.0;
 let boundsSet = false;
 let hotspotMode = false;
+let useRasterOverride = Boolean(CONFIG.raster_override);
 
 let activeOverlays = {
   hiking: false,

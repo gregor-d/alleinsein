@@ -115,6 +115,26 @@ function dataOpacityRowHTML(label) {
 }
 
 // BACKEND block: map engine, basemap (+ opacity), overlays (shared by full + mini panel).
+// Data-layer raster source switch (single pinned raster vs. backend zoom-tiering).
+// Only meaningful when a raster_override is configured; otherwise the backend
+// always tiers by zoom, so the switch is omitted.
+function rasterSourceRowHTML() {
+  if (!CONFIG.raster_override) return "";
+  return [
+    '<div class="sub-label-row raster-source-row">',
+    '  <div class="sub-label">Source</div>',
+    '  <div class="btn-group">',
+    '    <button class="seg-btn' +
+      (useRasterOverride ? " active" : "") +
+      '" data-ctrl="raster-mode" data-raster-mode="override">Single</button>',
+    '    <button class="seg-btn' +
+      (!useRasterOverride ? " active" : "") +
+      '" data-ctrl="raster-mode" data-raster-mode="tiers">Zoom Tiers</button>',
+    "  </div>",
+    "</div>",
+  ].join("\n");
+}
+
 function backendSectionHTML() {
   var basemapOpacityVal = Math.round(basemapOpacity * 100);
   var basemapEnabled = activeBasemapKey !== "none";
@@ -179,8 +199,10 @@ function buildMiniPanelHTML() {
     "  </button>",
     "</div>",
     '<div class="section-label">DATA LAYER</div>',
+    '<div class="sub-card">',
     dataOpacityRowHTML("Opacity"),
-    '<div class="divider"></div>',
+    rasterSourceRowHTML(),
+    "</div>",
     backendSectionHTML(),
   ].join("\n");
 }
@@ -283,21 +305,16 @@ function buildPanelHTML() {
     "  </div>",
     "</div>",
 
-    '<div class="divider"></div>',
-
     "<!-- Data layers -->",
     '<div class="section-label">DATA LAYERS</div>',
     '<div class="sub-card">',
     layersHTML,
     dataOpacityRowHTML("Opacity"),
+    rasterSourceRowHTML(),
     "</div>",
-
-    '<div class="divider"></div>',
 
     "<!-- Backend -->",
     backendSectionHTML(),
-
-    '<div class="divider"></div>',
 
     "<!-- Location -->",
     '<div class="section-label">LOCATION</div>',
@@ -482,6 +499,12 @@ function onControlClick(e) {
         el.checked = true;
       });
     if (mapEngine) mapEngine.switchBasemap(bm);
+  }
+
+  if (ctrl === "raster-mode") {
+    useRasterOverride = btn.dataset.rasterMode === "override";
+    syncActiveBtn("raster-mode", btn.dataset.rasterMode);
+    refreshDataLayer();
   }
 
   if (ctrl === "overlay") {
