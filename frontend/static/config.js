@@ -9,7 +9,7 @@ const CONFIG = {
   tile_size: 512,
   // Optional: pin a single raster (e.g. "germany_raster_v3.tif") bypassing the backend's per-zoom
   // tiering. Leave null/empty to let the backend tier by zoom (the default).
-  raster_override: null,
+  raster_override: "germany_raster_v3.tif",
   mask_opacity: 0.45,
   mask_color: "#111111",
   measure_color: "#e6007e",
