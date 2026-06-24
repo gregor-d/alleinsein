@@ -1,37 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Large-scale ("coarse") overview rasters — a LADDER, one COG per resolution.
-#
-# Mirrors create_raster.sh but at each resolution in RESOLUTIONS: it resamples
-# the already-smoothed roads heatmap onto the coarse grid, brings the CLC
-# land-cover raster onto the same grid, then applies the identical encoding as
-# the fine raster so the same frontend renderer can consume every tier.
-#
-# The resolutions are a doubling ladder anchored on the 20m fine raster (each is
-# 2^k * 20m). That makes every coarse grid a clean multiple of the fine grid (so
-# they nest without sub-pixel drift) and lands each one slippy zoom apart, where
-# it renders pixel-native. Resolution -> slippy zoom (Germany, ~51N) -> backend
-# raster_tiers max_zoom (titiler z = slippy - 1):
-#   1280m s6 -> z5    640m s7 -> z6    320m s8 -> z7
-#    160m s9 -> z8     80m s10 -> z9    40m  s11 -> z10
-#     20m (fine) s>=12 -> z99
-# Keep backend/main.py raster_tiers in sync with this list.
-#
-# Roads remoteness is mean-resampled then restretched back to 1-10 (the most
-# faithful "typical remoteness", on a relative scale); CLC land cover is
-# resampled by mode to keep the one-hot invariant. This is the faithful (and
-# pricier) coarse path; upsample_coarse_raster.sh is the cheap nearest-resample
-# sibling. Both write the same ${AREA}_${res}m_${VERSION_TAG}.tif names.
-
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=utils/load_raster_config.sh
 source "${SCRIPT_DIR}/utils/load_raster_config.sh"
 
-# Coarse resolutions to build, in metres. Supersedes the single
-# COARSE_RESOLUTION from raster.conf. Doubling ladder anchored on the 20m fine
-# raster (2^k * 20m); see the header for the resolution -> zoom mapping.
 RESOLUTIONS=(160 320 640 1280)
 
 # Version tag shared by the fine raster and the coarse outputs it feeds.
@@ -49,8 +22,6 @@ for f in "$roads_smooth" "$clc_classified" "$bounds_gpkg"; do
   fi
 done
 
-# output naming, keyed by resolution (matches upsample_coarse_raster.sh:
-# ${AREA}_${res}m_${VERSION_TAG}.tif). Re-runs overwrite via $OVERWRITE.
 output_dir="${SCRIPT_DIR}/out"
 
 # intermediate files, cleaned up on exit
@@ -86,8 +57,6 @@ for res in "${RESOLUTIONS[@]}"; do
   echo "-------------------------------------------------------"
 
   echo "Resampling CLC classes to coarse grid (mode)..."
-  # Land cover is categorical -> mode picks the dominant class per coarse cell,
-  # which keeps the one-hot invariant the encoding relies on intact.
   gdal raster pipeline \
     "!" read "$clc_classified" \
     "!" reproject --resolution "$res_pair" -r mode --target-aligned-pixels \
