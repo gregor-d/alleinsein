@@ -13,7 +13,7 @@ do {
 & "$PSScriptRoot\smoke-test.ps1"
 
 $frontend = Start-Process cmd `
-  -ArgumentList "/c npx --yes browser-sync start --server frontend/static --files `"frontend/static/**/*`" --port 5173 --no-ui --no-open --host 127.0.0.1" `
+  -ArgumentList "/c npx --yes browser-sync start --server frontend/static --files `"frontend/static/**/*`" --port 5173 --host 127.0.0.1" `
   -PassThru -NoNewWindow
 
 try {
