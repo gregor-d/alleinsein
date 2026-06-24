@@ -1,3 +1,9 @@
+## v2.2.0 (2026-06-24)
+
+### Feat
+
+- add LinkedIn and GitHub links to header and panel footer
+
 ## v2.1.0 (2026-06-24)
 
 ### Feat
