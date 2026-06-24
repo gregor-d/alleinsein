@@ -56,7 +56,6 @@ def synthetic_tiers(monkeypatch):
     monkeypatch.setattr(main.settings, "raster_file_z6", "coarse.tif")
     monkeypatch.setattr(main.settings, "raster_file_z7", "mid.tif")
     monkeypatch.setattr(main.settings, "raster_file_z8", "midfine.tif")
-    monkeypatch.setattr(main.settings, "raster_file_z9", "finer.tif")
     monkeypatch.setattr(main.settings, "raster_file_z99", "fine.tif")
 
 
@@ -67,7 +66,6 @@ def synthetic_tiers(monkeypatch):
         (6, "coarse.tif"),  # exactly on the first break (6)
         (7, "mid.tif"),  # on the second break (7)
         (8, "midfine.tif"),  # on the third break (8)
-        (9, "finer.tif"),  # on the fourth break (9)
         (10, "fine.tif"),  # past the last finite break → finest tier
         (99, "fine.tif"),  # on the last break (99)
         (500, "fine.tif"),  # above the last break → still the finest tier
@@ -133,7 +131,6 @@ def test_env_example_sets_all_settings(monkeypatch):
     assert settings.raster_file_z6 == "germany_1280m_v3.tif"
     assert settings.raster_file_z7 == "germany_640m_v3.tif"
     assert settings.raster_file_z8 == "germany_320m_v3.tif"
-    assert settings.raster_file_z9 == "germany_160m_v3.tif"
     assert settings.raster_file_z99 == "germany_20m_v3.tif"
     assert settings.enable_docs is True
     assert settings.add_preview is True

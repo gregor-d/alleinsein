@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     raster_file_z6: str = "germany_1280m_v3.tif"
     raster_file_z7: str = "germany_640m_v3.tif"
     raster_file_z8: str = "germany_320m_v3.tif"
-    raster_file_z9: str = "germany_160m_v3.tif"
     raster_file_z99: str = "germany_20m_v3.tif"
 
     @property
@@ -47,7 +46,6 @@ class Settings(BaseSettings):
             RasterTier(raster=self.raster_file_z6, max_zoom=6),
             RasterTier(raster=self.raster_file_z7, max_zoom=7),
             RasterTier(raster=self.raster_file_z8, max_zoom=8),
-            RasterTier(raster=self.raster_file_z9, max_zoom=9),
             RasterTier(raster=self.raster_file_z99, max_zoom=99),
         ]
 
