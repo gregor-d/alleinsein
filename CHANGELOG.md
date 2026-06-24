@@ -1,3 +1,19 @@
+## v2.0.0 (2026-06-24)
+
+### Feat
+
+- implement raster source switch for data layers
+- set default raster override to germany_raster_v3.tif for backwards compatibility
+- add script for generating coarse overview rasters with COG output
+- add support for raster tier 9 in settings and tests
+- enhance Docker setup with environment file support and improved smoke tests
+- implement raster tier selection and configuration in backend and frontend
+- hotspot mode shows the two largest values
+
+### Refactor
+
+- remove raster_file_z9 from environment settings and tests
+
 ## v1.2.0 (2026-06-23)
 
 ### Feat
