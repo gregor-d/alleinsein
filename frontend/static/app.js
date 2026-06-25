@@ -122,28 +122,28 @@ function rasterSourceRowHTML() {
   if (!CONFIG.raster_override) return "";
   return [
     '<div class="sub-label-row raster-source-row">',
-    '  <div class="sub-label">Source</div>',
+    '  <div class="sub-label">Detail</div>',
     '  <div class="btn-group">',
     '    <button class="seg-btn' +
       (useRasterOverride ? " active" : "") +
-      '" data-ctrl="raster-mode" data-raster-mode="override">Single</button>',
+      '" data-ctrl="raster-mode" data-raster-mode="override">Fine</button>',
     '    <button class="seg-btn' +
       (!useRasterOverride ? " active" : "") +
-      '" data-ctrl="raster-mode" data-raster-mode="tiers">Zoom Tiers</button>',
+      '" data-ctrl="raster-mode" data-raster-mode="tiers">Auto</button>',
     "  </div>",
     "</div>",
   ].join("\n");
 }
 
-function backendSectionHTML() {
+function backendSectionHTML(showLabel) {
   var basemapOpacityVal = Math.round(basemapOpacity * 100);
   var basemapEnabled = activeBasemapKey !== "none";
   return [
-    '<div class="section-label">BACKEND</div>',
+    showLabel === false ? "" : '<div class="section-label">Map Style</div>',
 
     '<div class="sub-card">',
     '  <div class="sub-label-row">',
-    '    <div class="sub-label">BASEMAP</div>',
+    '    <div class="sub-label">Background Map</div>',
     '    <label class="toggle">',
     '      <input type="checkbox" data-ctrl="basemap-toggle" ' +
       (basemapEnabled ? "checked" : "") +
@@ -176,7 +176,7 @@ function backendSectionHTML() {
     "</div>",
 
     '<div class="sub-card">',
-    '  <div class="sub-label">OVERLAYS</div>',
+    '  <div class="sub-label">Trail Overlays</div>',
     '  <div class="btn-group">',
     '    <button class="seg-btn' +
       (activeOverlays.hiking ? " toggled" : "") +
@@ -198,12 +198,11 @@ function buildMiniPanelHTML() {
     '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
     "  </button>",
     "</div>",
-    '<div class="section-label">DATA LAYER</div>',
     '<div class="sub-card">',
-    dataOpacityRowHTML("Opacity"),
+    '  <div class="sub-label">Aloneness Map</div>',
     rasterSourceRowHTML(),
     "</div>",
-    backendSectionHTML(),
+    backendSectionHTML(false),
   ].join("\n");
 }
 
@@ -269,17 +268,7 @@ function buildPanelHTML() {
   return [
     "<!-- Panel header -->",
     '<div class="panel-header">',
-    '  <div class="theme-switch">',
-    '    <span class="theme-switch-label">THEME</span>',
-    '    <div class="btn-group">',
-    '      <button class="seg-btn' +
-      (currentTheme === "light" ? " active" : "") +
-      '" data-ctrl="theme" data-theme="light">Light</button>',
-    '      <button class="seg-btn' +
-      (currentTheme === "dark" ? " active" : "") +
-      '" data-ctrl="theme" data-theme="dark">Dark</button>',
-    "    </div>",
-    "  </div>",
+    '  <span class="mini-title">Settings</span>',
     '  <button class="icon-btn" data-ctrl="panel-close" title="Close">',
     '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
     "  </button>",
@@ -288,12 +277,15 @@ function buildPanelHTML() {
     "<!-- Intro -->",
     '<p class="panel-intro">',
     '  <a href="https://alleinseinkarte.de" target="_blank" rel="noopener noreferrer">alleinseinkarte.de</a>',
-    "  is a map for finding places where you can be alone. It shows you areas which have the lowest chance of having other people around.",
+    "   is a map for finding places where you can be alone. It guides you to areas where you’re least likely to encounter other people.",
     "</p>",
 
-    "<!-- Hotspot mode -->",
-    '<div class="section-label">HOTSPOT MODE</div>',
+    "<!-- Aloneness Map -->",
+    '<div class="section-label">Aloneness Map</div>',
+
+    "<!-- Best Spots -->",
     '<div class="sub-card">',
+    '  <div class="sub-label">Highest value only</div>',
     '  <div class="hotspot-row">',
     '    <label class="toggle">',
     '      <input type="checkbox" data-ctrl="hotspot" ' + hotspotChecked + ">",
@@ -301,13 +293,14 @@ function buildPanelHTML() {
     "    </label>",
     '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
     '    <span class="row-name">Hotspots</span>',
-    '    <span class="row-hint">Top values only</span>',
     "  </div>",
     "</div>",
-
-    "<!-- Data layers -->",
-    '<div class="section-label">DATA LAYERS</div>',
     '<div class="sub-card">',
+    // '  <div class="sub-label">Aloneness Legend</div>',
+    '  <div class="legend-head">',
+    '    <span class="legend-head-name">Area</span>',
+    '    <span class="legend-head-scale">higher --></span>',
+    "  </div>",
     layersHTML,
     dataOpacityRowHTML("Opacity"),
     rasterSourceRowHTML(),
@@ -351,6 +344,18 @@ function buildPanelHTML() {
     '    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.48l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.85.09-.67.35-1.12.63-1.38-2.22-.26-4.55-1.14-4.55-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.81c0 .27.18.59.69.48A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>',
     "    GitHub repository",
     "  </a>",
+    "  </div>",
+    "<!-- Theme -->",
+    '  <div class="theme-switch">',
+    '    <span class="theme-switch-label">THEME</span>',
+    '    <div class="btn-group">',
+    '      <button class="seg-btn' +
+      (currentTheme === "light" ? " active" : "") +
+      '" data-ctrl="theme" data-theme="light">Light</button>',
+    '      <button class="seg-btn' +
+      (currentTheme === "dark" ? " active" : "") +
+      '" data-ctrl="theme" data-theme="dark">Dark</button>',
+    "    </div>",
     "</div>",
     "</div>",
   ].join("\n");
@@ -750,18 +755,25 @@ function openColorSheet(layerId) {
   var body = document.getElementById("color-sheet-body");
   if (!header || !body) return;
 
-  var dataOpacityVal = Math.round(dataLayerOpacity * 100);
-
+  // 2×3 grid (set in CSS): captions on row 1 sit above their controls on row 2,
+  // so the markup order is Area, Higher, close, then name-group, ramp, reverse.
   header.innerHTML = [
-    '<label class="toggle">',
-    '  <input type="checkbox" data-ctrl="layer-toggle" data-layer="' +
+    '<span class="cs-caption cs-cap-area">Area</span>',
+    '<span class="cs-caption cs-cap-higher">Higher →</span>',
+    '<button class="icon-btn" id="cs-close" aria-label="Close">',
+    '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+    "</button>",
+    '<div class="cs-namegroup">',
+    '  <label class="toggle">',
+    '    <input type="checkbox" data-ctrl="layer-toggle" data-layer="' +
       layer.id +
       '" ' +
       (layer.visible ? "checked" : "") +
       ">",
-    '  <span class="toggle-track"></span>',
-    "</label>",
-    '<span class="layer-name">' + layer.id + "</span>",
+    '    <span class="toggle-track"></span>',
+    "  </label>",
+    '  <span class="layer-name">' + layer.id + "</span>",
+    "</div>",
     '<div class="color-sheet-gradient-bar" data-grad="' +
       layer.id +
       '" style="' +
@@ -770,26 +782,13 @@ function openColorSheet(layerId) {
     '<button class="reverse-btn" data-ctrl="layer-reverse" data-layer="' +
       layer.id +
       '" title="Umkehren">⇄</button>',
-    '<button class="icon-btn" id="cs-close" aria-label="Close">',
-    '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
-    "</button>",
   ].join("");
 
   body.innerHTML = [
+    '<span class="cs-caption">New Color</span>',
     '<div class="color-sheet-scheme-grid">' +
       schemeButtonsHTML(layer) +
       "</div>",
-    '<div class="opacity-row">',
-    '  <div class="opacity-head">',
-    '    <span class="opacity-label">Opacity</span>',
-    '    <span class="opacity-val" data-disp="data-opacity">' +
-      dataOpacityVal +
-      "%</span>",
-    "  </div>",
-    '  <input type="range" data-ctrl="data-opacity" min="0" max="100" value="' +
-      dataOpacityVal +
-      '">',
-    "</div>",
   ].join("");
 
   document.getElementById("cs-close").onclick = closeColorSheet;
@@ -798,7 +797,23 @@ function openColorSheet(layerId) {
   var backdrop = document.getElementById("color-sheet-backdrop");
   backdrop.removeAttribute("hidden");
   sheet.classList.add("open");
+  positionColorSheetArrow(layer.id);
   backdrop.addEventListener("click", closeColorSheet, { once: true });
+}
+
+// Aligns the floating card's tail with the horizontal center of the layer tab
+// being edited, so it's obvious which colour is in play. Left is relative to the
+// card and clamped so the tail never slides past its rounded corners.
+function positionColorSheetArrow(layerId) {
+  var arrow = document.getElementById("color-sheet-arrow");
+  var sheet = document.getElementById("color-sheet");
+  var tab = document.querySelector('[data-tab-layer="' + layerId + '"]');
+  if (!arrow || !sheet || !tab) return;
+  var sheetRect = sheet.getBoundingClientRect();
+  var tabRect = tab.getBoundingClientRect();
+  var tabCenter = tabRect.left + tabRect.width / 2 - sheetRect.left;
+  var x = Math.max(18, Math.min(sheetRect.width - 18, tabCenter));
+  arrow.style.left = x + "px";
 }
 
 function closeColorSheet() {
