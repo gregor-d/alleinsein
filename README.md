@@ -1,8 +1,8 @@
 # [alleinseinkarte.de](https://alleinseinkarte.de)
 
-[alleinseinkarte.de](https://alleinseinkarte.de) is a map for finding places where you can be alone. By visualizing areas where there is the lowest chance of meeting other people, it guides you to spots where you can escape and have a good time with yourself.
+[alleinseinkarte.de](https://alleinseinkarte.de) is a map for finding places where you can be alone. By visualizing areas across different land-cover types with the lowest chance of encountering other people, it guides you to spots where you can escape and enjoy time by yourself.
 
-The project utilizes Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https://developmentseed.org/titiler/) backend via FastAPI, combined with a frontend using MapLibre and/or Leaflet.
+The project utilizes Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https://developmentseed.org/titiler/) backend via FastAPI, combined with a frontend using MapLibre.
 
 | PC Layout                                              | Mobile Layout                                                  |
 | ------------------------------------------------------ | -------------------------------------------------------------- |
@@ -21,12 +21,13 @@ The project utilizes Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https
 
 # Technical Features
 
-1. **Optimized Spatial Data Masking**: Instead of querying multiple overlapping rasters, the pipeline uses `gdal` to encode distinct CORINE land-cover classifications (Nature, Farm, Parks, Urban, Water) and OSM road proximity into different value-ranges in a single-band raster. The frontend decodes these bands in real-time.
-2. **Cloud-Optimized GeoTIFFs (COGs)**: The pipeline outputs web-optimized COGs with built-in overviews and DEFLATE compression, aligned precisely to the Web Mercator tile grid using `rio-cogeo` for low-latency range requests.
-3. **Cloudflare CDN Integration**: Caching rules absorb tile requests at the Edge. The Hetzner VPS is bypassed for any pre-rendered tiles.
-4. **Outbound Tunnel Networking**: Host ports remain closed to the public internet; traffic is routed from Cloudflare using a secure dockerized tunnel agent (`cloudflared`).
-5. **Tailscale VPN Integration**: Administrative services (SSH, development servers) bind to the private Tailnet, protecting the VPS from public discovery.
-6. **Automated CI/CD**: Pre-commit hooks check code styles and static types. Version tags and changelogs are automatically calculated using Commitizen and pushed on branch merges.
+1. **Optimized Spatial Data Masking**: Instead of querying multiple overlapping rasters, the [raster pipeline](#raster-pipeline) encodes land-cover classifications re, Farm, Parks, Urban, Water) and the seclusion-index to different value-ranges into a single-band raster. The frontend decodes these values per land-cover in real-time.
+2. **Cloud-Optimized GeoTIFFs (COGs)**: The pipeline outputs web-optimized COGs with built-in overviews aligned precisely to the Web Mercator tile grid using `rio-cogeo` for low-latency range requests.
+3. **Multi-Resolution Zoom Tiering**: The backend serves a different COG per zoom band — coarse 1280/640/320 m overviews for wide views, the full 20 m raster for close-ups .
+4. **Cloudflare CDN Integration**: Caching rules absorb tile requests at the Edge. The Hetzner VPS is bypassed for any pre-rendered tiles.
+5. **Outbound Tunnel Networking**: Host ports remain closed to the public internet; traffic is routed from Cloudflare using a secure dockerized tunnel agent (`cloudflared`).
+6. **Tailscale VPN Integration**: Administrative services (SSH, development servers) bind to the private Tailnet, protecting the VPS from public discovery.
+7. **Automated CI/CD**: Pre-commit hooks check code styles and static types. Version tags and changelogs are automatically calculated using Commitizen and pushed on branch merges.
 
 # Production System Architecture
 
@@ -81,7 +82,13 @@ graph TD
         S5["5. Final COG\ngdal_calc merge → clip → reproject EPSG:3857\n→ rio-cogeo web-optimized output"]
     end
 
-    COG[("raster/out/\n&lt;AREA&gt;_raster_v&lt;N&gt;.tif")]
+    subgraph Coarse ["Coarse Overviews — create_coarse_raster.sh"]
+        C1["Resample roads + CLC\nto 160/320/640/1280 m"]
+        C2["Re-encode + clip + COG\nper resolution"]
+    end
+
+    COG[("raster/out/\n&lt;AREA&gt;_20m_v&lt;N&gt;.tif")]
+    COARSE[("raster/out/\n&lt;AREA&gt;_{160,320,640,1280}m_v&lt;N&gt;.tif")]
 
     OSM_PBF --> S1
     S1       --> S2
@@ -91,7 +98,15 @@ graph TD
     S4       --> S5
     BOUNDS   --> S5
     S5       --> COG
+
+    S3       --> C1
+    S4       --> C1
+    BOUNDS   --> C2
+    C1       --> C2
+    C2       --> COARSE
 ```
+
+A single tiled frontend source transparently spans the full zoom range; `backend/main.py` picks the matching COG per tile.
 
 # How to Run Locally
 

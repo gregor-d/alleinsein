@@ -6,7 +6,8 @@ This document describes the full raster pipeline: data sources, configuration, e
 
 | Script                                | Description                                                                                                                                                                                        |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `raster/create_raster.sh`             | Full pipeline entry point — runs all five stages below in sequence                                                                                                                                 |
+| `raster/create_raster.sh`             | Full pipeline entry point — runs all five stages below in sequence to build the full-detail 20 m COG                                                                                               |
+| `raster/create_coarse_raster.sh`      | Derives the 160/320/640/1280 m overview COGs from the Stage 3/4 intermediates, served by the backend at low zooms (see [Coarse overview rasters](#coarse-overview-rasters-create_coarse_rastersh)) |
 | `raster/utils/osm_filter_pbf.sh`      | Pre-filters the OSM PBF to highway and railway ways using osmium-tool, producing a much smaller PBF for GDAL to process                                                                            |
 | `raster/utils/osm_create_gpkg.sh`     | Extracts roads, paths, and railways from the filtered OSM PBF into a single GeoPackage                                                                                                             |
 | `raster/utils/osm_rasterize_roads.sh` | Rasterizes the GeoPackage and produces a smoothed road-proximity heatmap                                                                                                                           |
@@ -234,7 +235,7 @@ Each band is a binary mask: `1` = pixel belongs to that class, `0` = it does not
 - `input/clc/<AREA>_clc_classes_stack.tif` — 5-band one-hot stack (B–F)
 - `input/bounds/<AREA>.gpkg` — area boundary for clipping
 
-**Output:** `out/<AREA>_raster_v<N>.tif`
+**Output:** `out/<AREA>_20m_v<N>.tif`
 
 ### Value encoding formula
 
@@ -271,10 +272,29 @@ raw_calc.tif
   └─ rio cogeo create --web-optimized align tiles to Web Mercator tile matrix,
                                        add overviews with Nearest resampling,
                                        blocksize of 512x512
-     → out/<AREA>_raster_v<N>.tif
+     → out/<AREA>_20m_v<N>.tif
 ```
 
 The output version number auto-increments (`v1`, `v2`, …) so existing COGs are never silently overwritten (unless `OVERWRITE` is set in `raster.conf`).
+
+---
+
+## Coarse overview rasters (`create_coarse_raster.sh`)
+
+The full-detail COG is 20 m/pixel. Serving it at wide (low-zoom) views forces TiTiler to read and downsample a large footprint for every tile, which is slow and wasteful. `create_coarse_raster.sh` pre-bakes lower-resolution COGs so each zoom band reads a raster sized for it.
+
+The backend ([`backend/main.py`](../backend/main.py)) maps tile zooms to rasters via `Settings.raster_tiers`, served coarsest-first.
+
+| Tile zoom (`z`) | Raster file (default)  | Resolution |
+| --------------- | ---------------------- | ---------- |
+| ≤ 6             | `germany_1280m_v3.tif` | 1280 m     |
+| 7               | `germany_640m_v3.tif`  | 640 m      |
+| 8               | `germany_320m_v3.tif`  | 320 m      |
+| ≥ 9 (to 99)     | `germany_20m_v3.tif`   | 20 m       |
+
+> Note: `z` is the WebMercatorQuad tile-matrix zoom TiTiler receives, which is the frontend's slippy zoom minus 1. The `tilejson` endpoint (no `z`) returns the finest tier so its metadata advertises the full data footprint and detail.
+
+The frontend requests a single tiled source and lets the backend pick the tier. A **Source** switch in the panel (shown only when `CONFIG.raster_override` is set) can instead pin that one raster via the `raster=` query param, bypassing tiering — useful for testing a specific COG.
 
 ---
 
@@ -301,6 +321,12 @@ Override the config path:
 
 ```bash
 RASTER_CONFIG_FILE=/path/to/custom.conf bash raster/create_raster.sh
+```
+
+Then build the coarse overview COGs the backend serves at low zooms:
+
+```bash
+bash raster/create_coarse_raster.sh
 ```
 
 Run individual stages manually (useful for debugging):

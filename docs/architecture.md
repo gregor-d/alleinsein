@@ -16,8 +16,8 @@ graph TD
 
     subgraph VPS [Hetzner VPS Backend]
         CFD[cloudflared daemon]
-        App[Uvicorn / FastAPI / Titiler]
-        Data[(Local COG Raster Tiles)]
+        DockerApp[Uvicorn / FastAPI / Titiler]
+        Data[("Local COG Rasters<br/>20m + coarse overviews")]
     end
 
     User -- "HTTPS Request" --> CF_DNS
@@ -25,15 +25,19 @@ graph TD
 
     CF_Cache -- "Cache Miss" --> CF_Tunnel
     CF_Tunnel -- "Secure Tunnel" --> CFD
-    CFD -- "Localhost:8000" --> App
-    App -- "Read GeoTIFF" --> Data
-    App -- "Return Tile" --> CFD
+    CFD -- "Localhost:8000" --> DockerApp
+    DockerApp -- "Read GeoTIFF<br/>(per-zoom tier)" --> Data
+    DockerApp -- "Return Tile" --> CFD
     CFD -- "Secure Tunnel" --> CF_Tunnel
     CF_Tunnel -- "Update Cache" --> CF_Cache
 
     CF_Cache -- "Cache Hit / Return Tile" --> CF_DNS
     CF_DNS -- "HTTPS Response" --> User
 ```
+
+### Per-zoom raster tiering
+
+The backend does not serve a single raster. `backend/main.py` maps each incoming tile zoom to a resolution-appropriate COG (`Settings.raster_tiers`, coarsest-first). See the zoom→file mapping in the [Raster Creation Pipeline](raster_creation.md#coarse-overview-rasters-create_coarse_rastersh).
 
 ## Request Sequence Diagram
 
