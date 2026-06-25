@@ -1,3 +1,9 @@
+## v2.2.1 (2026-06-25)
+
+### Refactor
+
+- **ui**: rework settings panel, color sheet, and mobile controls
+
 ## v2.2.0 (2026-06-24)
 
 ### Feat
