@@ -17,51 +17,38 @@ function hexToRgba(hex) {
 
 /**
  * Returns the colour list for a named COLORMAP_PRESETS entry as a fresh array,
- * reversed when reverse is true (never mutates the preset).
  */
-function resolveColors(preset, reverse) {
+function resolveColors(preset) {
   const colors = [...COLORMAP_PRESETS[preset]];
-  return reverse ? colors.reverse() : colors;
+  return colors;
 }
 
 /**
- * Builds a CSS background value from a named COLORMAP_PRESETS entry.
- * Reverses the colour order when reverse is true.
+ * Builds a CSS background value from a named COLORMAP_PRESETS entry: the colours
+ * shown as equal-width discrete blocks (one per data bucket)
  *
- * By default the highest colour fills the first 20% of the bar as a solid block,
- * with the remaining colours spread linearly across the rest. Options:
- *   - forceFull: ignore hotspot mode and always render the full ramp
- *     (the scheme picker uses this).
- *   - linear:    spread all colours evenly with no 20% emphasis block.
- * In hotspot mode (unless forceFull) only the single colour actually used is
- * shown, as a solid swatch.
+ * Drawn "to left" so the highest bucket (colors[0]) sits on the right, matching
+ * the legend's "higher →".
+ *
+ * forceFull ignores hotspot mode and always renders the full ramp (the scheme
+ * picker uses this). In hotspot mode (unless forceFull), or for single-colour
+ * presets, only the one colour in use is shown as a solid swatch.
  */
-function buildGradient(preset, reverse, opts) {
+function buildGradient(preset, opts) {
   opts = opts || {};
-  const colors = resolveColors(preset, reverse);
+  const colors = resolveColors(preset);
 
   // Hotspot mode (and degenerate single-colour presets) collapse to a solid swatch.
   if ((hotspotMode && !opts.forceFull) || colors.length <= 1) {
     return colors[0] || "transparent";
   }
 
-  let stops;
-  if (opts.linear) {
-    // Even spread across the whole bar.
-    const step = 100 / (colors.length - 1);
-    stops = colors.map(function (color, i) {
-      return `${color} ${step * i}%`;
-    });
-  } else {
-    // Highest colour fills the first 20%; the rest spread across 20–100%.
-    const firstColorWidth = 20;
-    const step = (100 - firstColorWidth) / (colors.length - 1);
-    stops = [`${colors[0]} 0%`].concat(
-      colors.map(function (color, i) {
-        return `${color} ${firstColorWidth + step * i}%`;
-      }),
-    );
-  }
+  // Equal-width blocks with hard edges (each colour spans [from%, to%] with no
+  // blend into its neighbour).
+  const step = 100 / colors.length;
+  const stops = colors.map(function (color, i) {
+    return `${color} ${step * i}%, ${color} ${step * (i + 1)}%`;
+  });
 
   return `linear-gradient(to left, ${stops.join(", ")})`;
 }
@@ -80,7 +67,7 @@ function getCombinedColormapJson() {
       return;
     }
 
-    const colors = resolveColors(layer.preset, layer.reverse);
+    const colors = resolveColors(layer.preset);
     if (hotspotMode) {
       // Hotspot mode highlights the two highest buckets, each in its own colour.
       cmap[layer.start] = hexToRgba(colors[0]);

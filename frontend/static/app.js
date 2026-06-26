@@ -43,7 +43,7 @@ function layerGradientStyle(layer) {
   if (layer.type === "solid") {
     return "background:" + layer.preset.slice(0, 7) + ";";
   }
-  return "background:" + buildGradient(layer.preset, layer.reverse) + ";";
+  return "background:" + buildGradient(layer.preset) + ";";
 }
 
 // Row of colour-ramp preset buttons for a layer's scheme picker (panel + sheet).
@@ -61,7 +61,7 @@ function schemeButtonsHTML(layer) {
         '" title="' +
         name +
         '" style="background:' +
-        buildGradient(name, false, { forceFull: true }) +
+        buildGradient(name, { forceFull: true }) +
         '"></button>'
       );
     })
@@ -236,11 +236,6 @@ function buildPanelHTML() {
             '" style="' +
             grad +
             '" role="button" tabindex="0" title="Farbschema wählen"></div>',
-        '  <button class="reverse-btn' +
-          (isWater ? " hidden" : "") +
-          '" data-ctrl="layer-reverse" data-layer="' +
-          layer.id +
-          '" title="Umkehren">⇄</button>',
         "</div>",
       ].join("");
       var dropdownHTML = isWater
@@ -497,17 +492,6 @@ function onControlClick(e) {
     return;
   }
 
-  if (ctrl === "layer-reverse") {
-    var id = btn.dataset.layer;
-    var layer = layerState.find(function (l) {
-      return l.id === id;
-    });
-    if (!layer) return;
-    layer.reverse = !layer.reverse;
-    applyLayerColor(layer);
-    refreshDataLayer();
-  }
-
   if (ctrl === "basemap") {
     var bm = btn.dataset.basemap;
     activeBasemapKey = bm;
@@ -755,8 +739,8 @@ function openColorSheet(layerId) {
   var body = document.getElementById("color-sheet-body");
   if (!header || !body) return;
 
-  // 2×3 grid (set in CSS): captions on row 1 sit above their controls on row 2,
-  // so the markup order is Area, Higher, close, then name-group, ramp, reverse.
+  // Grid (set in CSS): captions on row 1 sit above their controls on row 2,
+  // so the markup order is Area, Higher, close, then name-group, ramp.
   header.innerHTML = [
     '<span class="cs-caption cs-cap-area">Area</span>',
     '<span class="cs-caption cs-cap-higher">Higher →</span>',
@@ -779,9 +763,6 @@ function openColorSheet(layerId) {
       '" style="' +
       layerGradientStyle(layer) +
       '"></div>',
-    '<button class="reverse-btn" data-ctrl="layer-reverse" data-layer="' +
-      layer.id +
-      '" title="Umkehren">⇄</button>',
   ].join("");
 
   body.innerHTML = [
