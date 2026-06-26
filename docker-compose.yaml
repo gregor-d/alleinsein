@@ -6,6 +6,11 @@ services:
       dockerfile: dockerfile/Dockerfile
     image: base_alleinsein
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     ports:
       - "8000:8000"
     # use ./backend/.env.example to create env-file for dev-mode
@@ -27,6 +32,13 @@ services:
 
     volumes:
       - ./raster/out:/raster/out
+      # Dev: also bind-mount the source so edits are picked up without a rebuild.
+      # The mount shadows the image's baked-in /backend (prod uses the baked copy).
+      # - ./backend:/backend
+      # On Docker Desktop (Windows) file-watch events may not cross into the
+      # container; if --reload doesn't fire on save, force polling:
+      # environment:
+      #   - WATCHFILES_FORCE_POLLING=true
 
     # Start command is the image default (see CMD in dockerfile/Dockerfile).
     # Override for development (auto-reload, single worker) with:

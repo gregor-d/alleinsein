@@ -81,6 +81,31 @@ sudo systemctl enable --now docker
 sudo usermod -aG docker gregor
 ```
 
+### Docker Log Rotation
+
+By default the `json-file` log driver has **no size limit**, so a long-running
+container's logs grow until they fill the host disk. Cap them at the daemon level
+so every container inherits the limit:
+
+```bash
+sudo mkdir -p /etc/docker
+sudo tee /etc/docker/daemon.json >/dev/null <<'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": { "max-size": "10m", "max-file": "5" }
+}
+EOF
+sudo systemctl restart docker
+```
+
+Note the limit only
+applies to containers **created after** the change — recreate existing ones
+(`docker compose up -d --force-recreate`) for it to take effect.
+
+> The `alleinsein` `tiler` service also pins the same cap in
+> [docker-compose.yaml](../docker-compose.yaml) so the limit travels with the
+> project even on a host without the daemon default.
+
 ## Python Environment Setup (uv)
 
 The backend runs on Python, and dependencies are managed via [uv](https://github.com/astral-sh/uv).
