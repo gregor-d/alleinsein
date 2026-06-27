@@ -40,7 +40,7 @@ function buildGradient(preset, opts) {
 
   // Hotspot mode (and degenerate single-colour presets) collapse to a solid swatch.
   if ((hotspotMode && !opts.forceFull) || colors.length <= 1) {
-    return colors[0] || "transparent";
+    return colors[4] || "transparent";
   }
 
   // Equal-width blocks with hard edges (each colour spans [from%, to%] with no
@@ -70,9 +70,9 @@ function getCombinedColormapJson() {
     const colors = resolveColors(layer.preset);
     if (hotspotMode) {
       // Hotspot mode highlights the two highest buckets, each in its own colour.
-      cmap[layer.start] = hexToRgba(colors[0]);
+      cmap[layer.start] = hexToRgba(colors[4]);
       // cmap[layer.start + 1] = hexToRgba(colors[1]);
-      cmap[layer.start + 1] = hexToRgba(colors[0]);
+      cmap[layer.start + 1] = hexToRgba(colors[4]);
     } else {
       colors.forEach(function (color, i) {
         cmap[layer.start + i] = hexToRgba(color);

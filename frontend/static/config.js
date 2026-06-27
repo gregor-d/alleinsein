@@ -30,48 +30,48 @@ const TILE_JSON_URL = new URL(CONFIG.tile_json_path, CONFIG.fqdn);
 // end. So a glance reads the value direction unambiguously.
 const COLORMAP_PRESETS = {
   greens: [
-    "#00441bff",
-    "#006d2cff",
-    "#238b45ff",
-    "#41ab5dff",
-    "#74c476ff",
-    "#a1d99bff",
-    "#c7e9c0ff",
-    "#e5f5e0ff",
-    "#f7fcf5ff",
+    "#003912",
+    "#00501B",
+    "#006626",
+    "#007E30",
+    "#00963A",
+    "#00AE45",
+    "#00C751",
+    "#00E15C",
+    "#00FB67",
   ],
   ylorbr: [
-    "#662506ff",
-    "#993404ff",
-    "#cc4c02ff",
-    "#ec7014ff",
-    "#fe9929ff",
-    "#fec44fff",
-    "#fee391ff",
-    "#fff7bcff",
-    "#ffffe5ff",
+    "#4E1D00",
+    "#6B2B00",
+    "#893900",
+    "#A74700",
+    "#C65600",
+    "#E66500",
+    "#FF7A2A",
+    "#FFA171",
+    "#FFC2A5",
   ],
   blues: [
-    "#08306bff",
-    "#08519cff",
-    "#2171b5ff",
-    "#4292c6ff",
-    "#6baed6ff",
-    "#9ecae1ff",
-    "#c6dbefff",
-    "#deebf7ff",
-    "#f7fbffff",
+    "#00314F",
+    "#00456C",
+    "#005989",
+    "#006EA8",
+    "#0084C7",
+    "#0099E7",
+    "#2FB0FF",
+    "#75C5FF",
+    "#A7D9FF",
   ],
   purples: [
-    "#3f007dff",
-    "#54278fff",
-    "#6a51a3ff",
-    "#807dbaff",
-    "#9e9ac8ff",
-    "#bcbddcff",
-    "#dadaebff",
-    "#efedf5ff",
-    "#fcfbfdff",
+    "#4D0056",
+    "#690075",
+    "#860095",
+    "#A400B6",
+    "#C300D7",
+    "#E200FA",
+    "#ED5EFF",
+    "#F38FFF",
+    "#F8B7FF",
   ],
   viridis: [
     "#440154",
@@ -91,35 +91,35 @@ const layerState = [
   {
     id: "Nature",
     start: 1,
-    preset: "greens",
+    preset: "purples",
     visible: true,
     type: "category",
   },
   {
     id: "Farm",
     start: 11,
-    preset: "ylorbr",
+    preset: "greens",
     visible: false,
     type: "category",
   },
   {
     id: "Parks",
     start: 21,
-    preset: "purples",
+    preset: "blues",
     visible: true,
     type: "category",
   },
   {
     id: "Urban",
     start: 31,
-    preset: "blues",
+    preset: "ylorbr",
     visible: false,
     type: "category",
   },
   {
     id: "Water",
     start: 200,
-    preset: "#4da6ff",
+    preset: "#008fa8",
     visible: false,
     type: "solid",
   },
@@ -128,10 +128,10 @@ const layerState = [
 // ─── BASEMAP DEFINITIONS ───
 const BASEMAPS = {
   // Tile sizes below are fixed by each provider:
-  //   • OSM standard tiles ...................... 256 px
-  //   • Esri World Imagery (ArcGIS XYZ) ......... 256 px
-  //   • Waymarked Trails (hiking/cycling) ....... 256 px
-  //   • basemap.de Schummerung WMS .............. any size via width/height (256 px requested)
+  // • OSM standard tiles ...................... 256 px
+  // • Esri World Imagery (ArcGIS XYZ) ......... 256 px
+  // • Waymarked Trails (hiking/cycling) ....... 256 px
+  // • basemap.de Schummerung WMS .............. any size via width/height (256 px requested)
   // The titiler data raster uses CONFIG.tile_size (512) instead — that is separate.
   osm: {
     label: "OpenStreetMap",
