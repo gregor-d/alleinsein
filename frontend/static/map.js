@@ -454,6 +454,81 @@ class MapLibreEngine {
   }
 
   /**
+   * Touch-device inspect gestures (coarse pointer only — see wirePixelInspect).
+   * A long press (finger held ~500ms in place) calls onLongPress with the
+   * MapTouchEvent (.lngLat) to open the readout; a quick tap calls onTap to
+   * dismiss it. Dragging (pan) or a second finger (pinch) cancels both, so the
+   * gestures never fire while the user is navigating the map.
+   */
+  onTouchInspect(onLongPress, onTap) {
+    if (!this.map) return;
+    const map = this.map;
+    const LONG_PRESS_MS = 500;
+    const MOVE_TOLERANCE = 12; // px of finger travel before it counts as a pan
+
+    let timer = null;
+    let startPoint = null;
+    let longFired = false;
+    let moved = false;
+    let multiTouch = false;
+
+    const cancelTimer = function () {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    map.on("touchstart", function (e) {
+      const touches = e.originalEvent && e.originalEvent.touches;
+      if (touches && touches.length > 1) {
+        // A second finger means pinch/rotate, never an inspect gesture.
+        multiTouch = true;
+        cancelTimer();
+        return;
+      }
+      multiTouch = false;
+      moved = false;
+      longFired = false;
+      startPoint = e.point;
+      cancelTimer();
+      timer = setTimeout(function () {
+        timer = null;
+        longFired = true;
+        onLongPress(e); // touchstart event — its .lngLat is the press point
+      }, LONG_PRESS_MS);
+    });
+
+    map.on("touchmove", function (e) {
+      if (!startPoint || moved) return;
+      const p = e.point;
+      if (
+        Math.abs(p.x - startPoint.x) > MOVE_TOLERANCE ||
+        Math.abs(p.y - startPoint.y) > MOVE_TOLERANCE
+      ) {
+        moved = true; // finger dragged → a pan, not a tap or long press
+        cancelTimer();
+      }
+    });
+
+    map.on("touchend", function (e) {
+      cancelTimer();
+      const touches = e.originalEvent && e.originalEvent.touches;
+      if (touches && touches.length > 0) return; // wait for the last finger up
+      if (!multiTouch && !moved && !longFired) onTap();
+      startPoint = null;
+      multiTouch = false;
+    });
+
+    map.on("touchcancel", function () {
+      cancelTimer();
+      startPoint = null;
+      moved = false;
+      multiTouch = false;
+    });
+  }
+
+  /**
    * Projects a geographic point to viewport (page) pixel coordinates, so a
    * position:fixed overlay can be placed next to it. Returns null if no map.
    */

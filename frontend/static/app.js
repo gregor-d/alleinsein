@@ -73,10 +73,27 @@ var SHARE_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
 
 function wirePixelInspect() {
-  mapEngine.onClick(function (e) {
-    if (measureActive) return;
-    showPixelInfo(e.lngLat);
-  });
+  // Touch devices: long-press opens the readout, a quick tap dismisses any open
+  // one. Mouse/pointer devices keep the simpler click-to-open behaviour.
+  var coarsePointer =
+    window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  if (coarsePointer) {
+    mapEngine.onTouchInspect(
+      function (e) {
+        if (measureActive) return;
+        showPixelInfo(e.lngLat);
+      },
+      function () {
+        if (measureActive) return;
+        hidePixelInfo();
+      },
+    );
+  } else {
+    mapEngine.onClick(function (e) {
+      if (measureActive) return;
+      showPixelInfo(e.lngLat);
+    });
+  }
   var closeBtn = document.getElementById("pixel-info-close");
   if (closeBtn) closeBtn.addEventListener("click", hidePixelInfo);
   // Keep the floating readout pinned next to its point while the map moves.
