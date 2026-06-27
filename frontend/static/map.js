@@ -435,6 +435,32 @@ class MapLibreEngine {
     return MapLibreEngine.toSlippyZoom(this.map.getZoom());
   }
 
+  // ─── PIXEL INSPECT ───
+
+  /**
+   * Registers a persistent map click handler. The handler receives the native
+   * MapLibre click event (with .lngLat). Used by the click-to-inspect readout.
+   */
+  onClick(handler) {
+    if (this.map) this.map.on("click", handler);
+  }
+
+  /**
+   * Fetches the raw raster value(s) under a coordinate from the tiler's /point
+   * endpoint. Always reads the finest raster: omitting z/raster lets the backend
+   * default to its finest tier (see select_tier_raster), so the readout reports
+   * the exact ground value at the point regardless of the coarser tier that may
+   * be drawn at the current zoom. Resolves to the titiler point JSON
+   * ({ coordinates, values, band_names }).
+   */
+  async getPointValue(lngLat) {
+    const base = CONFIG.fqdn.replace(/\/+$/, "");
+    const url = new URL(base + "/point/" + lngLat.lng + "," + lngLat.lat);
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error("point query failed: " + res.status);
+    return res.json();
+  }
+
   // ─── MEASURE DISTANCE ───
 
   /**
