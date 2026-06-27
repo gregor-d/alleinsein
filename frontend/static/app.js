@@ -5,6 +5,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   loadTheme();
   loadBottomBarPref();
+  loadPixelInMapPref();
   buildAllPanels();
   buildLayerStrip();
   wireTopBar();
@@ -39,6 +40,12 @@ function applyBottomBarVisibility() {
   document.body.classList.toggle("bottombar-hidden", !bottomBarEnabled);
 }
 
+// ─── PIXEL READOUT IN MAP ─────────────────────
+
+function loadPixelInMapPref() {
+  pixelInMapEnabled = localStorage.getItem("pixelInMap") !== "off";
+}
+
 // ─── MAP INIT ─────────────────────────────────
 
 function initMapEngine() {
@@ -56,6 +63,7 @@ function initMapEngine() {
 // measure tool is active (that mode owns clicks).
 
 var _pixelReqSeq = 0;
+var _pixelLngLat = null; // geographic point of the last click, for positioning
 
 var COPY_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
@@ -71,6 +79,8 @@ function wirePixelInspect() {
   });
   var closeBtn = document.getElementById("pixel-info-close");
   if (closeBtn) closeBtn.addEventListener("click", hidePixelInfo);
+  // Keep the floating readout pinned next to its point while the map moves.
+  mapEngine.onMove(positionFloatingReadout);
   // Copy/share buttons render in both the floating readout and the LOCATION
   // panel card, so delegate at document level rather than per-container.
   document.addEventListener("click", function (e) {
@@ -191,10 +201,17 @@ function showCopied(btn) {
 }
 
 function showPixelInfo(lngLat) {
+  _pixelLngLat = lngLat;
+  // The settings-panel readout (Interact card) always updates; the floating
+  // on-map window only appears when "Show in Map" is enabled.
   var floatPanel = document.getElementById("pixel-info");
-  if (floatPanel) floatPanel.removeAttribute("hidden");
+  if (floatPanel) {
+    if (pixelInMapEnabled) floatPanel.removeAttribute("hidden");
+    else floatPanel.setAttribute("hidden", "");
+  }
 
   setPixelInfoHTML('<div class="pixel-info-loading">Reading…</div>');
+  positionFloatingReadout();
 
   var reqId = ++_pixelReqSeq;
   mapEngine
@@ -202,11 +219,48 @@ function showPixelInfo(lngLat) {
     .then(function (data) {
       if (reqId !== _pixelReqSeq) return; // a newer click (or close) superseded this
       setPixelInfoHTML(renderPixelInfoHTML(data, lngLat));
+      positionFloatingReadout();
     })
     .catch(function () {
       if (reqId !== _pixelReqSeq) return;
-      setPixelInfoHTML('<div class="pixel-info-empty">Lookup failed</div>');
+      // A failed lookup is almost always a point outside the raster footprint
+      // (titiler returns 500 out-of-bounds), so present it as "No data here"
+      // rather than an error — renderPixelInfoHTML(null, …) yields exactly that.
+      setPixelInfoHTML(renderPixelInfoHTML(null, lngLat));
+      positionFloatingReadout();
     });
+}
+
+// Places the floating readout next to the clicked point, flipping and clamping so
+// it stays inside the viewport (and below the top bar). No-op while hidden.
+function positionFloatingReadout() {
+  var panel = document.getElementById("pixel-info");
+  if (!panel || panel.hasAttribute("hidden") || !_pixelLngLat || !mapEngine)
+    return;
+  var pos = mapEngine.projectToPage(_pixelLngLat);
+  if (!pos) return;
+
+  var rect = panel.getBoundingClientRect();
+  var margin = 8;
+  var offset = 7; // gap from the cursor so the box doesn't sit under it
+  var topbar =
+    parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue("--topbar-h"),
+      10,
+    ) || 40;
+
+  var left = pos.x + offset;
+  if (left + rect.width + margin > window.innerWidth)
+    left = pos.x - rect.width - offset; // flip to the left edge of the cursor
+  if (left < margin) left = margin;
+
+  var top = pos.y + offset;
+  if (top + rect.height + margin > window.innerHeight)
+    top = pos.y - rect.height - offset; // flip above the cursor
+  if (top < topbar + margin) top = topbar + margin;
+
+  panel.style.left = left + "px";
+  panel.style.top = top + "px";
 }
 
 // Mirror the readout into every sink: the floating box and the LOCATION panel
@@ -513,7 +567,7 @@ function buildPanelHTML() {
     // '  <div class="sub-label">Aloneness Legend</div>',
     '  <div class="legend-head">',
     '    <span class="legend-head-name">Area</span>',
-    '    <span class="legend-head-scale">higher --></span>',
+    '    <span class="legend-head-scale">Color</span>',
     "  </div>",
     layersHTML,
     dataOpacityRowHTML("Opacity"),
@@ -525,29 +579,36 @@ function buildPanelHTML() {
 
     "<!-- Location -->",
     '<div class="section-label">LOCATION</div>',
+
+    "<!-- Search sub-panel: geocoding search + my-location -->",
     '<div class="sub-card">',
-    '<div class="search-row">',
-    '  <input type="text" data-ctrl="location-input" placeholder="Search location…" autocomplete="off">',
-    '  <button class="btn-go" data-ctrl="location-go">Go</button>',
-    "</div>",
-    '<ul class="search-results" data-ctrl="location-results"></ul>',
+    '  <div class="sub-label">Search</div>',
+    '  <div class="search-row">',
+    '    <input type="text" data-ctrl="location-input" placeholder="Search location…" autocomplete="off">',
+    '    <button class="btn-go" data-ctrl="location-go">Go</button>',
+    "  </div>",
+    '  <ul class="search-results" data-ctrl="location-results"></ul>',
+    '  <button class="btn-full" data-ctrl="my-location">',
+    '    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
+    "    My Location",
+    "  </button>",
     "</div>",
 
+    "<!-- Info sub-panel: coordinate information; header row carries the show-in-map toggle -->",
     '<div class="sub-card">',
-    '<button class="btn-full" data-ctrl="my-location">',
-    '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>',
-    "  My Location",
-    "</button>",
-    '<button class="btn-full' +
-      (measureActive ? " active" : "") +
-      '" data-ctrl="measure">',
-    '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/></svg>',
-    "  Measure Distance",
-    "</button>",
-    "</div>",
-
-    "<!-- Coordinates picker: shows the hint until a map click fills it with the readout -->",
-    '<div class="sub-card">',
+    '  <div class="sub-label-row">',
+    '    <div class="sub-label">Info</div>',
+    '    <div class="picker-showmap">',
+    '      <span class="picker-showmap-hint">Show in map</span>',
+    '      <label class="toggle">',
+    '        <input type="checkbox" data-ctrl="pixel-in-map" ' +
+      (pixelInMapEnabled ? "checked" : "") +
+      ">",
+    '        <span class="toggle-track"></span>',
+    "      </label>",
+    "    </div>",
+    "  </div>",
+    "  <!-- Coordinate information: hint until a map click fills it with the readout -->",
     '  <div class="picker-info" id="panel-picker-body">',
     '    <div class="picker-hint">',
     '      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="2"/></svg>',
@@ -651,6 +712,23 @@ function onControlChange(e) {
     localStorage.setItem("bottomBar", bottomBarEnabled ? "on" : "off");
     syncCheckboxes("bottombar-toggle", null, bottomBarEnabled);
     applyBottomBarVisibility();
+  }
+
+  if (ctrl === "pixel-in-map") {
+    pixelInMapEnabled = e.target.checked;
+    localStorage.setItem("pixelInMap", pixelInMapEnabled ? "on" : "off");
+    syncCheckboxes("pixel-in-map", null, pixelInMapEnabled);
+    // Reflect the change on the live floating readout right away: hide it when
+    // turned off, or bring it back at the last clicked point when turned on.
+    var floatPanel = document.getElementById("pixel-info");
+    if (floatPanel) {
+      if (!pixelInMapEnabled) {
+        floatPanel.setAttribute("hidden", "");
+      } else if (_pixelLngLat) {
+        floatPanel.removeAttribute("hidden");
+        positionFloatingReadout();
+      }
+    }
   }
 
   if (ctrl === "basemap-toggle") {
@@ -991,7 +1069,7 @@ function openColorSheet(layerId) {
   // so the markup order is Area, Higher, close, then name-group, ramp.
   header.innerHTML = [
     '<span class="cs-caption cs-cap-area">Area</span>',
-    '<span class="cs-caption cs-cap-higher">Higher →</span>',
+    '<span class="cs-caption cs-cap-higher">Color</span>',
     '<button class="icon-btn" id="cs-close" aria-label="Close">',
     '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
     "</button>",
@@ -1252,6 +1330,7 @@ function triggerMyLocation(btn) {
 // ─── RESPONSIVE RESIZE ────────────────────────
 
 window.addEventListener("resize", function () {
+  positionFloatingReadout(); // keep the click readout pinned to its point
   var panel = document.getElementById("settings-panel");
   if (!panel) return;
   if (window.innerWidth >= 768) {

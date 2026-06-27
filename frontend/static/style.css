@@ -326,7 +326,8 @@ body {
 }
 .legend-head-name {
   grid-column: 1 / 3;
-  text-align: center;
+  margin-left: 10px;
+  text-align: left;
 }
 .legend-head-scale {
   grid-column: 3 / 4;
@@ -336,7 +337,7 @@ body {
 
 .layer-row {
   display: grid;
-  grid-template-columns: 34px 1fr 58px;
+  grid-template-columns: 34px 1fr 85px;
   align-items: center;
   gap: 5px;
   padding: 4px 0;
@@ -577,6 +578,20 @@ body {
   flex-shrink: 0;
 }
 
+/* Info card header: "Show in map" hint sitting right beside its toggle. */
+.picker-showmap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.picker-showmap-hint {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--c-text-muted);
+}
+
 /* Hint pointing at the click-to-inspect feature (LOCATION section). */
 .picker-hint {
   display: flex;
@@ -747,8 +762,10 @@ body {
    of the MapLibre compass control so the two never overlap. */
 #pixel-info {
   position: fixed;
-  top: calc(var(--topbar-h) + 14px);
-  left: 56px;
+  /* top/left are set by JS to sit next to the clicked point (see
+     positionFloatingReadout); these are just pre-position fallbacks. */
+  top: 0;
+  left: 0;
   z-index: 150;
   min-width: 150px;
   max-width: 240px;
@@ -993,11 +1010,12 @@ body.bottombar-hidden #bottom-bar {
   font-size: 12px;
 }
 .layer-tab-grad {
-  width: calc(100% - 8px);
+  width: calc(100% - 15px);
   margin-top: 5px;
   height: 10px;
   overflow: hidden;
   cursor: pointer;
+  border-radius: 2px;
 }
 .layer-tab-grad:hover {
   filter: brightness(1.1) saturate(1.1);
@@ -1525,6 +1543,24 @@ body.bottombar-hidden #bottom-bar {
 #color-sheet-backdrop:not([hidden]) {
   opacity: 1;
   display: block;
+}
+
+/* On desktop the bottom bar is a centered, fixed-width floating panel, so match
+   the color sheet to it instead of spanning full width. Placed after the base
+   #color-sheet rules so it wins (media queries add no specificity). margin-left
+   centers the card, leaving transform free for the slide-in animation. */
+@media (min-width: 768px) {
+  #color-sheet {
+    left: 50%;
+    right: auto;
+    width: var(--bottombar-w);
+    margin-left: calc(var(--bottombar-w) / -2);
+    bottom: calc(var(--bottombar-h) - 26px);
+  }
+  /* Track the bottom bar's shift when the settings panel is open. */
+  body.panel-open #color-sheet {
+    left: calc((100vw - var(--panel-w)) / 2);
+  }
 }
 
 /* ── LOCATION PROMPT POPUP ───────────────────── */

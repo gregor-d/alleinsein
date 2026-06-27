@@ -200,6 +200,10 @@ let boundsSet = false;
 let hotspotMode = false;
 // Bottom layer bar visibility (toggle in settings → Theme). Enabled by default.
 let bottomBarEnabled = true;
+// Whether the coordinate-info readout pops up on the map itself when clicking
+// (LOCATION → Interact → "Show in Map"). The settings-panel readout shows either
+// way; this only gates the floating window. Enabled by default.
+let pixelInMapEnabled = true;
 // Data-layer raster source mode. true = pin CONFIG.raster_override (single raster,
 // no tiering); false = let the backend pick a raster per zoom tier. Defaults to tiering.
 let useRasterOverride = false;
