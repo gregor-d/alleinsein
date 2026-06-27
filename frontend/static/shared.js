@@ -53,6 +53,38 @@ function buildGradient(preset, opts) {
   return `linear-gradient(to left, ${stops.join(", ")})`;
 }
 
+// Each category layer occupies a contiguous run of CATEGORY_SPAN raster values
+// starting at layer.start — the road-influence index A (1..10) offset per land
+// cover (see raster/create_raster.sh: A, A+10, A+20, A+30). Note the colormap
+// only colours the first 9 of these, so A=10 pixels are valid data but render
+// transparent.
+const CATEGORY_SPAN = 10;
+
+/**
+ * Decodes a raw raster pixel value into its area type and within-category bucket.
+ *
+ * Category layers store A (1..10) offset by layer.start; bucket = value - start,
+ * so bucket 0 (A=1, least road influence) is the most-alone end — the one hotspot
+ * mode highlights. `solid` layers (Water) use a single value. Returns null for
+ * nodata / unmapped values.
+ *
+ * Shape: { area: "Parks", bucket: 2, value: 23 }  (bucket is null for solid layers).
+ */
+function describePixelValue(value) {
+  if (value === null || value === undefined || Number.isNaN(value)) return null;
+  for (let i = 0; i < layerState.length; i++) {
+    const layer = layerState[i];
+    if (layer.type === "overlay") continue;
+    if (layer.type === "solid") {
+      if (value === layer.start)
+        return { area: layer.id, bucket: null, value: value };
+    } else if (value >= layer.start && value < layer.start + CATEGORY_SPAN) {
+      return { area: layer.id, bucket: value - layer.start, value: value };
+    }
+  }
+  return null;
+}
+
 /**
  * Combines all visible layers into a single colormap JSON string
  * to be sent as a query parameter to the tile server.

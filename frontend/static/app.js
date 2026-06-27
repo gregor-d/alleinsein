@@ -34,7 +34,88 @@ function initMapEngine() {
   mapEngine.init("map", DEFAULT_CENTER, DEFAULT_ZOOM).then(function () {
     afterEngineInit(true);
     wireLocationButtons();
+    wirePixelInspect();
   });
+}
+
+// ─── PIXEL INSPECT ────────────────────────────
+// Click anywhere on the map to read the raw raster value under the cursor and
+// show its area type + aloneness level in a fixed readout. Skipped while the
+// measure tool is active (that mode owns clicks).
+
+var _pixelReqSeq = 0;
+
+function wirePixelInspect() {
+  mapEngine.onClick(function (e) {
+    if (measureActive) return;
+    showPixelInfo(e.lngLat);
+  });
+  var closeBtn = document.getElementById("pixel-info-close");
+  if (closeBtn) closeBtn.addEventListener("click", hidePixelInfo);
+}
+
+function showPixelInfo(lngLat) {
+  var panel = document.getElementById("pixel-info");
+  var body = document.getElementById("pixel-info-body");
+  if (!panel || !body) return;
+
+  panel.removeAttribute("hidden");
+  body.innerHTML = '<div class="pixel-info-loading">Reading…</div>';
+
+  var reqId = ++_pixelReqSeq;
+  mapEngine
+    .getPointValue(lngLat)
+    .then(function (data) {
+      if (reqId !== _pixelReqSeq) return; // a newer click (or close) superseded this
+      renderPixelInfo(body, data, lngLat);
+    })
+    .catch(function () {
+      if (reqId !== _pixelReqSeq) return;
+      body.innerHTML = '<div class="pixel-info-empty">Lookup failed</div>';
+    });
+}
+
+function renderPixelInfo(body, data, lngLat) {
+  var raw = data && data.values ? data.values[0] : null;
+  var info = describePixelValue(raw);
+  var coords = lngLat.lat.toFixed(4) + ", " + lngLat.lng.toFixed(4);
+
+  if (!info) {
+    body.innerHTML =
+      '<div class="pixel-info-area">No data here</div>' +
+      '<div class="pixel-info-coords">' +
+      coords +
+      "</div>";
+    return;
+  }
+
+  var levelHTML = "";
+  if (info.bucket !== null) {
+    // bucket 0 (A=1, least road influence) is the most-alone end — the one
+    // hotspot mode highlights — so it reads as 10 / 10, matching "higher →".
+    var level = CATEGORY_SPAN - info.bucket;
+    levelHTML =
+      '<div class="pixel-info-row"><span>Aloneness</span><b>' +
+      level +
+      " / " +
+      CATEGORY_SPAN +
+      "</b></div>";
+  }
+
+  body.innerHTML =
+    '<div class="pixel-info-area">' +
+    info.area +
+    "</div>" +
+    levelHTML +
+    '<div class="pixel-info-coords">' +
+    coords +
+    "</div>";
+}
+
+function hidePixelInfo() {
+  _pixelReqSeq++; // invalidate any in-flight lookup
+  var panel = document.getElementById("pixel-info");
+  if (panel) panel.setAttribute("hidden", "");
 }
 
 // ─── PANEL BUILDER ────────────────────────────
@@ -887,6 +968,7 @@ function startMeasure() {
   if (!mapEngine || !mapEngine.startMeasure()) return;
   measureActive = true;
   syncMeasureButtons();
+  hidePixelInfo(); // measure mode owns clicks; clear any stale pixel readout
 }
 
 function stopMeasure() {
