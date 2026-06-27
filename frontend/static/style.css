@@ -1211,100 +1211,6 @@ body.bottombar-hidden #bottom-bar {
   color: var(--c-text);
 }
 
-/* ── MEDIA QUERIES ───────────────────────────── */
-@media (max-width: 767px) {
-  #map {
-    bottom: var(--bottombar-h);
-  }
-  /* No bar reserved at the bottom when it's toggled off. */
-  body.bottombar-hidden #map {
-    bottom: 0;
-  }
-  #bottom-bar {
-    display: block;
-  }
-  #fab-group {
-    bottom: calc(var(--bottombar-h) + 12px);
-    right: 12px;
-  }
-  #fab-settings {
-    display: flex;
-  }
-  #settings-cog {
-    right: 12px;
-  }
-
-  #settings-panel {
-    width: var(--panel-w);
-    z-index: 310;
-  }
-  #settings-panel.sliding-out {
-    transform: translateY(100%);
-  }
-  /* Grey out the bottom layer strip while the settings panel is open. */
-  body.panel-open #bottom-bar {
-    opacity: 0.35;
-    pointer-events: none;
-  }
-
-  #search-popover {
-    bottom: calc(
-      var(--bottombar-h) + var(--fab-sz) * 7 + var(--gap) * 2 + 16px
-    );
-    right: 12px;
-  }
-  /* Mini panel still opens left of the settings FAB on mobile. */
-  #mini-panel {
-    bottom: calc(var(--bottombar-h) + 12px);
-    right: calc(12px + var(--fab-sz) + var(--gap));
-  }
-}
-
-@media (min-width: 768px) {
-  /* Centered, fixed-width floating panel instead of a full-width bar. */
-  #bottom-bar {
-    left: 50%;
-    right: auto;
-    bottom: 2px;
-    transform: translateX(-50%);
-    width: var(--bottombar-w);
-    height: auto;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    overflow: hidden;
-  }
-  /* Opacity/water controls row is hidden in the top-bar layout. */
-  #bottom-controls {
-    display: none;
-  }
-  #fab-settings {
-    display: flex;
-  }
-
-  /* panel-open class applied to body by JS — shift the right-anchored
-       controls so the opening side panel doesn't cover them. */
-  body.panel-open #map {
-    right: var(--panel-w);
-  }
-  /* Keep the bar centered within the map area left of the open panel. */
-  body.panel-open #bottom-bar {
-    left: calc((100vw - var(--panel-w)) / 2);
-  }
-  body.panel-open #fab-group {
-    right: calc(var(--panel-w) + 12px);
-  }
-  body.panel-open #settings-cog {
-    right: calc(var(--panel-w) + 12px);
-  }
-  body.panel-open #search-popover {
-    right: calc(var(--panel-w) + 12px);
-  }
-  body.panel-open #mini-panel {
-    right: calc(var(--panel-w) + 12px + var(--fab-sz) + var(--gap));
-  }
-}
-
 /* ── MAPLIBRE OVERRIDES ──────────────────────── */
 .maplibregl-ctrl-group:has(.maplibregl-ctrl-compass) {
   background: rgba(255, 255, 255, 0.46) !important;
@@ -1545,24 +1451,6 @@ body.bottombar-hidden #bottom-bar {
   display: block;
 }
 
-/* On desktop the bottom bar is a centered, fixed-width floating panel, so match
-   the color sheet to it instead of spanning full width. Placed after the base
-   #color-sheet rules so it wins (media queries add no specificity). margin-left
-   centers the card, leaving transform free for the slide-in animation. */
-@media (min-width: 768px) {
-  #color-sheet {
-    left: 50%;
-    right: auto;
-    width: var(--bottombar-w);
-    margin-left: calc(var(--bottombar-w) / -2);
-    bottom: calc(var(--bottombar-h) - 26px);
-  }
-  /* Track the bottom bar's shift when the settings panel is open. */
-  body.panel-open #color-sheet {
-    left: calc((100vw - var(--panel-w)) / 2);
-  }
-}
-
 /* ── LOCATION PROMPT POPUP ───────────────────── */
 #location-prompt {
   position: fixed;
@@ -1628,6 +1516,117 @@ body.bottombar-hidden #bottom-bar {
 *:focus-visible {
   outline: 2px solid var(--c-accent);
   outline-offset: 2px;
+}
+
+/* ── MEDIA QUERIES — RESPONSIVE LAYOUTS ──────────
+   All mobile (≤767px) and desktop (≥768px) layout overrides live here, after
+   every component's base rules, so the responsive rules always win on source
+   order (media queries add no specificity of their own). */
+@media (max-width: 767px) {
+  #map {
+    bottom: var(--bottombar-h);
+  }
+  /* No bar reserved at the bottom when it's toggled off. */
+  body.bottombar-hidden #map {
+    bottom: 0;
+  }
+  #bottom-bar {
+    display: block;
+  }
+  #fab-group {
+    bottom: calc(var(--bottombar-h) + 12px);
+    right: 12px;
+  }
+  #fab-settings {
+    display: flex;
+  }
+  #settings-cog {
+    right: 12px;
+  }
+
+  #settings-panel {
+    width: var(--panel-w);
+    z-index: 310;
+  }
+  #settings-panel.sliding-out {
+    transform: translateY(100%);
+  }
+  /* Grey out the bottom layer strip while the settings panel is open. */
+  body.panel-open #bottom-bar {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  #search-popover {
+    bottom: calc(
+      var(--bottombar-h) + var(--fab-sz) * 7 + var(--gap) * 2 + 16px
+    );
+    right: 12px;
+  }
+  /* Mini panel still opens left of the settings FAB on mobile. */
+  #mini-panel {
+    bottom: calc(var(--bottombar-h) + 12px);
+    right: calc(12px + var(--fab-sz) + var(--gap));
+  }
+}
+
+@media (min-width: 768px) {
+  /* Centered, fixed-width floating panel instead of a full-width bar. */
+  #bottom-bar {
+    left: 50%;
+    right: auto;
+    bottom: 2px;
+    transform: translateX(-50%);
+    width: var(--bottombar-w);
+    height: auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow: hidden;
+  }
+  /* Opacity/water controls row is hidden in the top-bar layout. */
+  #bottom-controls {
+    display: none;
+  }
+  /* Match the color sheet to the centered, fixed-width bottom bar instead of
+     spanning full width. margin-left centers it, leaving transform free for the
+     slide-in animation. */
+  #color-sheet {
+    left: 50%;
+    right: auto;
+    width: var(--bottombar-w);
+    margin-left: calc(var(--bottombar-w) / -2);
+    bottom: calc(var(--bottombar-h) - 26px);
+  }
+  #fab-settings {
+    display: flex;
+  }
+
+  /* panel-open class applied to body by JS — shift the right-anchored
+       controls so the opening side panel doesn't cover them. */
+  body.panel-open #map {
+    right: var(--panel-w);
+  }
+  /* Keep the bar centered within the map area left of the open panel. */
+  body.panel-open #bottom-bar {
+    left: calc((100vw - var(--panel-w)) / 2);
+  }
+  /* Color sheet tracks the bottom bar's shift. */
+  body.panel-open #color-sheet {
+    left: calc((100vw - var(--panel-w)) / 2);
+  }
+  body.panel-open #fab-group {
+    right: calc(var(--panel-w) + 12px);
+  }
+  body.panel-open #settings-cog {
+    right: calc(var(--panel-w) + 12px);
+  }
+  body.panel-open #search-popover {
+    right: calc(var(--panel-w) + 12px);
+  }
+  body.panel-open #mini-panel {
+    right: calc(var(--panel-w) + 12px + var(--fab-sz) + var(--gap));
+  }
 }
 
 /* ── REDUCED MOTION ──────────────────────────── */
