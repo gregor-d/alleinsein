@@ -1537,6 +1537,10 @@ body.bottombar-hidden #bottom-bar {
     bottom: calc(var(--bottombar-h) + 12px);
     right: 12px;
   }
+  /* Drop the FABs down to the screen edge when the bottom bar is toggled off. */
+  body.bottombar-hidden #fab-group {
+    bottom: 12px;
+  }
   #fab-settings {
     display: flex;
   }
