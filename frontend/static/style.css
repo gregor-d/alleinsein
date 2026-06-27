@@ -18,6 +18,7 @@
   --c-accent-hover: rgba(85, 76, 255, 0.5);
   --c-shadow: rgb(0, 0, 0);
 
+  --box-shadow: 3px 3px 0 rgb(0, 0, 0);
   --c-measure: #e6007e;
 
   --panel-w: 240px;
@@ -25,8 +26,9 @@
   --bottombar-h: 104px;
   --fab-sz: 40px;
   --gap: 8px;
+  /* minipanel, location prompt, search popover, sub-card, layer-strip*/
   --r: 7px;
-  --r-sm: 7px;
+  --r-sm: 5px;
   --t: 0.18s ease;
 
   --font-ui: "Inter", system-ui, sans-serif;
@@ -45,6 +47,8 @@
   --c-accent: rgb(129, 122, 248);
   --c-accent-hover: rgba(85, 76, 255, 0.5);
   --c-shadow: rgb(0, 0, 0);
+
+  --box-shadow: 3px 3px 0 rgb(0, 0, 0);
 }
 
 /* ── RESET ───────────────────────────────────── */
@@ -263,7 +267,6 @@ body {
   height: 15px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
   transition: transform var(--t);
 }
 .toggle input:checked + .toggle-track {
@@ -383,7 +386,6 @@ body {
   height: 14px;
   border-radius: 50%;
   background: var(--c-accent);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
   transition: transform var(--t);
   cursor: pointer;
 }
@@ -398,7 +400,6 @@ body {
   border: none;
   border-radius: 50%;
   background: var(--c-accent);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
   cursor: pointer;
 }
 .opacity-val {
@@ -416,7 +417,7 @@ body {
   border-radius: var(--r);
   padding: 6px 8px;
   margin-bottom: 8px;
-  box-shadow: 3px 3px 0 var(--c-shadow);
+  box-shadow: var(--box-shadow);
 }
 
 .sub-label {
@@ -462,21 +463,22 @@ body {
   padding: 5px 4px;
   border-radius: var(--r-sm);
   background: var(--c-button);
+  border: 1px solid var(--c-border);
   color: var(--c-text-muted);
   font-size: 12px;
   font-family: var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
+  font-weight: 500;
   transition:
     background var(--t),
     color var(--t),
     border-color var(--t);
   text-align: center;
-  box-shadow: 1px 1px 0 var(--c-border);
 }
 .seg-btn:hover {
   color: var(--c-text);
-  font-weight: 500;
+  /* font-weight: 500; */
   background: var(--c-accent-hover);
 }
 
@@ -484,7 +486,6 @@ body {
 .seg-btn.toggled {
   color: var(--c-text-hi);
   background: var(--c-accent);
-  font-weight: 500;
 }
 
 /* ── LOCATION SECTION ────────────────────────── */
@@ -663,7 +664,7 @@ body {
   background: var(--c-button);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 3px 3px 0 var(--c-shadow);
+  box-shadow: var(--box-shadow);
   overflow: hidden;
 }
 .ctrl-btn {
@@ -731,18 +732,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 3px 3px 0 var(--c-shadow);
-  transition:
-    background var(--t),
-    box-shadow var(--t),
-    transform var(--t),
-    border-color var(--t);
+  box-shadow: var(--box-shadow);
   padding: 0;
 }
 .fab:hover {
-  background: var(--c-surface);
-  box-shadow: 3px 3px 0 var(--c-shadow);
-  transform: translate(-1px, -1px);
+  background: var(--c-accent-hover);
 }
 
 .fab svg {
@@ -751,7 +745,6 @@ body {
 }
 .fab.active {
   background: var(--c-accent);
-  border-color: var(--c-accent);
   color: #fff;
 }
 
@@ -761,12 +754,6 @@ body {
   top: calc(var(--topbar-h) + 16px);
   right: 16px;
   z-index: 150;
-  transition:
-    right var(--t),
-    background var(--t),
-    box-shadow var(--t),
-    transform var(--t),
-    border-color var(--t);
 }
 
 /* ── BOTTOM BAR ──────────────────────────────── */
@@ -777,12 +764,10 @@ body {
   right: 0;
   height: var(--bottombar-h);
   background: var(--c-surface);
-  /* backdrop-filter: blur(14px) saturate(1.4); */
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
   border-top: 1px solid var(--c-border);
   z-index: 100;
   display: block;
-  transition: opacity var(--t);
 }
 
 /* Controls row below the layer strip */
@@ -836,31 +821,20 @@ body {
   align-items: center;
   justify-content: center;
   margin: 3px 3px 3px 3px;
-  /* gap: 4px; */
-  /* border: none; */
-  /* border-right: 1px solid var(--c-border); */
   border: 1px solid var(--c-border);
-  border-radius: var(--r-sm);
-  background: var(--c-surface);
-  /* background: var(--c-button); */
+  border-radius: var(--r);
+  background: var(--c-button);
   cursor: pointer;
   color: var(--c-text-muted);
   font-weight: 500;
-  /* padding: 8px 4px 10px; */
-  box-shadow: 3px 3px 0 var(--c-shadow);
-  transition:
-    background var(--t),
-    color var(--t),
-    border-color var(--t),
-    box-shadow var(--t),
-    transform var(--t);
+  box-shadow: var(--box-shadow);
 }
 
 .layer-tab.active {
   color: var(--c-text);
-  font-weight: 700;
+  padding: 0px;
   background: var(--c-button);
-  /* background: var(--c-accent-hover); */
+  border: 1px solid var(--c-accent);
 }
 
 .layer-tab svg {
@@ -877,18 +851,13 @@ body {
 
 .layer-tab-name {
   font-size: 12px;
-  /* letter-spacing: 0.03em; */
 }
 .layer-tab-grad {
   width: calc(100% - 8px);
   margin-top: 5px;
   height: 10px;
-  border-radius: 7px;
   overflow: hidden;
   cursor: pointer;
-  transition:
-    filter var(--t),
-    transform var(--t);
 }
 .layer-tab-grad:hover {
   filter: brightness(1.1) saturate(1.1);
@@ -927,7 +896,7 @@ body {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--r);
-  box-shadow: 0 4px 20px var(--c-shadow);
+  box-shadow: var(--box-shadow);
   min-width: 240px;
 }
 #search-popover:not([hidden]) {
@@ -1300,15 +1269,14 @@ body {
   bottom: calc(var(--bottombar-h) + 12px);
   z-index: 320;
   background: var(--c-surface);
-  border-radius: 14px;
+  border-radius: var(--r);
   border: 1px solid var(--c-border);
-  box-shadow: 0 6px 28px var(--c-shadow);
-  /* Hidden state must clear its own height + the bar and gap it floats above. */
   transform: translateY(calc(100% + var(--bottombar-h) + 32px));
   transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
   max-height: 70vh;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--box-shadow);
 }
 #color-sheet.open {
   transform: translateY(0);
@@ -1349,7 +1317,6 @@ body {
 .color-sheet-gradient-bar {
   min-width: 40px;
   height: 14px;
-  border-radius: 3px;
 }
 
 #color-sheet-body {
@@ -1426,7 +1393,7 @@ body {
   -webkit-backdrop-filter: blur(14px) saturate(1.4);
   border: 1px solid var(--c-border);
   border-radius: var(--r);
-  box-shadow: 3px 3px 0 var(--c-shadow);
+  box-shadow: var(--box-shadow);
   font-size: 13px;
   font-weight: 500;
   color: var(--c-text);
