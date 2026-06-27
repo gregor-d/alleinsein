@@ -1,3 +1,14 @@
+## v2.3.0 (2026-06-27)
+
+### Feat
+
+- update colormap presets and adjust hotspot color
+- add logging configuration and rotation for tiler service.  include Docker log rotation instructions in VPS setup
+
+### Refactor
+
+- remove color-ramp and show distincnt colors and remove reverse functionality in colormap
+
 ## v2.2.1 (2026-06-25)
 
 ### Refactor
