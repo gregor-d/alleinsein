@@ -198,6 +198,8 @@ let basemapOpacity = 0.8;
 let dataLayerOpacity = 1.0;
 let boundsSet = false;
 let hotspotMode = false;
+// Bottom layer bar visibility (toggle in settings → Theme). Enabled by default.
+let bottomBarEnabled = true;
 // Data-layer raster source mode. true = pin CONFIG.raster_override (single raster,
 // no tiering); false = let the backend pick a raster per zoom tier. Defaults to tiering.
 let useRasterOverride = false;
