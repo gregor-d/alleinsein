@@ -24,6 +24,8 @@
   --panel-w: 240px;
   --topbar-h: 40px;
   --bottombar-h: 104px;
+  /* fixed width of the centered bottom bar on desktop */
+  --bottombar-w: 440px;
   --fab-sz: 40px;
   --gap: 8px;
   /* minipanel, location prompt, search popover, sub-card, layer-strip*/
@@ -719,6 +721,71 @@ body {
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35);
 }
 
+/* ── PIXEL INSPECTOR ─────────────────────────── */
+/* Fixed readout that updates on each map click. Anchored top-left, to the right
+   of the MapLibre compass control so the two never overlap. */
+#pixel-info {
+  position: fixed;
+  top: calc(var(--topbar-h) + 14px);
+  left: 56px;
+  z-index: 150;
+  min-width: 150px;
+  max-width: 240px;
+  padding: 8px 10px 9px;
+  background: var(--c-button);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--box-shadow);
+  color: var(--c-text);
+  font-size: 12px;
+  line-height: 1.35;
+}
+#pixel-info[hidden] {
+  display: none;
+}
+#pixel-info-close {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
+}
+#pixel-info-close svg {
+  width: 14px;
+  height: 14px;
+}
+#pixel-info-body {
+  padding-right: 14px;
+}
+.pixel-info-area {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.pixel-info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pixel-info-row span {
+  color: var(--c-text-muted);
+}
+.pixel-info-row b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+.pixel-info-coords {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--c-text-muted);
+}
+.pixel-info-loading,
+.pixel-info-empty {
+  color: var(--c-text-muted);
+}
+
 .fab {
   width: var(--fab-sz);
   height: var(--fab-sz);
@@ -1072,18 +1139,9 @@ body {
     right: 12px;
   }
 
-  /* Settings panel becomes a bottom sheet instead of a right sidebar. */
   #settings-panel {
-    /* top: auto; */
-    /* left: 0; */
-    /* right: 0; */
     width: var(--panel-w);
-    /* max-height: calc(99vh - var(--bottombar-h) - var(--topbar-h)); */
     z-index: 310;
-    /* border-left: none; */
-    /* border-bottom: 3px solid var(--c-border); */
-    /* border-radius: 7px 0px 0px 7px; */
-    /* margin-bottom: 5px; */
   }
   #settings-panel.sliding-out {
     transform: translateY(100%);
@@ -1108,8 +1166,22 @@ body {
 }
 
 @media (min-width: 768px) {
+  /* Centered, fixed-width floating panel instead of a full-width bar. */
   #bottom-bar {
-    display: none !important;
+    left: 50%;
+    right: auto;
+    bottom: 2px;
+    transform: translateX(-50%);
+    width: var(--bottombar-w);
+    height: auto;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow: hidden;
+  }
+  /* Opacity/water controls row is hidden in the top-bar layout. */
+  #bottom-controls {
+    display: none;
   }
   #fab-settings {
     display: flex;
@@ -1120,6 +1192,7 @@ body {
   body.panel-open #map {
     right: var(--panel-w);
   }
+  /* Keep the bar centered within the map area left of the open panel. */
   body.panel-open #bottom-bar {
     left: calc((100vw - var(--panel-w)) / 2);
   }
