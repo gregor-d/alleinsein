@@ -5,10 +5,12 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=utils/load_raster_config.sh
 source "${SCRIPT_DIR}/utils/load_raster_config.sh"
+# shellcheck source=utils/raster_lib.sh
+source "${SCRIPT_DIR}/utils/raster_lib.sh"
 
 # input files
 clc_classes="${SCRIPT_DIR}/input/clc/${AREA}_clc_classes_stack.tif"
-roads="${SCRIPT_DIR}/input/osm/${AREA}_roads_smooth.tif"                     
+roads="${SCRIPT_DIR}/input/osm/${AREA}_roads_smooth.tif"
 bounds_gpkg="${SCRIPT_DIR}/input/bounds/${AREA}.gpkg"
 
 # output files
@@ -57,33 +59,12 @@ echo "using roads: $roads"
 echo "using clc classes: $clc_classes"
 echo "output raster: $output_cog"
 
-echo "running gdal__calc to tempfile ${raw_calc_raster}..."
+echo "running heatmap_calc to tempfile ${raw_calc_raster}..."
 
-# CORINE land cover types
-# 1       # nature
-# 2       # farm
-# 3       # park
-# 4       # urban
-# 5       # water
+# Encode the roads heatmap masked per land-cover class. The shared heatmap_calc
+# (utils/raster_lib.sh) keeps this in lockstep with eu/create_eu_raster.sh.
+heatmap_calc "$roads" "$clc_classes" "$raw_calc_raster"
 
-# This is the main function:
-# It uses the roads-heatmap to create virtual layers by masking it with landcover.
-# Each layer has a different landcover and its own value-range.
-# With this its possible to have only one request to the backend for all layers, and not one per layer.
-# because muparser is buggy, can not use the gdal raster pipeline for this
-gdal_calc \
-  -A "$roads" --A_band=1 \
-  -B "$clc_classes" --B_band=1 \
-  -C "$clc_classes" --C_band=2 \
-  -D "$clc_classes" --D_band=3 \
-  -E "$clc_classes" --E_band=4 \
-  -F "$clc_classes" --F_band=5 \
-  --calc="where(F==1, 200, A*B + (A+10)*C + (A+20)*D + (A+30)*E)" \
-  --co=TILED=YES --co=COMPRESS=DEFLATE --co=PREDICTOR=2 --co=BIGTIFF=IF_SAFER \
-  --outfile=$raw_calc_raster \
-  --type=$RASTER_DATA_TYPE \
-  --NoDataValue=$RASTER_NODATA $OVERWRITE
-  
 echo "Running GDAL pipeline clip to bounds and reproject..."
 gdal raster pipeline \
   "!" read "$raw_calc_raster" \
