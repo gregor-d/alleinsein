@@ -1,3 +1,17 @@
+## v2.4.0 (2026-06-27)
+
+### Feat
+
+- add pixel readout feature to map with toggle option
+- add pixel info display to sidepanel
+- add bottom bar visibility toggle and update UI interactions
+- implement pixel inspector for map interactions and add UI elements
+- add pixel inspector for map interactions and adjust bottom bar layout
+
+### Refactor
+
+- reorganize media queries for responsive layouts and remove redundant styles
+
 ## v2.3.0 (2026-06-27)
 
 ### Feat
