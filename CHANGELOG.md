@@ -1,3 +1,9 @@
+## v2.5.0 (2026-06-27)
+
+### Feat
+
+- implement touch gestures for pixel inspection on map and adjust FAB positioning when bottom bar is hidden
+
 ## v2.4.0 (2026-06-27)
 
 ### Feat
