@@ -69,12 +69,11 @@ function wirePixelInspect() {
     if (measureActive) return;
     showPixelInfo(e.lngLat);
   });
-  var panel = document.getElementById("pixel-info");
-  if (!panel) return;
   var closeBtn = document.getElementById("pixel-info-close");
   if (closeBtn) closeBtn.addEventListener("click", hidePixelInfo);
-  // Delegated: the body is re-rendered on every click, so bind once on the panel.
-  panel.addEventListener("click", function (e) {
+  // Copy/share buttons render in both the floating readout and the LOCATION
+  // panel card, so delegate at document level rather than per-container.
+  document.addEventListener("click", function (e) {
     var coordsBtn = e.target.closest(".pixel-info-coords");
     if (coordsBtn) {
       copyCoords(coordsBtn);
@@ -192,34 +191,41 @@ function showCopied(btn) {
 }
 
 function showPixelInfo(lngLat) {
-  var panel = document.getElementById("pixel-info");
-  var body = document.getElementById("pixel-info-body");
-  if (!panel || !body) return;
+  var floatPanel = document.getElementById("pixel-info");
+  if (floatPanel) floatPanel.removeAttribute("hidden");
 
-  panel.removeAttribute("hidden");
-  body.innerHTML = '<div class="pixel-info-loading">Reading…</div>';
+  setPixelInfoHTML('<div class="pixel-info-loading">Reading…</div>');
 
   var reqId = ++_pixelReqSeq;
   mapEngine
     .getPointValue(lngLat)
     .then(function (data) {
       if (reqId !== _pixelReqSeq) return; // a newer click (or close) superseded this
-      renderPixelInfo(body, data, lngLat);
+      setPixelInfoHTML(renderPixelInfoHTML(data, lngLat));
     })
     .catch(function () {
       if (reqId !== _pixelReqSeq) return;
-      body.innerHTML = '<div class="pixel-info-empty">Lookup failed</div>';
+      setPixelInfoHTML('<div class="pixel-info-empty">Lookup failed</div>');
     });
 }
 
-function renderPixelInfo(body, data, lngLat) {
+// Mirror the readout into every sink: the floating box and the LOCATION panel
+// card (which shows the hint until the first click replaces it).
+function setPixelInfoHTML(html) {
+  var floatBody = document.getElementById("pixel-info-body");
+  if (floatBody) floatBody.innerHTML = html;
+  var panelBody = document.getElementById("panel-picker-body");
+  if (panelBody) panelBody.innerHTML = html;
+}
+
+function renderPixelInfoHTML(data, lngLat) {
   var raw = data && data.values ? data.values[0] : null;
   var info = describePixelValue(raw);
 
   if (!info) {
-    body.innerHTML =
-      '<div class="pixel-info-area">No data here</div>' + coordsRowHTML(lngLat);
-    return;
+    return (
+      '<div class="pixel-info-area">No data here</div>' + coordsRowHTML(lngLat)
+    );
   }
 
   var levelHTML = "";
@@ -235,12 +241,13 @@ function renderPixelInfo(body, data, lngLat) {
       "</b></div>";
   }
 
-  body.innerHTML =
+  return (
     '<div class="pixel-info-area">' +
     info.area +
     "</div>" +
     levelHTML +
-    coordsRowHTML(lngLat);
+    coordsRowHTML(lngLat)
+  );
 }
 
 function hidePixelInfo() {
@@ -537,6 +544,16 @@ function buildPanelHTML() {
     '  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/></svg>',
     "  Measure Distance",
     "</button>",
+    "</div>",
+
+    "<!-- Coordinates picker: shows the hint until a map click fills it with the readout -->",
+    '<div class="sub-card">',
+    '  <div class="picker-info" id="panel-picker-body">',
+    '    <div class="picker-hint">',
+    '      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="2"/></svg>',
+    "      <span>Click on the map to get information about an area and its coordinates.</span>",
+    "    </div>",
+    "  </div>",
     "</div>",
 
     "<!-- About / links -->",
