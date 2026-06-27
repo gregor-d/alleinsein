@@ -446,6 +446,25 @@ class MapLibreEngine {
   }
 
   /**
+   * Registers a handler that fires on every camera change (pan/zoom). Used to
+   * keep the click readout pinned next to its geographic point as the map moves.
+   */
+  onMove(handler) {
+    if (this.map) this.map.on("move", handler);
+  }
+
+  /**
+   * Projects a geographic point to viewport (page) pixel coordinates, so a
+   * position:fixed overlay can be placed next to it. Returns null if no map.
+   */
+  projectToPage(lngLat) {
+    if (!this.map) return null;
+    const p = this.map.project(lngLat);
+    const rect = this.map.getContainer().getBoundingClientRect();
+    return { x: rect.left + p.x, y: rect.top + p.y };
+  }
+
+  /**
    * Fetches the raw raster value(s) under a coordinate from the tiler's /point
    * endpoint. Always reads the finest raster: omitting z/raster lets the backend
    * default to its finest tier (see select_tier_raster), so the readout reports
