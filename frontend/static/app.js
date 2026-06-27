@@ -4,6 +4,7 @@
 
 document.addEventListener("DOMContentLoaded", function () {
   loadTheme();
+  loadBottomBarPref();
   buildAllPanels();
   buildLayerStrip();
   wireTopBar();
@@ -27,6 +28,17 @@ function setTheme(t, save) {
   });
 }
 
+// ─── BOTTOM BAR ───────────────────────────────
+
+function loadBottomBarPref() {
+  bottomBarEnabled = localStorage.getItem("bottomBar") !== "off";
+  applyBottomBarVisibility();
+}
+
+function applyBottomBarVisibility() {
+  document.body.classList.toggle("bottombar-hidden", !bottomBarEnabled);
+}
+
 // ─── MAP INIT ─────────────────────────────────
 
 function initMapEngine() {
@@ -45,13 +57,138 @@ function initMapEngine() {
 
 var _pixelReqSeq = 0;
 
+var COPY_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+var CHECK_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+var SHARE_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+
 function wirePixelInspect() {
   mapEngine.onClick(function (e) {
     if (measureActive) return;
     showPixelInfo(e.lngLat);
   });
+  var panel = document.getElementById("pixel-info");
+  if (!panel) return;
   var closeBtn = document.getElementById("pixel-info-close");
   if (closeBtn) closeBtn.addEventListener("click", hidePixelInfo);
+  // Delegated: the body is re-rendered on every click, so bind once on the panel.
+  panel.addEventListener("click", function (e) {
+    var coordsBtn = e.target.closest(".pixel-info-coords");
+    if (coordsBtn) {
+      copyCoords(coordsBtn);
+      return;
+    }
+    var shareBtn = e.target.closest(".pixel-info-share");
+    if (shareBtn) shareCoords(shareBtn);
+  });
+}
+
+// Coordinate line: a copy button (copy icon → "Copied!") plus a share button.
+// The share button opens the native share sheet on touch devices (any map/app on
+// the device) and opens a Google Maps tab on desktop — see shareCoords.
+function coordsRowHTML(lngLat) {
+  var lat = lngLat.lat.toFixed(4);
+  var lng = lngLat.lng.toFixed(4);
+  var coords = lat + ", " + lng;
+  var mapsUrl =
+    "https://www.google.com/maps/search/?api=1&query=" + lat + "," + lng;
+  return (
+    '<div class="pixel-info-coords-row">' +
+    '<button type="button" class="pixel-info-coords" data-copy="' +
+    coords +
+    '" title="Copy coordinates">' +
+    '<span class="coords-icon">' +
+    COPY_ICON +
+    '</span><span class="coords-text">' +
+    coords +
+    "</span></button>" +
+    '<button type="button" class="pixel-info-share" data-coords="' +
+    coords +
+    '" data-maps="' +
+    mapsUrl +
+    '" title="Share location" aria-label="Share location">' +
+    SHARE_ICON +
+    "</button>" +
+    "</div>"
+  );
+}
+
+function copyCoords(btn) {
+  var text = btn.getAttribute("data-copy");
+  if (!text) return;
+  copyToClipboard(text).then(function (ok) {
+    if (ok) showCopied(btn);
+  });
+}
+
+// Touch-first devices (coarse pointer: phones/tablets, incl. iOS/iPadOS) get the
+// native share sheet so the coords can go to any map/app installed. Desktops —
+// including macOS Safari, which supports the API but is mouse-driven, and Firefox,
+// which doesn't — open a Google Maps tab instead.
+function shareCoords(btn) {
+  var coords = btn.getAttribute("data-coords");
+  var mapsUrl = btn.getAttribute("data-maps");
+  var coarsePointer =
+    window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+
+  if (typeof navigator.share === "function" && coarsePointer) {
+    navigator
+      .share({ title: "Coordinates", text: coords, url: mapsUrl })
+      .catch(function () {}); // user dismissed the sheet, or share unavailable — no-op
+    return;
+  }
+  window.open(mapsUrl, "_blank", "noopener");
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(
+      function () {
+        return true;
+      },
+      function () {
+        return legacyCopy(text); // clipboard API can reject without a user gesture / on http
+      },
+    );
+  }
+  return Promise.resolve(legacyCopy(text));
+}
+
+function legacyCopy(text) {
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+var _copiedTimer = null;
+function showCopied(btn) {
+  var iconEl = btn.querySelector(".coords-icon");
+  var textEl = btn.querySelector(".coords-text");
+  if (!iconEl || !textEl) return;
+  var original = btn.getAttribute("data-copy");
+  btn.classList.add("copied");
+  iconEl.innerHTML = CHECK_ICON;
+  textEl.textContent = "Copied!";
+  clearTimeout(_copiedTimer);
+  _copiedTimer = setTimeout(function () {
+    // A newer click may have replaced the body; only revert if still mounted.
+    if (!document.body.contains(btn)) return;
+    btn.classList.remove("copied");
+    iconEl.innerHTML = COPY_ICON;
+    textEl.textContent = original;
+  }, 1200);
 }
 
 function showPixelInfo(lngLat) {
@@ -78,14 +215,10 @@ function showPixelInfo(lngLat) {
 function renderPixelInfo(body, data, lngLat) {
   var raw = data && data.values ? data.values[0] : null;
   var info = describePixelValue(raw);
-  var coords = lngLat.lat.toFixed(4) + ", " + lngLat.lng.toFixed(4);
 
   if (!info) {
     body.innerHTML =
-      '<div class="pixel-info-area">No data here</div>' +
-      '<div class="pixel-info-coords">' +
-      coords +
-      "</div>";
+      '<div class="pixel-info-area">No data here</div>' + coordsRowHTML(lngLat);
     return;
   }
 
@@ -107,9 +240,7 @@ function renderPixelInfo(body, data, lngLat) {
     info.area +
     "</div>" +
     levelHTML +
-    '<div class="pixel-info-coords">' +
-    coords +
-    "</div>";
+    coordsRowHTML(lngLat);
 }
 
 function hidePixelInfo() {
@@ -421,7 +552,9 @@ function buildPanelHTML() {
     "    GitHub repository",
     "  </a>",
     "  </div>",
-    "<!-- Theme -->",
+    "<!-- Display: theme + bottom bar -->",
+    '<div class="section-label">Display</div>',
+    '<div class="sub-card">',
     '  <div class="theme-switch">',
     '    <span class="theme-switch-label">THEME</span>',
     '    <div class="btn-group">',
@@ -432,6 +565,16 @@ function buildPanelHTML() {
       (currentTheme === "dark" ? " active" : "") +
       '" data-ctrl="theme" data-theme="dark">Dark</button>',
     "    </div>",
+    "  </div>",
+    '  <div class="theme-switch bottombar-switch">',
+    '    <span class="theme-switch-label">BOTTOM BAR</span>',
+    '    <label class="toggle">',
+    '      <input type="checkbox" data-ctrl="bottombar-toggle" ' +
+      (bottomBarEnabled ? "checked" : "") +
+      ">",
+    '      <span class="toggle-track"></span>',
+    "    </label>",
+    "  </div>",
     "</div>",
     "</div>",
   ].join("\n");
@@ -484,6 +627,13 @@ function onControlChange(e) {
     refreshDataLayer();
     updateHotspotTab(hotspotMode);
     repaintAllGradients();
+  }
+
+  if (ctrl === "bottombar-toggle") {
+    bottomBarEnabled = e.target.checked;
+    localStorage.setItem("bottomBar", bottomBarEnabled ? "on" : "off");
+    syncCheckboxes("bottombar-toggle", null, bottomBarEnabled);
+    applyBottomBarVisibility();
   }
 
   if (ctrl === "basemap-toggle") {

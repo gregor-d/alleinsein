@@ -207,6 +207,11 @@ body {
   padding: 3px 10px;
   font-size: 11px;
 }
+/* Bottom-bar on/off toggle: label left, switch pushed to the right. */
+.bottombar-switch {
+  justify-content: space-between;
+  margin-top: 10px;
+}
 
 .panel-intro {
   color: var(--c-text-muted);
@@ -775,11 +780,58 @@ body {
   font-family: var(--font-mono);
   font-weight: 500;
 }
-.pixel-info-coords {
+/* Coordinate line: a click-to-copy button + an open-in-maps link. The copy icon
+   signals it's actionable; hover lifts the colour, .copied switches to accent +
+   checkmark; the pin link deep-links to a maps app (mobile) / opens a tab. */
+.pixel-info-coords-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 5px;
+}
+.pixel-info-coords {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 2px 1px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--c-text-muted);
+  transition: color var(--t);
+}
+.pixel-info-coords:hover {
+  color: var(--c-text);
+}
+.pixel-info-coords.copied {
+  color: var(--c-accent);
+}
+.pixel-info-coords .coords-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.pixel-info-coords .coords-icon svg {
+  width: 12px;
+  height: 12px;
+}
+.pixel-info-share {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: color var(--t);
+}
+.pixel-info-share:hover {
+  color: var(--c-accent);
+}
+.pixel-info-share svg {
+  width: 14px;
+  height: 14px;
 }
 .pixel-info-loading,
 .pixel-info-empty {
@@ -835,6 +887,11 @@ body {
   border-top: 1px solid var(--c-border);
   z-index: 100;
   display: block;
+}
+
+/* Hidden via the settings → Theme "Bottom Bar" toggle. */
+body.bottombar-hidden #bottom-bar {
+  display: none;
 }
 
 /* Controls row below the layer strip */
@@ -1124,6 +1181,10 @@ body {
 @media (max-width: 767px) {
   #map {
     bottom: var(--bottombar-h);
+  }
+  /* No bar reserved at the bottom when it's toggled off. */
+  body.bottombar-hidden #map {
+    bottom: 0;
   }
   #bottom-bar {
     display: block;
