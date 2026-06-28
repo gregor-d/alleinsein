@@ -73,12 +73,11 @@ class MapLibreEngine {
 
   /**
    * Initialises MapLibre GL with pre-defined basemap sources and layers (all hidden),
-   * adds navigation, attribution and scale controls, and loads the Germany mask GeoJSON.
+   * adds attribution and scale controls, and loads the Germany mask GeoJSON.
    * Returns a Promise that resolves once the map style has loaded.
    */
-  init(containerId, center, zoom, navPos = "top-left") {
+  init(containerId, center, zoom) {
     const self = this;
-    this._navPos = navPos;
 
     return new Promise(function (resolve) {
       self.map = new maplibregl.Map({
@@ -123,18 +122,21 @@ class MapLibreEngine {
         minZoom: MapLibreEngine.toCameraZoom(CONFIG.minimal_zoom),
         maxZoom: MapLibreEngine.toCameraZoom(CONFIG.maximal_zoom),
         attributionControl: false,
+        // Keep the map north-up: no drag-rotate (right-drag / two-finger twist)
+        // and no pitch/tilt gestures.
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
       });
+
+      // The constructor flags above don't cover the two-finger twist or the
+      // keyboard rotation keys, so disable those explicitly too.
+      self.map.touchZoomRotate.disableRotation();
+      self.map.keyboard.disableRotation();
 
       self.map.addControl(
         new maplibregl.ScaleControl({ maxWidth: 80, unit: "metric" }),
         "bottom-left",
-      );
-      self.map.addControl(
-        new maplibregl.NavigationControl({
-          showCompass: true,
-          showZoom: false,
-        }),
-        self._navPos,
       );
       self.map.addControl(
         new maplibregl.AttributionControl({ compact: false }),
@@ -192,8 +194,14 @@ class MapLibreEngine {
    * per tile zoom (see backend/main.py raster_tiers), so the client just
    * requests one tiled source.
    * Removes the layer entirely when the colormap is empty.
+   *
+   * `opts.bidx` picks which raster band to render (1 = normal aloneness, 2 = the
+   * slope-boosted hotspot band); the data COG can be multi-band, so titiler needs it
+   * explicitly. `opts.raster` pins a specific raster file (used by hotspot-slope mode
+   * to point at the 2-band COG), bypassing per-zoom tiering like the override.
    */
-  updateDataLayer(colormapJson, opacity) {
+  updateDataLayer(colormapJson, opacity, opts) {
+    opts = opts || {};
     if (!this.map || !this.map.isStyleLoaded()) return;
 
     clearTimeout(this.debounceTimer);
@@ -210,8 +218,12 @@ class MapLibreEngine {
       const reqId = ++self.dataReqSeq;
       const url = new URL(TILE_JSON_URL.toString());
       url.searchParams.set("colormap", colormapJson);
+      url.searchParams.set("bidx", opts.bidx || 1);
 
-      if (useRasterOverride && CONFIG.raster_override) {
+      if (opts.raster) {
+        // Hotspot-slope mode pins the 2-band raster (its overviews cover all zooms).
+        url.searchParams.set("raster", opts.raster);
+      } else if (useRasterOverride && CONFIG.raster_override) {
         // Pin a single raster, bypasses the backend's per-zoom tiering entirely.
         url.searchParams.set("raster", CONFIG.raster_override);
       } else {
@@ -451,81 +463,6 @@ class MapLibreEngine {
    */
   onMove(handler) {
     if (this.map) this.map.on("move", handler);
-  }
-
-  /**
-   * Touch-device inspect gestures (coarse pointer only — see wirePixelInspect).
-   * A long press (finger held ~500ms in place) calls onLongPress with the
-   * MapTouchEvent (.lngLat) to open the readout; a quick tap calls onTap to
-   * dismiss it. Dragging (pan) or a second finger (pinch) cancels both, so the
-   * gestures never fire while the user is navigating the map.
-   */
-  onTouchInspect(onLongPress, onTap) {
-    if (!this.map) return;
-    const map = this.map;
-    const LONG_PRESS_MS = 500;
-    const MOVE_TOLERANCE = 12; // px of finger travel before it counts as a pan
-
-    let timer = null;
-    let startPoint = null;
-    let longFired = false;
-    let moved = false;
-    let multiTouch = false;
-
-    const cancelTimer = function () {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-
-    map.on("touchstart", function (e) {
-      const touches = e.originalEvent && e.originalEvent.touches;
-      if (touches && touches.length > 1) {
-        // A second finger means pinch/rotate, never an inspect gesture.
-        multiTouch = true;
-        cancelTimer();
-        return;
-      }
-      multiTouch = false;
-      moved = false;
-      longFired = false;
-      startPoint = e.point;
-      cancelTimer();
-      timer = setTimeout(function () {
-        timer = null;
-        longFired = true;
-        onLongPress(e); // touchstart event — its .lngLat is the press point
-      }, LONG_PRESS_MS);
-    });
-
-    map.on("touchmove", function (e) {
-      if (!startPoint || moved) return;
-      const p = e.point;
-      if (
-        Math.abs(p.x - startPoint.x) > MOVE_TOLERANCE ||
-        Math.abs(p.y - startPoint.y) > MOVE_TOLERANCE
-      ) {
-        moved = true; // finger dragged → a pan, not a tap or long press
-        cancelTimer();
-      }
-    });
-
-    map.on("touchend", function (e) {
-      cancelTimer();
-      const touches = e.originalEvent && e.originalEvent.touches;
-      if (touches && touches.length > 0) return; // wait for the last finger up
-      if (!multiTouch && !moved && !longFired) onTap();
-      startPoint = null;
-      multiTouch = false;
-    });
-
-    map.on("touchcancel", function () {
-      cancelTimer();
-      startPoint = null;
-      moved = false;
-      multiTouch = false;
-    });
   }
 
   /**

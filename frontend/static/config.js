@@ -10,6 +10,15 @@ const CONFIG = {
   // Optional: pin a single raster (e.g. "germany_raster_v3.tif") bypassing the backend's per-zoom
   // tiering. Leave null/empty to let the backend tier by zoom (the default).
   raster_override: "germany_20m_v3.tif",
+  // The 2-band raster (built by raster/create_slope_band.sh) whose band 2 separates
+  // the slope classes within the most-secluded group (one value per class, per land
+  // cover). The "Slope spots" UI toggle pins this raster and requests band 2 (bidx=2);
+  // its own overviews cover low zooms too.
+  slope_hotspot_raster: "germany_20m_v3_2band.tif",
+  // Single-band, fully slope-modified variant (built by create_slope_modified_raster.sh):
+  // the whole aloneness band shifted by terrain slope, same encoding as the default
+  // raster. The "Slope map" UI toggle pins it and renders it with the normal full ramp.
+  slope_modified_raster: "germany_20m_v3_slope.tif",
   mask_opacity: 0.45,
   mask_color: "#111111",
   measure_color: "#e6007e",
@@ -198,6 +207,12 @@ let basemapOpacity = 0.8;
 let dataLayerOpacity = 1.0;
 let boundsSet = false;
 let hotspotMode = false;
+// "Slope spots" mode: render data band 2 (slope-boosted encoding), colouring only
+// the four most-secluded buckets per land cover. When on it owns the data layer.
+let slopeHotspotMode = false;
+// "Slope map" mode: render the fully slope-modified raster with the normal full ramp.
+// Mutually exclusive with slopeHotspotMode (they pin different rasters).
+let slopeModifiedMode = false;
 // Bottom layer bar visibility (toggle in settings → Theme). Enabled by default.
 let bottomBarEnabled = true;
 // Whether the coordinate-info readout pops up on the map itself when clicking

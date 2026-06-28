@@ -28,3 +28,29 @@ heatmap_calc() {
     --type="$RASTER_DATA_TYPE" \
     --NoDataValue="$RASTER_NODATA" $OVERWRITE
 }
+
+# finalize_web_cog SRC OUT_COG [WORK_DIR]
+#
+# Turn a raster on the TARGET_EPSG grid into the final web product: clip it to the
+# AREA bounds, reproject to WEB_EPSG, and write a web-optimized COG (the tile-matrix
+# aligned grid that minimises reads). This is the shared tail of create_raster.sh and
+# the slope band scripts, so the reprojection/web-optimization stays in one place.
+# WORK_DIR holds the intermediate reprojected file (defaults to OUT_COG's directory).
+# Requires AREA, WEB_EPSG, OVERWRITE, GTIFF_WRITE_OPTIONS and RASTER_ROOT_DIR.
+finalize_web_cog() {
+  local src="$1" out_cog="$2" work_dir="${3:-$(dirname "$out_cog")}"
+  local bounds_gpkg="${RASTER_ROOT_DIR}/input/bounds/${AREA}.gpkg"
+  local reprojected="${work_dir}/$(basename "${out_cog%.tif}")_3857.tif"
+
+  echo "Clipping to bounds and reprojecting to ${WEB_EPSG}..."
+  gdal raster pipeline \
+    "!" read "$src" \
+    "!" clip --like "$bounds_gpkg" --like-layer "$AREA" --allow-bbox-outside-source \
+    "!" reproject -d "$WEB_EPSG" \
+    "!" write $OVERWRITE "${GTIFF_WRITE_OPTIONS[@]}" "$reprojected"
+
+  echo "Creating web-optimized COG with overviews -> ${out_cog}"
+  rio cogeo create --web-optimized "$reprojected" "$out_cog" \
+    --resampling nearest --overview-resampling nearest \
+    --blocksize 512 --overview-blocksize 512
+}

@@ -73,27 +73,12 @@ var SHARE_ICON =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
 
 function wirePixelInspect() {
-  // Touch devices: long-press opens the readout, a quick tap dismisses any open
-  // one. Mouse/pointer devices keep the simpler click-to-open behaviour.
-  var coarsePointer =
-    window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-  if (coarsePointer) {
-    mapEngine.onTouchInspect(
-      function (e) {
-        if (measureActive) return;
-        showPixelInfo(e.lngLat);
-      },
-      function () {
-        if (measureActive) return;
-        hidePixelInfo();
-      },
-    );
-  } else {
-    mapEngine.onClick(function (e) {
-      if (measureActive) return;
-      showPixelInfo(e.lngLat);
-    });
-  }
+  // A plain click/tap opens the readout on every device (MapLibre synthesises a
+  // click from a touch tap, so the same handler covers mouse and touch).
+  mapEngine.onClick(function (e) {
+    if (measureActive) return;
+    showPixelInfo(e.lngLat);
+  });
   var closeBtn = document.getElementById("pixel-info-close");
   if (closeBtn) closeBtn.addEventListener("click", hidePixelInfo);
   // Keep the floating readout pinned next to its point while the map moves.
@@ -111,9 +96,8 @@ function wirePixelInspect() {
   });
 }
 
-// Coordinate line: a copy button (copy icon → "Copied!") plus a share button.
-// The share button opens the native share sheet on touch devices (any map/app on
-// the device) and opens a Google Maps tab on desktop — see shareCoords.
+// Coordinate line: a copy button (copy icon → "Copied!") plus a share button
+// that opens the point in Google Maps in a new tab — see shareCoords.
 function coordsRowHTML(lngLat) {
   var lat = lngLat.lat.toFixed(4);
   var lng = lngLat.lng.toFixed(4);
@@ -130,11 +114,9 @@ function coordsRowHTML(lngLat) {
     '</span><span class="coords-text">' +
     coords +
     "</span></button>" +
-    '<button type="button" class="pixel-info-share" data-coords="' +
-    coords +
-    '" data-maps="' +
+    '<button type="button" class="pixel-info-share" data-maps="' +
     mapsUrl +
-    '" title="Share location" aria-label="Share location">' +
+    '" title="Open in Google Maps" aria-label="Open in Google Maps">' +
     SHARE_ICON +
     "</button>" +
     "</div>"
@@ -149,23 +131,10 @@ function copyCoords(btn) {
   });
 }
 
-// Touch-first devices (coarse pointer: phones/tablets, incl. iOS/iPadOS) get the
-// native share sheet so the coords can go to any map/app installed. Desktops —
-// including macOS Safari, which supports the API but is mouse-driven, and Firefox,
-// which doesn't — open a Google Maps tab instead.
+// Opens the clicked point in Google Maps in a new tab, on every device.
 function shareCoords(btn) {
-  var coords = btn.getAttribute("data-coords");
   var mapsUrl = btn.getAttribute("data-maps");
-  var coarsePointer =
-    window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-
-  if (typeof navigator.share === "function" && coarsePointer) {
-    navigator
-      .share({ title: "Coordinates", text: coords, url: mapsUrl })
-      .catch(function () {}); // user dismissed the sheet, or share unavailable — no-op
-    return;
-  }
-  window.open(mapsUrl, "_blank", "noopener");
+  if (mapsUrl) window.open(mapsUrl, "_blank", "noopener");
 }
 
 function copyToClipboard(text) {
@@ -722,6 +691,27 @@ function onControlChange(e) {
     refreshDataLayer();
     updateHotspotTab(hotspotMode);
     repaintAllGradients();
+  }
+
+  if (ctrl === "hotspot-slope") {
+    slopeHotspotMode = e.target.checked;
+    syncCheckboxes("hotspot-slope", null, e.target.checked);
+    if (slopeHotspotMode && slopeModifiedMode) {
+      // The two slope views pin different rasters — only one at a time.
+      slopeModifiedMode = false;
+      syncCheckboxes("slope-modified", null, false);
+    }
+    refreshDataLayer();
+  }
+
+  if (ctrl === "slope-modified") {
+    slopeModifiedMode = e.target.checked;
+    syncCheckboxes("slope-modified", null, e.target.checked);
+    if (slopeModifiedMode && slopeHotspotMode) {
+      slopeHotspotMode = false;
+      syncCheckboxes("hotspot-slope", null, false);
+    }
+    refreshDataLayer();
   }
 
   if (ctrl === "bottombar-toggle") {

@@ -31,6 +31,91 @@
   </head>
 
   <body>
+    <!-- ░░░ DEV-BAR START — temporary developer toggles. Delete this whole
+         block (markup + <style>) to remove. The toggles share the same
+         data-ctrl values as the bottom-bar copies, so app.js keeps them in
+         sync automatically; no JS changes are needed. ░░░ -->
+    <style>
+      /* Height of the dev-bar; everything below is pushed down by this much.
+         Defined here so it's removed together with the block. */
+      :root {
+        --devbar-h: 34px;
+      }
+      #dev-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--devbar-h);
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 0 14px;
+        background: var(--c-surface);
+        border-bottom: 1px dashed var(--c-accent);
+        font-family: var(--font-ui, inherit);
+      }
+      /* Push the normal UI down so the dev-bar sits above it, not over the map. */
+      #top-bar {
+        top: var(--devbar-h);
+      }
+      #map,
+      #settings-panel {
+        top: calc(var(--topbar-h) + var(--devbar-h));
+      }
+      #settings-cog {
+        top: calc(var(--topbar-h) + 16px + var(--devbar-h));
+      }
+      #dev-bar .dev-bar-badge {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--c-accent);
+      }
+      #dev-bar .dev-bar-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      #dev-bar .dev-bar-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--c-text);
+        white-space: nowrap;
+      }
+    </style>
+    <div id="dev-bar" role="group" aria-label="Developer toggles">
+      <span class="dev-bar-badge">Dev</span>
+      <!-- Slope spots: most-secluded spots boosted by terrain slope (band 2). -->
+      <div class="dev-bar-item">
+        <span class="dev-bar-label">Slope spots</span>
+        <label class="toggle">
+          <input
+            type="checkbox"
+            data-ctrl="hotspot-slope"
+            aria-label="Toggle slope hotspot mode (most-secluded spots only)"
+          />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <!-- Slope map: whole aloneness map adjusted by terrain slope (full ramp). -->
+      <div class="dev-bar-item">
+        <span class="dev-bar-label">Slope map</span>
+        <label class="toggle">
+          <input
+            type="checkbox"
+            data-ctrl="slope-modified"
+            aria-label="Toggle slope-modified map (full ramp)"
+          />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+    <!-- ░░░ DEV-BAR END ░░░ -->
+
     <!-- Top bar -->
     <header id="top-bar">
       <div class="brand">

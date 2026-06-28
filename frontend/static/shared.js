@@ -115,12 +115,47 @@ function getCombinedColormapJson() {
 }
 
 /**
- * Triggers a full data layer refresh on the active map engine
- * using the current layer visibility and colormap settings.
+ * Colormap for the "Slope spots" band (data band 2). Per visible category layer it
+ * reuses that layer's own ramp but only its first four colours, mapped to the four
+ * slope classes of the most-secluded group (start..start+3, where start+0 = steepest
+ * => colors[0], the darkest). Everything else is left unmapped and so renders
+ * transparent — "all but the first four ramp colours" hidden per land cover.
+ */
+function getHotspotSlopeColormapJson() {
+  const cmap = {};
+  layerState.forEach(function (layer) {
+    if (!layer.visible || layer.type !== "category") return;
+    const colors = resolveColors(layer.preset);
+    for (let i = 0; i < 4; i++) {
+      cmap[layer.start + i] = hexToRgba(colors[i]);
+    }
+  });
+  return JSON.stringify(cmap);
+}
+
+/**
+ * Triggers a full data layer refresh on the active map engine:
+ *  - "Slope spots": pin the 2-band raster, render band 2 with the first-four-colours ramp.
+ *  - "Slope map": pin the fully slope-modified raster, render band 1 with the normal ramp.
+ *  - default: render band 1 of the tiered/override raster with the combined colormap.
  */
 function refreshDataLayer() {
-  if (mapEngine)
-    mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity);
+  if (!mapEngine) return;
+  if (slopeHotspotMode) {
+    mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity, {
+      bidx: 1,
+      raster: CONFIG.slope_hotspot_raster,
+    });
+  } else if (slopeModifiedMode) {
+    mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity, {
+      bidx: 1,
+      raster: CONFIG.slope_modified_raster,
+    });
+  } else {
+    mapEngine.updateDataLayer(getCombinedColormapJson(), dataLayerOpacity, {
+      bidx: 1,
+    });
+  }
 }
 
 // ─── GEO HELPERS ───
