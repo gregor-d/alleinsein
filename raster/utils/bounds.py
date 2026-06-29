@@ -74,7 +74,9 @@ def buffered_bbox(
             f"Missing {gpkg} - run 'bounds.py area' for '{area}' first"
         )
 
-    minx, miny, maxx, maxy = gpd.read_file(gpkg, layer=area).to_crs(TARGET_CRS).total_bounds
+    minx, miny, maxx, maxy = (
+        gpd.read_file(gpkg, layer=area).to_crs(TARGET_CRS).total_bounds
+    )
 
     # Buffered processing extent: expand so the road-smoothing kernel sees the
     # neighbours' roads, then snap to a shared grid so every area lands on one global
@@ -177,7 +179,9 @@ def _area_from_env() -> str:
     precedence; fall back to raster.conf for the single-area workflow."""
     from dotenv import dotenv_values
 
-    area = os.environ.get("AREA") or dotenv_values(DEFAULT_RASTER_CONFIG_FILE).get("AREA")
+    area = os.environ.get("AREA") or dotenv_values(DEFAULT_RASTER_CONFIG_FILE).get(
+        "AREA"
+    )
     if not area:
         raise ValueError(f"AREA is required (env AREA or {DEFAULT_RASTER_CONFIG_FILE})")
     return area

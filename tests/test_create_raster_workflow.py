@@ -33,9 +33,9 @@ def _run_dry_run():
 
 def test_clip_reproject_pipeline_renders_expected_string():
     """Golden test for the clip/reproject/web-COG pipeline block in
-    raster/utils/gdal_controller.py (finalize_web_cog). The block below is a copy
+    raster/utils/gdal_controller.py (clip_reproject_web_cog). The block below is a copy
     of that code with its external variables turned into local inputs (here the
-    source is the raw heatmap; in the main pipeline finalize_web_cog receives the
+    source is the raw heatmap; in the main pipeline clip_reproject_web_cog receives the
     2-band stack instead, but the rendered template is identical). Keep the two in
     sync: when you change the block in gdal_controller.py, mirror it here and this
     assertion proves the rendered output is unchanged."""

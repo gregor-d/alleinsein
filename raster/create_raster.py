@@ -4,8 +4,9 @@ Orchestrates the same stages as create_raster.sh, but in Python, and stacks an e
 slope-modified band onto the aloneness raster: the final COG carries two bands (band
 1 raw aloneness, band 2 the same encoding re-scored by slope class). This module only
 coordinates: it parses CLI flags, prepares directories and the process environment,
-decides which prep stages to (re)run, and calls into ``raster.utils.gdal_controller``,
-which performs all the actual GDAL/osmium work. Configuration defaults live as plain
+decides which prep stages to (re)run, and calls into the per-domain stage modules
+(``osm``, ``clc``, ``dem``) and the assembly steps in ``raster.utils.gdal_controller``,
+which perform the actual GDAL/osmium work. Configuration defaults live as plain
 variables in ``raster_settings.py``.
 """
 
@@ -15,7 +16,7 @@ import argparse
 from pathlib import Path
 
 from raster import raster_settings as settings
-from raster.utils import gdal_controller as gdal_ctl
+from raster.utils import clc, dem, gdal_common, gdal_controller, osm
 from raster.utils.helpers import banner
 
 
@@ -67,7 +68,7 @@ def main() -> None:
     if args.dry_run:
         print("Dry run: no GDAL, rio-cogeo or osmium commands will be executed.")
     else:
-        gdal_ctl.configure_gdal()
+        gdal_common.configure_gdal()
 
     banner("Raster workflow")
     print(f"AREA: {settings.area}")
@@ -78,22 +79,22 @@ def main() -> None:
         check_skip_prep_inputs()
 
     if needs_prep(args, settings.osm_filtered):
-        gdal_ctl.filter_osm_pbf(settings.osm_latest, settings.osm_filtered)
+        osm.filter_osm_pbf(settings.osm_latest, settings.osm_filtered)
     else:
         print(f"Reusing existing {settings.osm_filtered}")
 
     if needs_prep(args, settings.roads_gpkg):
-        gdal_ctl.create_roads_gpkg(settings.osm_filtered, settings.roads_gpkg)
+        osm.create_roads_gpkg(settings.osm_filtered, settings.roads_gpkg)
     else:
         print(f"Reusing existing {settings.roads_gpkg}")
 
     if needs_prep(args, settings.roads_smooth):
-        gdal_ctl.rasterize_and_smooth_roads(settings.roads_gpkg, settings.roads_smooth)
+        osm.rasterize_and_smooth_roads(settings.roads_gpkg, settings.roads_smooth)
     else:
         print(f"Reusing existing {settings.roads_smooth}")
 
     if needs_prep(args, settings.clc_stack):
-        gdal_ctl.create_clc_stack(
+        clc.create_clc_stack(
             settings.clc_source,
             settings.clc_mapping,
             settings.clc_classified,
@@ -103,19 +104,19 @@ def main() -> None:
         print(f"Reusing existing {settings.clc_stack}")
 
     if needs_prep(args, settings.slope_classes):
-        gdal_ctl.create_slope_classes(
+        dem.create_slope_classes(
             settings.dem_slope_source, settings.slope_mapping, settings.slope_classes
         )
     else:
         print(f"Reusing existing {settings.slope_classes}")
 
-    gdal_ctl.calculate_heatmap(  # band 1: raw aloneness
+    gdal_controller.calculate_heatmap(  # band 1: raw aloneness
         settings.roads_smooth, settings.clc_stack, settings.raw_calc
     )
-    gdal_ctl.calculate_slope_mod_band(  # band 2: slope-modified aloneness
+    dem.calculate_slope_mod_band(  # band 2: slope-modified aloneness
         settings.raw_calc, settings.slope_classes, settings.slope_mod_modified
     )
-    gdal_ctl.create_web_cog(  # stack both bands -> 2-band web COG
+    gdal_controller.create_web_cog(  # stack both bands -> 2-band web COG
         settings.raw_calc,
         settings.slope_mod_modified,
         settings.output_cog,

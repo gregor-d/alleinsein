@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 
 from raster import raster_settings as settings
-from raster.utils import gdal_controller as gdal_ctl
+from raster.utils import gdal_common, gdal_controller
 from raster.utils.helpers import banner
 
 
@@ -49,7 +49,7 @@ def main() -> None:
     if args.dry_run:
         print("Dry run: no GDAL or rio-cogeo commands will be executed.")
     else:
-        gdal_ctl.configure_gdal()
+        gdal_common.configure_gdal()
         check_inputs()
 
     banner("Coarse raster workflow")
@@ -59,7 +59,7 @@ def main() -> None:
     for resolution in settings.coarse_resolutions:
         stem = f"{settings.area}_{resolution}m_v{settings.raster_version}"
         output_cog = settings.output_dir / f"{stem}.tif"
-        gdal_ctl.build_coarse_raster(
+        gdal_controller.build_coarse_raster(
             resolution,
             settings.roads_smooth,
             settings.clc_classified,

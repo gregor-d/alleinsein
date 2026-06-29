@@ -8,9 +8,10 @@ reprojected and written as a single web COG.
 
 Like ``create_raster.py`` this module only coordinates: it parses CLI flags, prepares
 directories and the GDAL config, decides which per-country prep stages to (re)run, and
-calls into ``raster.utils.gdal_controller`` for the GDAL/osmium work. The geocoding and
-dissolved-boundary steps (geopandas/osmnx) are imported and called directly from
-``raster.utils.bounds``. Configuration defaults live in ``raster_settings.py``.
+calls into the per-domain GDAL/osmium stage modules (``osm``, ``clc``) and the assembly
+steps in ``gdal_controller``. The geocoding and dissolved-boundary steps
+(geopandas/osmnx) are imported and called directly from ``raster.utils.bounds``.
+Configuration defaults live in ``raster_settings.py``.
 
 The per-country PBFs are cut from the Europe-wide PBF automatically when missing, so the
 only prerequisite is placing that PBF at ``input/osm/<eu_europe_pbf_name>`` (download
@@ -23,12 +24,14 @@ import argparse
 from pathlib import Path
 
 from raster import raster_settings as settings
-from raster.utils import bounds, gdal_controller as gdal_ctl
+from raster.utils import bounds, clc, gdal_common, gdal_controller, osm
 from raster.utils.helpers import banner
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build the combined multi-country COG.")
+    parser = argparse.ArgumentParser(
+        description="Build the combined multi-country COG."
+    )
     # Re-run the (slow) per-country prep even when its outputs already exist.
     parser.add_argument("--force-prep", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -83,7 +86,7 @@ def process_country(country: str, force_prep: bool) -> Path:
     europe_pbf = settings.osm_dir / settings.eu_europe_pbf_name
     pbf = settings.osm_dir / f"{country}-latest.osm.pbf"
     if not pbf.is_file():
-        gdal_ctl.extract_country_pbf(europe_pbf, pbf, bbox_4326)
+        osm.extract_country_pbf(europe_pbf, pbf, bbox_4326)
     else:
         print(f"Reusing existing {pbf}")
 
@@ -98,16 +101,16 @@ def process_country(country: str, force_prep: bool) -> Path:
     # 3. OSM roads heatmap (filter -> gpkg -> rasterize + smooth).
     if needs_prep(force_prep, roads_smooth):
         print(f"Building OSM roads heatmap for {country}...")
-        gdal_ctl.filter_osm_pbf(pbf, osm_filtered)
-        gdal_ctl.create_roads_gpkg(osm_filtered, roads_gpkg)
-        gdal_ctl.rasterize_and_smooth_roads(roads_gpkg, roads_smooth)
+        osm.filter_osm_pbf(pbf, osm_filtered)
+        osm.create_roads_gpkg(osm_filtered, roads_gpkg)
+        osm.rasterize_and_smooth_roads(roads_gpkg, roads_smooth)
     else:
         print(f"Reusing existing {roads_smooth} (--force-prep to rebuild)")
 
     # 4. CLC one-hot land-cover stack.
     if needs_prep(force_prep, clc_stack):
         print(f"Building CLC stack for {country}...")
-        gdal_ctl.create_clc_stack(
+        clc.create_clc_stack(
             settings.clc_source, settings.clc_mapping, clc_classified, clc_stack
         )
     else:
@@ -116,7 +119,7 @@ def process_country(country: str, force_prep: bool) -> Path:
     # 5. Encode the heatmap on this country's buffered grid (TARGET_EPSG). No clip
     #    or reproject yet - those run once on the merged mosaic.
     country_3035 = settings.temp_dir / f"{settings.eu_output_area}_{country}_3035.tif"
-    gdal_ctl.calculate_heatmap(roads_smooth, clc_stack, country_3035)
+    gdal_controller.calculate_heatmap(roads_smooth, clc_stack, country_3035)
     return country_3035
 
 
@@ -136,7 +139,7 @@ def main() -> None:
     if args.dry_run:
         print("Dry run: no GDAL, osmium, rio-cogeo or geocoding operations will run.")
     else:
-        gdal_ctl.configure_gdal()
+        gdal_common.configure_gdal()
 
     banner("Multi-country raster workflow")
     print(f"Output area: {settings.eu_output_area}")
@@ -157,11 +160,11 @@ def main() -> None:
     # Mosaic the per-country rasters on the shared grid, then clip to the exact
     # dissolved outline, reproject to Web Mercator and write the web-optimized COG.
     mosaic_vrt = settings.temp_dir / f"{settings.eu_output_area}_3035.vrt"
-    gdal_ctl.mosaic_rasters(per_country_3035, mosaic_vrt)
+    gdal_controller.mosaic_rasters(per_country_3035, mosaic_vrt)
 
     reprojected = settings.temp_dir / f"{settings.eu_output_area}_3857.tif"
     output_cog = next_versioned_cog(f"{settings.eu_output_area}_20m")
-    gdal_ctl.finalize_web_cog(
+    gdal_controller.clip_reproject_web_cog(
         mosaic_vrt,
         output_cog,
         reprojected,
