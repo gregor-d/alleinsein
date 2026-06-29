@@ -14,7 +14,7 @@ MAPPING_FILE="${DEM_DIR}/slope_classes.txt"
 # up pixel-for-pixel with the roads/CLC rasters and the heatmap output and can be
 # combined with gdal_calc without any reprojection. Read by the slope band scripts
 # (create_hotspot_slope_band.sh, create_slope_mod_band.sh).
-OUTPUT_RASTER="${RASTER_ROOT_DIR}/input/transformed/${AREA}_slope_classes.tif"
+OUTPUT_RASTER="${DEM_DIR}/${AREA}_slope_classes.tif"
 
 BBOX="${MINX},${MINY},${MAXX},${MAXY}"
 

@@ -9,6 +9,7 @@ rasterizes line-by-line.
 
 from __future__ import annotations
 
+from osgeo import gdal  # ty: ignore[unresolved-import]
 from raster import raster_settings as settings
 from raster.utils.raster_helpers import banner, make_pipeline
 
@@ -41,8 +42,6 @@ def create_roads_gpkg() -> None:
     print(f"$ gdal vector pipeline {pipeline}")
     if settings.dry_run:
         return
-
-    from osgeo import gdal  # ty: ignore[unresolved-import]
 
     result = gdal.Run("vector pipeline", pipeline=pipeline)
     if hasattr(result, "Finalize"):

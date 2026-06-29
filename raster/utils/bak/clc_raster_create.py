@@ -11,6 +11,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+from osgeo import gdal  # ty: ignore[unresolved-import]
 from raster import raster_settings as settings
 from raster.utils.raster_helpers import banner, make_pipeline
 
@@ -36,8 +37,6 @@ def create_clc_stack() -> None:
     )
     print(f"$ gdal raster pipeline {pipeline}")
     if not settings.dry_run:
-        from osgeo import gdal  # ty: ignore[unresolved-import]
-
         result = gdal.Run("raster pipeline", pipeline=pipeline)
         if hasattr(result, "Finalize"):
             result.Finalize()
@@ -57,8 +56,6 @@ def create_clc_stack() -> None:
             )
             print(f"$ gdal raster pipeline {pipeline}")
             if not settings.dry_run:
-                from osgeo import gdal  # ty: ignore[unresolved-import]
-
                 result = gdal.Run("raster pipeline", pipeline=pipeline)
                 if hasattr(result, "Finalize"):
                     result.Finalize()
@@ -72,8 +69,6 @@ def create_clc_stack() -> None:
         )
         print(f"$ gdal raster pipeline {pipeline}")
         if not settings.dry_run:
-            from osgeo import gdal  # ty: ignore[unresolved-import]
-
             result = gdal.Run("raster pipeline", pipeline=pipeline)
             if hasattr(result, "Finalize"):
                 result.Finalize()

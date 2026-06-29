@@ -1,27 +1,22 @@
-# pyright: reportMissingImports=false
-"""Build the test raster COG (Python pipeline).
+"""Build the test raster COG (Python pipeline) — workflow coordinator.
 
-Orchestrates the same stages as create_raster.sh, but in Python and with an extra
-slope modifier on the roads raster. Each input-data stage lives in its own module
-under ``utils/`` (mirroring the shell utils); ``raster_settings.py`` holds config
-and derived paths, while this script wires the stages together and runs the final
-heatmap + web-COG steps inline.
-
-Configuration defaults live as plain variables in ``raster_settings.py``.
+Orchestrates the same stages as create_raster.sh, but in Python, and stacks an extra
+slope-modified band onto the aloneness raster: the final COG carries two bands (band
+1 raw aloneness, band 2 the same encoding re-scored by slope class). This module only
+coordinates: it parses CLI flags, prepares directories and the process environment,
+decides which prep stages to (re)run, and calls into ``raster.utils.gdal_controller``,
+which performs all the actual GDAL/osmium work. Configuration defaults live as plain
+variables in ``raster_settings.py``.
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
 
 from raster import raster_settings as settings
-from raster.utils.clc_raster_create import create_clc_stack
-from raster.utils.osm_create_gpkg import create_roads_gpkg
-from raster.utils.osm_filter_pbf import filter_osm_pbf
-from raster.utils.osm_rasterize_roads import rasterize_and_smooth_roads
-from raster.utils.raster_helpers import banner, make_pipeline
+from raster.utils import gdal_controller as gdal_ctl
+from raster.utils.helpers import banner
 
 
 def parse_args() -> argparse.Namespace:
@@ -50,6 +45,7 @@ def check_skip_prep_inputs() -> None:
         (settings.roads_gpkg, "roads GeoPackage"),
         (settings.roads_smooth, "roads smooth raster"),
         (settings.clc_stack, "CLC one-hot stack"),
+        (settings.slope_classes, "slope classes raster"),
     ):
         if not path.is_file():
             raise FileNotFoundError(f"Missing {label}: {path}")
@@ -62,32 +58,16 @@ def main() -> None:
     for directory in (
         settings.osm_dir,
         settings.clc_dir,
+        settings.dem_dir,
         settings.output_dir,
         settings.temp_dir,
     ):
         directory.mkdir(parents=True, exist_ok=True)
 
-    # Export the GDAL/OSM settings into the process environment.
-    os.environ.update(
-        {
-            "AREA": settings.area,
-            "TARGET_EPSG": settings.target_epsg,
-            "WEB_EPSG": settings.web_epsg,
-            "RASTER_RESOLUTION": settings.resolution,
-            "RASTER_NODATA": str(settings.nodata),
-            "RASTER_DATA_TYPE": settings.data_type,
-            "GDAL_CACHEMAX": settings.gdal_cachemax,
-            "OSM_MAX_TMPFILE_SIZE": settings.osm_max_tmpfile_size,
-            "CPL_TMPDIR": settings.cpl_tmpdir,
-        }
-    )
     if args.dry_run:
         print("Dry run: no GDAL, rio-cogeo or osmium commands will be executed.")
     else:
-        from osgeo import gdal  # ty: ignore[unresolved-import]
-
-        for key in ("GDAL_CACHEMAX", "OSM_MAX_TMPFILE_SIZE", "CPL_TMPDIR"):
-            gdal.SetConfigOption(key, os.environ[key])
+        gdal_ctl.configure_gdal()
 
     banner("Raster workflow")
     print(f"AREA: {settings.area}")
@@ -98,110 +78,49 @@ def main() -> None:
         check_skip_prep_inputs()
 
     if needs_prep(args, settings.osm_filtered):
-        filter_osm_pbf()
+        gdal_ctl.filter_osm_pbf(settings.osm_latest, settings.osm_filtered)
     else:
         print(f"Reusing existing {settings.osm_filtered}")
 
     if needs_prep(args, settings.roads_gpkg):
-        create_roads_gpkg()
+        gdal_ctl.create_roads_gpkg(settings.osm_filtered, settings.roads_gpkg)
     else:
         print(f"Reusing existing {settings.roads_gpkg}")
 
     if needs_prep(args, settings.roads_smooth):
-        rasterize_and_smooth_roads()
+        gdal_ctl.rasterize_and_smooth_roads(settings.roads_gpkg, settings.roads_smooth)
     else:
         print(f"Reusing existing {settings.roads_smooth}")
 
     if needs_prep(args, settings.clc_stack):
-        create_clc_stack()
+        gdal_ctl.create_clc_stack(
+            settings.clc_source,
+            settings.clc_mapping,
+            settings.clc_classified,
+            settings.clc_stack,
+        )
     else:
         print(f"Reusing existing {settings.clc_stack}")
 
-    # Encode the roads heatmap masked per land-cover class into a single band: each
-    # class occupies its own value range (nature A, farm A+10, park A+20, urban
-    # A+30, water 200). muparser is buggy, so this stays in gdal_calc.
-    banner("Calculate heatmap raster")
-    if not args.dry_run:
-        if not settings.roads_smooth.is_file():
-            raise FileNotFoundError(
-                f"Missing roads smooth raster: {settings.roads_smooth}"
-            )
-        if not settings.clc_stack.is_file():
-            raise FileNotFoundError(f"Missing CLC one-hot stack: {settings.clc_stack}")
-    print(f"gdal_calc.Calc -> {settings.raw_calc}")
-    if not args.dry_run:
-        from osgeo_utils.gdal_calc import Calc  # ty: ignore[unresolved-import]
-
-        Calc(
-            calc="where(F==1, 200, A*B + (A+10)*C + (A+20)*D + (A+30)*E)",
-            outfile=str(settings.raw_calc),
-            type=settings.data_type,
-            NoDataValue=settings.nodata,
-            creation_options=list(settings.gtiff_creation_options),
-            overwrite=settings.overwrite,
-            quiet=False,
-            A=str(settings.roads_smooth),
-            A_band=1,
-            B=str(settings.clc_stack),
-            B_band=1,
-            C=str(settings.clc_stack),
-            C_band=2,
-            D=str(settings.clc_stack),
-            D_band=3,
-            E=str(settings.clc_stack),
-            E_band=4,
-            F=str(settings.clc_stack),
-            F_band=5,
+    if needs_prep(args, settings.slope_classes):
+        gdal_ctl.create_slope_classes(
+            settings.dem_slope_source, settings.slope_mapping, settings.slope_classes
         )
+    else:
+        print(f"Reusing existing {settings.slope_classes}")
 
-    # Clip to the AREA bounds, reproject to WEB_EPSG, then write a Web Mercator
-    # tile-matrix aligned COG with overviews.
-    banner("Clip, reproject and create web COG")
-    if not args.dry_run and not settings.bounds_gpkg.is_file():
-        raise FileNotFoundError(f"Missing bounds GeoPackage: {settings.bounds_gpkg}")
-
-    pipeline = make_pipeline(
-        f"""
-        ! read {settings.raw_calc.as_posix()}
-        ! clip --like {settings.bounds_gpkg.as_posix()} --like-layer {settings.area} --allow-bbox-outside-source
-        ! reproject -d {settings.web_epsg}
-        ! write {settings.overwrite_arg} {settings.gtiff} {settings.reprojected.as_posix()}
-        """
+    gdal_ctl.calculate_heatmap(  # band 1: raw aloneness
+        settings.roads_smooth, settings.clc_stack, settings.raw_calc
     )
-    print(f"$ gdal raster pipeline {pipeline}")
-    if not args.dry_run:
-        from osgeo import gdal  # ty: ignore[unresolved-import]
-
-        result = gdal.Run("raster pipeline", pipeline=pipeline)
-        if hasattr(result, "Finalize"):
-            result.Finalize()
-
-    print(f"rio_cogeo.cog_translate -> {settings.output_cog}")
-    if not args.dry_run:
-        from rio_cogeo.cogeo import cog_translate
-        from rio_cogeo.profiles import cog_profiles
-
-        output_profile = cog_profiles.get("deflate")
-        output_profile.update(
-            {
-                "BIGTIFF": "IF_SAFER",
-                "blockxsize": settings.cog_blocksize,
-                "blockysize": settings.cog_blocksize,
-            }
-        )
-        cog_translate(
-            str(settings.reprojected),
-            str(settings.output_cog),
-            output_profile,
-            web_optimized=True,
-            resampling="nearest",
-            overview_resampling="nearest",
-            in_memory=False,
-            quiet=False,
-            config={"GDAL_TIFF_OVR_BLOCKSIZE": str(settings.cog_blocksize)},
-        )
-
-    print(f"Successfully created masked COG raster: {settings.output_cog}")
+    gdal_ctl.calculate_slope_mod_band(  # band 2: slope-modified aloneness
+        settings.raw_calc, settings.slope_classes, settings.slope_mod_modified
+    )
+    gdal_ctl.create_web_cog(  # stack both bands -> 2-band web COG
+        settings.raw_calc,
+        settings.slope_mod_modified,
+        settings.output_cog,
+        settings.bounds_gpkg,
+    )
 
 
 if __name__ == "__main__":

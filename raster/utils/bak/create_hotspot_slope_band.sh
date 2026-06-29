@@ -33,7 +33,7 @@ output_dir="${SCRIPT_DIR}/out"
 # Raw aloneness heatmap (TARGET_EPSG, 20m) from create_raster.sh, and the slope
 # classes (1..4, flat..steep) on the same grid from utils/dem_create_raster.sh.
 raw_raster="${output_dir}/temp/${AREA}_raster_raw.tif"
-slope_src="${SCRIPT_DIR}/input/transformed/${AREA}_slope_classes.tif"
+slope_src="${SCRIPT_DIR}/input/dem/${AREA}_slope_classes.tif"
 
 # Name the output after the main COG version (RASTER_VERSION, set in raster.conf).
 base_name="${AREA}_20m"
