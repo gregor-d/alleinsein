@@ -43,7 +43,7 @@ def create_clc_stack(
         ! clip --bbox={settings.bbox} --bbox-crs={settings.target_epsg} --allow-bbox-outside-source
         ! reclassify --mapping=@{clc_mapping.as_posix()} --ot={settings.data_type}
         ! edit --nodata={settings.nodata}
-        ! write {settings.gtiff} {settings.overwrite_arg} {clc_classified.as_posix()}
+        ! write {settings.gdal_pipeline_creation_options} {settings.overwrite_arg} {clc_classified.as_posix()}
         """
     )
     print(f"$ gdal raster pipeline {pipeline}")
@@ -82,7 +82,7 @@ def build_clc_onehot_stack(classified: Path, out: Path, resolution: str) -> None
         pipeline = make_pipeline(
             f"""
             ! stack {band_inputs} --dst-nodata {settings.nodata} --resolution {resolution}
-            ! write {settings.gtiff} {settings.overwrite_arg} {out.as_posix()}
+            ! write {settings.gdal_pipeline_creation_options} {settings.overwrite_arg} {out.as_posix()}
             """
         )
         print(f"$ gdal raster pipeline {pipeline}")

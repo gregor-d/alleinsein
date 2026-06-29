@@ -162,12 +162,10 @@ def main() -> None:
     mosaic_vrt = settings.temp_dir / f"{settings.eu_output_area}_3035.vrt"
     gdal_controller.mosaic_rasters(per_country_3035, mosaic_vrt)
 
-    reprojected = settings.temp_dir / f"{settings.eu_output_area}_3857.tif"
     output_cog = next_versioned_cog(f"{settings.eu_output_area}_20m")
     gdal_controller.clip_reproject_web_cog(
         mosaic_vrt,
         output_cog,
-        reprojected,
         dissolved_gpkg,
         layer=settings.eu_output_area,
     )

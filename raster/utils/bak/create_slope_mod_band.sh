@@ -67,7 +67,7 @@ fi
 TEMP_DIR="${output_dir}/temp"
 mkdir -p "$TEMP_DIR"
 
-modified_raster="${TEMP_DIR}/${base_name}_v${version}_slope_modified.tif"
+modified_raster="${TEMP_DIR}/${base_name}_v${version}_slope_mod.tif"
 
 echo "======================================================="
 echo "Raw: $raw_raster  ->  $(basename "$output_cog")"

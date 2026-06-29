@@ -20,11 +20,11 @@ from pathlib import Path
 
 from osgeo import gdal  # ty: ignore[unresolved-import]
 from osgeo_utils.gdal_calc import Calc  # ty: ignore[unresolved-import]
+
 from raster import raster_settings as settings
 from raster.utils.clc import build_clc_onehot_stack
 from raster.utils.gdal_common import make_pipeline
 from raster.utils.helpers import banner
-
 
 # ---------------------------------------------------------------------------
 # Encode the masked road heatmap into a single band
@@ -46,7 +46,7 @@ def encode_heatmap(roads: Path, clc_stack: Path, out: Path) -> None:
         outfile=str(out),
         type=settings.data_type,
         NoDataValue=settings.nodata,
-        creation_options=list(settings.gtiff_creation_options),
+        creation_options=list(settings.gdal_calc_options),
         overwrite=settings.overwrite,
         quiet=False,
         A=str(roads),
@@ -80,10 +80,10 @@ def calculate_heatmap(roads_smooth: Path, clc_stack: Path, raw_calc: Path) -> No
 # ---------------------------------------------------------------------------
 
 
+# TODO: remove once the EU pipeline has slope support — callers can then use create_web_cog directly.
 def clip_reproject_web_cog(
     src: Path,
     out_cog: Path,
-    reprojected: Path,
     bounds_gpkg: Path,
     layer: str | None = None,
 ) -> None:
@@ -93,7 +93,6 @@ def clip_reproject_web_cog(
     distinguishes this from the bare ``write_web_cog`` (which the coarse pipeline,
     already clipped on its own grid, calls directly). Shared tail of the heatmap
     pipeline and the slope-mod band (mirrors finalize_web_cog in utils/sh/raster_lib.sh).
-    ``reprojected`` is the intermediate reprojected GeoTIFF written before the COG.
     ``layer`` is the clip layer inside ``bounds_gpkg`` (defaults to ``settings.area``;
     the multi-country pipeline passes the dissolved-boundary layer instead).
     """
@@ -101,21 +100,23 @@ def clip_reproject_web_cog(
     if not settings.dry_run and not bounds_gpkg.is_file():
         raise FileNotFoundError(f"Missing bounds GeoPackage: {bounds_gpkg}")
 
-    pipeline = make_pipeline(
-        f"""
-        ! read {src.as_posix()}
-        ! clip --like {bounds_gpkg.as_posix()} --like-layer {layer} --allow-bbox-outside-source
-        ! reproject -d {settings.web_epsg}
-        ! write {settings.overwrite_arg} {settings.gtiff} {reprojected.as_posix()}
-        """
-    )
-    print(f"$ gdal raster pipeline {pipeline}")
-    if not settings.dry_run:
-        result = gdal.Run("raster pipeline", pipeline=pipeline)
-        if hasattr(result, "Finalize"):
-            result.Finalize()
+    with tempfile.TemporaryDirectory() as tmp:
+        reprojected = Path(tmp) / "reprojected.tif"
+        pipeline = make_pipeline(
+            f"""
+            ! read {src.as_posix()}
+            ! clip --like {bounds_gpkg.as_posix()} --like-layer {layer} --allow-bbox-outside-source
+            ! reproject -d {settings.web_epsg}
+            ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {reprojected.as_posix()}
+            """
+        )
+        print(f"$ gdal raster pipeline {pipeline}")
+        if not settings.dry_run:
+            result = gdal.Run("raster pipeline", pipeline=pipeline)
+            if hasattr(result, "Finalize"):
+                result.Finalize()
 
-    write_web_cog(reprojected, out_cog)
+        write_web_cog(reprojected, out_cog)
 
 
 def write_web_cog(src: Path, out_cog: Path) -> None:
@@ -154,36 +155,42 @@ def write_web_cog(src: Path, out_cog: Path) -> None:
 
 
 def create_web_cog(
-    raw_calc: Path, slope_mod_modified: Path, output_cog: Path, bounds_gpkg: Path
+    raw_calc: Path,
+    slope_mod: Path,
+    output_cog: Path,
+    bounds_gpkg: Path,
+    layer: str | None = None,
 ) -> None:
     # Stack the raw aloneness band (1, from calculate_heatmap) and the slope-modified
     # band (2, from dem.calculate_slope_mod_band) into a single 2-band raster on the
     # TARGET_EPSG grid, then clip/reproject/web-optimize it into the final COG.
-    # ``raster_stack`` and ``reprojected`` are internal intermediates from settings.
+    layer = layer or settings.area
     banner("Stack bands and create web COG")
     if not settings.dry_run:
         for path, label in (
             (raw_calc, "raw heatmap raster"),
-            (slope_mod_modified, "slope-modified band"),
+            (slope_mod, "slope-modified band"),
         ):
             if not path.is_file():
                 raise FileNotFoundError(f"Missing {label}: {path}")
 
-    pipeline = make_pipeline(
-        f"""
-        ! stack {raw_calc.as_posix()} {slope_mod_modified.as_posix()} --dst-nodata {settings.nodata} --resolution {settings.resolution}
-        ! write {settings.gtiff} {settings.overwrite_arg} {settings.raster_stack.as_posix()}
-        """
-    )
-    print(f"$ gdal raster pipeline {pipeline}")
-    if not settings.dry_run:
-        result = gdal.Run("raster pipeline", pipeline=pipeline)
-        if hasattr(result, "Finalize"):
-            result.Finalize()
+    with tempfile.TemporaryDirectory() as tmp:
+        reprojected = Path(tmp) / "reprojected.tif"
+        pipeline = make_pipeline(
+            f"""
+            ! stack {raw_calc.as_posix()} {slope_mod.as_posix()} --dst-nodata {settings.nodata} --resolution {settings.resolution}
+            ! clip --like {bounds_gpkg.as_posix()} --like-layer {layer} --allow-bbox-outside-source
+            ! reproject -d {settings.web_epsg}
+            ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {reprojected.as_posix()}
+            """
+        )
+        print(f"$ gdal raster pipeline {pipeline}")
+        if not settings.dry_run:
+            result = gdal.Run("raster pipeline", pipeline=pipeline)
+            if hasattr(result, "Finalize"):
+                result.Finalize()
 
-    clip_reproject_web_cog(
-        settings.raster_stack, output_cog, settings.reprojected, bounds_gpkg
-    )
+        write_web_cog(reprojected, output_cog)
     print(f"Successfully created 2-band masked COG raster: {output_cog}")
 
 
@@ -262,7 +269,7 @@ def build_coarse_raster(
             ! read {roads_smooth.as_posix()}
             ! reproject --resolution {res_pair} -r average --target-aligned-pixels
             ! scale --dst-min 1 --dst-max 10 --ot {settings.data_type}
-            ! write {settings.overwrite_arg} {settings.gtiff} {coarse_roads.as_posix()}
+            ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {coarse_roads.as_posix()}
             """
         )
         print(f"$ gdal raster pipeline {pipeline}")
@@ -278,7 +285,7 @@ def build_coarse_raster(
             ! read {clc_classified.as_posix()}
             ! reproject --resolution {res_pair} -r mode --target-aligned-pixels
             ! edit --nodata={settings.nodata}
-            ! write {settings.overwrite_arg} {settings.gtiff} {coarse_clc.as_posix()}
+            ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {coarse_clc.as_posix()}
             """
         )
         print(f"$ gdal raster pipeline {pipeline}")
@@ -301,7 +308,7 @@ def build_coarse_raster(
             f"""
             ! read {raw.as_posix()}
             ! clip --like {bounds_gpkg.as_posix()} --like-layer {settings.area} --allow-bbox-outside-source
-            ! write {settings.overwrite_arg} {settings.gtiff} {clipped.as_posix()}
+            ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {clipped.as_posix()}
             """
         )
         print(f"$ gdal raster pipeline {pipeline}")

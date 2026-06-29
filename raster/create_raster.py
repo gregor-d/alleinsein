@@ -22,34 +22,18 @@ from raster.utils.helpers import banner
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build the test raster COG.")
-    parser.add_argument("--force-prep", action="store_true")
-    parser.add_argument("--skip-prep", action="store_true")
+    parser.add_argument(
+        "--force-prep",
+        action="store_true",
+        help="Re-run all prep stages even if outputs already exist.",
+    )
     parser.add_argument("--dry-run", action="store_true")
-    args = parser.parse_args()
-    if args.force_prep and args.skip_prep:
-        parser.error("--force-prep and --skip-prep are mutually exclusive")
-    return args
+    return parser.parse_args()
 
 
 def needs_prep(args: argparse.Namespace, *targets: Path) -> bool:
-    """Whether a prep stage should run: never with --skip-prep, always with
-    --force-prep, otherwise only when an output is missing."""
-    if args.skip_prep:
-        return False
+    """Run stage if --force-prep or any output is missing; skip otherwise."""
     return args.force_prep or any(not target.exists() for target in targets)
-
-
-def check_skip_prep_inputs() -> None:
-    """With --skip-prep, fail early if any reused intermediate is missing."""
-    for path, label in (
-        (settings.osm_filtered, "filtered OSM PBF"),
-        (settings.roads_gpkg, "roads GeoPackage"),
-        (settings.roads_smooth, "roads smooth raster"),
-        (settings.clc_stack, "CLC one-hot stack"),
-        (settings.slope_classes, "slope classes raster"),
-    ):
-        if not path.is_file():
-            raise FileNotFoundError(f"Missing {label}: {path}")
 
 
 def main() -> None:
@@ -74,9 +58,6 @@ def main() -> None:
     print(f"AREA: {settings.area}")
     print(f"BBOX: {settings.bbox}")
     print(f"Output: {settings.output_cog}")
-
-    if args.skip_prep:
-        check_skip_prep_inputs()
 
     if needs_prep(args, settings.osm_filtered):
         osm.filter_osm_pbf(settings.osm_latest, settings.osm_filtered)
@@ -114,11 +95,11 @@ def main() -> None:
         settings.roads_smooth, settings.clc_stack, settings.raw_calc
     )
     dem.calculate_slope_mod_band(  # band 2: slope-modified aloneness
-        settings.raw_calc, settings.slope_classes, settings.slope_mod_modified
+        settings.raw_calc, settings.slope_classes, settings.slope_mod
     )
     gdal_controller.create_web_cog(  # stack both bands -> 2-band web COG
         settings.raw_calc,
-        settings.slope_mod_modified,
+        settings.slope_mod,
         settings.output_cog,
         settings.bounds_gpkg,
     )

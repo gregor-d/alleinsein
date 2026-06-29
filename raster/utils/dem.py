@@ -21,10 +21,10 @@ from pathlib import Path
 
 from osgeo import gdal  # ty: ignore[unresolved-import]
 from osgeo_utils.gdal_calc import Calc  # ty: ignore[unresolved-import]
+
 from raster import raster_settings as settings
 from raster.utils.gdal_common import configure_gdal, make_pipeline
 from raster.utils.helpers import banner
-
 
 # ---------------------------------------------------------------------------
 # Clip + reclassify the EU DEM slope into slope classes
@@ -56,7 +56,7 @@ def create_slope_classes(
         ! reproject -d {settings.target_epsg} --bbox={settings.bbox} --bbox-crs={settings.target_epsg} --resolution={settings.resolution} -r nearest
         ! reclassify --mapping=@{slope_mapping.as_posix()} --ot={settings.data_type}
         ! edit --nodata={settings.nodata}
-        ! write {settings.gtiff} {settings.overwrite_arg} {slope_classes.as_posix()}
+        ! write {settings.gdal_pipeline_creation_options} {settings.overwrite_arg} {slope_classes.as_posix()}
         """
     )
     print(f"$ gdal raster pipeline {pipeline}")
@@ -85,7 +85,7 @@ SLOPE_PENALTY = {1: 0, 2: 2, 3: 3, 4: 4}
 
 
 def calculate_slope_mod_band(
-    raw_calc: Path, slope_classes: Path, slope_mod_modified: Path
+    raw_calc: Path, slope_classes: Path, slope_mod: Path
 ) -> None:
     banner("Calculate slope-modified band")
     if not settings.dry_run:
@@ -110,14 +110,14 @@ def calculate_slope_mod_band(
         "((1.0*P-1)//10)*10 + where((1.0*P-1)%10+1 >= 10, 10, "
         f"maximum((1.0*P-1)%10+1 - ({slope_penalty}), 1)), 1.0*P)"
     )
-    print(f"gdal_calc.Calc -> {slope_mod_modified}")
+    print(f"gdal_calc.Calc -> {slope_mod}")
     if not settings.dry_run:
         Calc(
             calc=calc,
-            outfile=str(slope_mod_modified),
+            outfile=str(slope_mod),
             type=settings.data_type,
             NoDataValue=settings.nodata,
-            creation_options=list(settings.gtiff_creation_options),
+            creation_options=list(settings.gdal_pipeline_creation_options_creation_options),
             overwrite=settings.overwrite,
             quiet=False,
             P=str(raw_calc),
@@ -141,7 +141,9 @@ def main() -> None:
         ),
     )
     sub = parser.add_subparsers(dest="command")
-    sub.add_parser("classes", parents=[common], help="DEM slope -> slope classes (1..4)")
+    sub.add_parser(
+        "classes", parents=[common], help="DEM slope -> slope classes (1..4)"
+    )
     sub.add_parser(
         "modband",
         parents=[common],
@@ -158,7 +160,7 @@ def main() -> None:
 
     if args.command == "modband":
         calculate_slope_mod_band(
-            settings.raw_calc, settings.slope_classes, settings.slope_mod_modified
+            settings.raw_calc, settings.slope_classes, settings.slope_mod
         )
     else:  # "classes" or no subcommand: the slope-classes raster
         create_slope_classes(

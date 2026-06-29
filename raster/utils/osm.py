@@ -168,7 +168,7 @@ def rasterize_and_smooth_roads(roads_gpkg: Path, roads_smooth: Path) -> None:
         f"""
         ! read {roads_gpkg.as_posix()}
         ! rasterize --resolution {settings.resolution} --extent {settings.bbox} --burn 4 --target-aligned-pixels --init 0 --nodata {settings.nodata} --datatype {settings.data_type} --all-touched
-        ! write {settings.overwrite_arg} {settings.gtiff} {settings.roads_rasterized.as_posix()}
+        ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {settings.roads_rasterized.as_posix()}
         """
     )
     print(f"$ gdal pipeline {pipeline}")
@@ -189,7 +189,7 @@ def rasterize_and_smooth_roads(roads_gpkg: Path, roads_smooth: Path) -> None:
         ! resize --resolution {settings.resolution} -r bilinear
         ! neighbours --method mean --size 5 --kernel gaussian --nodata {settings.nodata}
         ! scale --src-min 0 --src-max 10 --dst-min 1 --dst-max 10 --ot {settings.data_type} --exponent 0.25
-        ! write {settings.overwrite_arg} {settings.gtiff} {roads_smooth.as_posix()}
+        ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {roads_smooth.as_posix()}
         """
     )
     print(f"$ gdal raster pipeline {pipeline}")
