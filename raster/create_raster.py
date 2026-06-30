@@ -16,7 +16,7 @@ import argparse
 from pathlib import Path
 
 from raster import raster_settings as settings
-from raster.utils import clc, dem, gdal_common, gdal_controller, osm
+from raster.utils import bounds, clc, dem, gdal_common, gdal_controller, osm
 from raster.utils.helpers import banner
 
 
@@ -54,6 +54,12 @@ def main() -> None:
     else:
         gdal_common.configure_gdal()
 
+    if not settings.bounds_gpkg.is_file():
+        print(f"Geocoding bounds for {settings.area}...")
+        if not settings.dry_run:
+            bounds.geocode_area(settings.area)
+    settings.bbox = bounds.get_bbox(settings.area)
+
     banner("Raster workflow")
     print(f"AREA: {settings.area}")
     print(f"BBOX: {settings.bbox}")
@@ -69,8 +75,11 @@ def main() -> None:
     else:
         print(f"Reusing existing {settings.roads_gpkg}")
 
+    if needs_prep(args, settings.roads_rasterized):
+        osm.rasterize_roads(settings.roads_gpkg, settings.roads_rasterized)
+
     if needs_prep(args, settings.roads_smooth):
-        osm.rasterize_and_smooth_roads(settings.roads_gpkg, settings.roads_smooth)
+        osm.smooth_roads(settings.roads_rasterized, settings.roads_smooth)
     else:
         print(f"Reusing existing {settings.roads_smooth}")
 

@@ -24,15 +24,6 @@ nodata: int = 255
 data_type: str = "Byte"
 
 # ---------------------------------------------------------------------------
-# Bounding box (EPSG:3035, metres) — germany default
-# ---------------------------------------------------------------------------
-
-minx: int = 4031300
-miny: int = 2684000
-maxx: int = 4672600
-maxy: int = 3556600
-
-# ---------------------------------------------------------------------------
 # Coarse raster tiers
 # ---------------------------------------------------------------------------
 
@@ -46,7 +37,37 @@ coarse_resolutions: tuple[int, ...] = (320, 640, 1280)
 # Each country is processed individually on a buffered extent (so the road-smoothing
 # kernel sees cross-border roads), kept in TARGET_EPSG, then mosaicked, clipped to
 # the dissolved boundary, reprojected and written as one combined COG.
-eu_countries: tuple[str, ...] = ("germany", "switzerland", "austria")
+# eu_countries: tuple[str, ...] = ("germany", "switzerland", "austria")
+eu_countries: tuple[str, ...] = (
+    # Western Europe
+    "Germany",
+    # "France", "Netherlands", "Belgium", "Luxembourg",
+    "Switzerland",
+    "Austria",
+    "Liechtenstein",
+    # Northern Europe
+    # "Denmark",
+    # "Sweden",
+    # "Norway",
+    # "Finland",
+    #  "Iceland",
+    # "Estonia", "Latvia", "Lithuania", "Ireland", "United Kingdom",
+    # Southern Europe
+    # "Spain",
+    # "Portugal",
+    # "Italy",
+    # "Greece", "Malta", "Cyprus",
+    # "Slovenia", "Croatia", "Bosnia and Herzegovina", "Serbia",
+    # "Montenegro", "Albania", "North Macedonia", "Kosovo",
+    # Eastern Europe
+    # "Poland",
+    # "Czech Republic",
+    # "Slovakia", "Hungary", "Romania",
+    # "Bulgaria", "Moldova", "Ukraine", "Belarus",
+    # Microstates
+    # "Andorra", "Monaco", "San Marino", "Vatican City",
+)
+
 # Name of the combined product; drives output COG and dissolved-boundary names.
 eu_output_area: str = "dach"
 # Cross-border buffer (metres) added to each country's extent; must exceed the
@@ -56,7 +77,7 @@ eu_bounds_buffer_m: int = 1000
 # pixel grid and tiles mosaic seamlessly.
 eu_bounds_snap_m: int = 100
 # Europe-wide source PBF the one-time extract helper cuts each country out of.
-eu_europe_pbf_name: str = "europe-latest.osm.pbf"
+eu_europe_pbf_name: str = "europe-260628.osm.pbf"
 
 # ---------------------------------------------------------------------------
 # GDAL environment & output format
@@ -73,7 +94,7 @@ gdal_calc_options: list[str] = [
     "BIGTIFF=IF_SAFER",
 ]
 cog_blocksize: int = 512
-bbox: str = f"{minx},{miny},{maxx},{maxy}"
+bbox: str = ""  # set at runtime from bounds_gpkg by the pipeline coordinator
 overwrite_arg: str = "--overwrite" if overwrite else ""
 gdal_pipeline_creation_options: str = " ".join(
     ["--of=GTiff", *[f"--co={opt}" for opt in gdal_calc_options]]
@@ -127,3 +148,4 @@ bounds_gpkg: Path = bounds_dir / f"{area}.gpkg"
 raw_calc: Path = temp_dir / f"{area}_raw_v{raster_version}.tif"
 slope_mod: Path = temp_dir / f"{area}_slope_mod_v{raster_version}.tif"
 output_cog: Path = output_dir / f"{area}_20m_v{raster_version}.tif"
+eu_output_cog: Path = output_dir / f"{eu_output_area}_20m_v{raster_version}.tif"

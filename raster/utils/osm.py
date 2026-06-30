@@ -157,18 +157,17 @@ def create_roads_gpkg(osm_filtered: Path, roads_gpkg: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def rasterize_and_smooth_roads(roads_gpkg: Path, roads_smooth: Path) -> None:
-    banner("Rasterize and smooth roads")
+def rasterize_roads(roads_gpkg: Path, roads_rasterized: Path) -> None:
+    banner("Rasterize roads")
     if not settings.dry_run and not roads_gpkg.is_file():
         raise FileNotFoundError(f"Missing roads GeoPackage: {roads_gpkg}")
 
-    # 1. Burn the road network onto the shared grid (roads = 4, elsewhere = 0).
     start = time.monotonic()
     pipeline = make_pipeline(
         f"""
         ! read {roads_gpkg.as_posix()}
         ! rasterize --resolution {settings.resolution} --extent {settings.bbox} --burn 4 --target-aligned-pixels --init 0 --nodata {settings.nodata} --datatype {settings.data_type} --all-touched
-        ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {settings.roads_rasterized.as_posix()}
+        ! write {settings.overwrite_arg} {settings.gdal_pipeline_creation_options} {roads_rasterized.as_posix()}
         """
     )
     print(f"$ gdal pipeline {pipeline}")
@@ -179,11 +178,16 @@ def rasterize_and_smooth_roads(roads_gpkg: Path, roads_smooth: Path) -> None:
     duration = int(time.monotonic() - start)
     print(f"{duration // 60} minutes and {duration % 60} seconds elapsed.")
 
-    # 2. Smooth the burned roads into the 1..10 proximity heatmap.
+
+def smooth_roads(roads_rasterized: Path, roads_smooth: Path) -> None:
+    banner("Smooth roads into proximity heatmap")
+    if not settings.dry_run and not roads_rasterized.is_file():
+        raise FileNotFoundError(f"Missing rasterized roads: {roads_rasterized}")
+
     start = time.monotonic()
     pipeline = make_pipeline(
         f"""
-        ! read {settings.roads_rasterized.as_posix()}
+        ! read {roads_rasterized.as_posix()}
         ! neighbours --method mean --size 5 --kernel gaussian
         ! reproject --resolution 100,100 -r sum
         ! resize --resolution {settings.resolution} -r bilinear
@@ -220,7 +224,8 @@ def main() -> None:
         "filter", parents=[common], help="filter the PBF to highway/railway ways"
     )
     sub.add_parser("gpkg", parents=[common], help="filtered PBF -> roads GeoPackage")
-    sub.add_parser("rasterize", parents=[common], help="roads gpkg -> smoothed heatmap")
+    sub.add_parser("rasterize", parents=[common], help="roads gpkg -> burned raster")
+    sub.add_parser("smooth", parents=[common], help="burned raster -> proximity heatmap")
 
     args = parser.parse_args()
     settings.dry_run = getattr(args, "dry_run", False)
@@ -234,11 +239,14 @@ def main() -> None:
     elif args.command == "gpkg":
         create_roads_gpkg(settings.osm_filtered, settings.roads_gpkg)
     elif args.command == "rasterize":
-        rasterize_and_smooth_roads(settings.roads_gpkg, settings.roads_smooth)
+        rasterize_roads(settings.roads_gpkg, settings.roads_rasterized)
+    elif args.command == "smooth":
+        smooth_roads(settings.roads_rasterized, settings.roads_smooth)
     else:  # no subcommand: the full chain
         filter_osm_pbf(settings.osm_latest, settings.osm_filtered)
         create_roads_gpkg(settings.osm_filtered, settings.roads_gpkg)
-        rasterize_and_smooth_roads(settings.roads_gpkg, settings.roads_smooth)
+        rasterize_roads(settings.roads_gpkg, settings.roads_rasterized)
+        smooth_roads(settings.roads_rasterized, settings.roads_smooth)
 
 
 if __name__ == "__main__":

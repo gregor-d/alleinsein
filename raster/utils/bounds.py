@@ -2,13 +2,13 @@
 
 The per-area GeoPackage (``input/bounds/<area>.gpkg``) is the single source of truth
 for bounds — there is no bounds.conf. Buffered/snapped processing extents are derived
-from the gpkg on demand by ``buffered_bbox``.
+from the gpkg on demand by ``get_bbox``.
 
 Operations, importable as functions and runnable as a CLI (heavy geo deps are imported
 lazily inside each function so importing this module stays cheap):
 
   - geocode_area(area): geocode an area and write its exact boundary gpkg.
-  - buffered_bbox(area, buffer_m, snap_m): read the gpkg bounds, buffer + snap them,
+  - get_bbox(area, buffer_m, snap_m): read the gpkg bounds, buffer + snap them,
     and return the processing bbox (EPSG:3035) and a WGS84 bbox covering it.
   - create_dissolved_bounds(output_area, areas): union several area gpkgs into one
     dissolved-boundary gpkg, used to clip the merged multi-country raster.
@@ -41,32 +41,33 @@ TARGET_CRS = "EPSG:3035"
 def geocode_area(area: str) -> Path:
     """Geocode ``area`` and write its exact boundary gpkg (EPSG:3035), returning the
     gpkg path. The gpkg is the single source of truth for bounds; buffered/snapped
-    processing extents are derived on demand by ``buffered_bbox``."""
+    processing extents are derived on demand by ``get_bbox``."""
     import osmnx as ox
 
     BOUNDS_DIR.mkdir(parents=True, exist_ok=True)
     out_gpkg = BOUNDS_DIR / f"{area}.gpkg"
 
-    # Exact boundary polygon, used for the final clip and as the basis for buffered
-    # processing extents. Never buffered, so adjacent areas tile against their true
-    # borders without overlap when mosaicked.
-    ox.geocoder.geocode_to_gdf(area).to_crs(TARGET_CRS).to_file(
-        out_gpkg, layer=area, driver="GPKG"
-    )
+    # area has been parsed for file-names and need to be reverted for nomatim-query
+    area = area.replace("_", " ")
+
+    try:
+        gdf = ox.geocoder.geocode_to_gdf(area)
+    except Exception as exc:
+        raise ValueError(f"Could not geocode area '{area}': {exc}") from exc
+
+    if gdf is None or gdf.empty:
+        raise ValueError(f"No results found for area '{area}'")
+
+    gdf.to_crs(TARGET_CRS).to_file(out_gpkg, layer=area, driver="GPKG")
 
     print(f"Wrote {out_gpkg}")
     return out_gpkg
 
 
-def buffered_bbox(
-    area: str, buffer_m: float = 0.0, snap_m: float = 0.0
-) -> tuple[str, str]:
-    """Read ``area``'s exact bounds from its gpkg (EPSG:3035), expand by ``buffer_m``
-    and snap to ``snap_m``. Returns ``(bbox_3035, bbox_4326)``: the buffered processing
-    bbox and a WGS84 bbox covering it (for ``osmium extract --bbox``). ``buffer_m`` /
-    ``snap_m`` default to 0, giving the exact, unsnapped single-area extent."""
+def get_bbox(area: str, buffer_m: float = 0.0, snap_m: float = 0.0) -> str:
+    """Read ``area``'s bounds from its gpkg (EPSG:3035), expand by ``buffer_m`` and
+    snap to ``snap_m``. Returns the bbox as ``"minx,miny,maxx,maxy"``."""
     import geopandas as gpd
-    from shapely.geometry import box
 
     gpkg = BOUNDS_DIR / f"{area}.gpkg"
     if not gpkg.exists():
@@ -78,9 +79,6 @@ def buffered_bbox(
         gpd.read_file(gpkg, layer=area).to_crs(TARGET_CRS).total_bounds
     )
 
-    # Buffered processing extent: expand so the road-smoothing kernel sees the
-    # neighbours' roads, then snap to a shared grid so every area lands on one global
-    # pixel grid and the tiles mosaic seamlessly.
     minx -= buffer_m
     miny -= buffer_m
     maxx += buffer_m
@@ -92,19 +90,23 @@ def buffered_bbox(
         maxx = math.ceil(maxx / snap_m) * snap_m
         maxy = math.ceil(maxy / snap_m) * snap_m
 
-    # WGS84 bbox covering the buffered 3035 rectangle, for `osmium extract --bbox`.
-    # Reprojecting the rectangle's corners under-covers the curved edges, so bound the
-    # reprojected rectangle instead - guaranteeing the extract contains the 3035 box.
+    return f"{minx:.0f},{miny:.0f},{maxx:.0f},{maxy:.0f}"
+
+
+def get_bbox_4326(bbox_3035: str) -> str:
+    """Convert a EPSG:3035 bbox string to a WGS84 bbox string for osmium extract.
+    Reprojecting the rectangle's corners under-covers curved edges, so the bounding
+    box of the reprojected rectangle is used to guarantee full coverage."""
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    minx, miny, maxx, maxy = (float(v) for v in bbox_3035.split(","))
     w, s, e, n = (
         gpd.GeoSeries([box(minx, miny, maxx, maxy)], crs=TARGET_CRS)
         .to_crs("EPSG:4326")
         .total_bounds
     )
-
-    return (
-        f"{minx:.0f},{miny:.0f},{maxx:.0f},{maxy:.0f}",
-        f"{w:.6f},{s:.6f},{e:.6f},{n:.6f}",
-    )
+    return f"{w:.6f},{s:.6f},{e:.6f},{n:.6f}"
 
 
 def create_dissolved_bounds(output_area: str, areas: list[str]) -> Path:
@@ -200,7 +202,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.command == "area":
         area = _area_from_env()
         geocode_area(area)
-        bbox_3035, _ = buffered_bbox(
+        bbox_3035, _ = get_bbox(
             area,
             float(os.environ.get("BOUNDS_BUFFER_M", "0")),
             float(os.environ.get("BOUNDS_SNAP_M", "0")),
