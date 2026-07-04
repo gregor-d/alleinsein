@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 import raster.raster_settings as settings
+from raster.utils.helpers import slugify_areas
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 RASTER_DIR = SCRIPT_DIR.parent
@@ -20,10 +21,6 @@ TARGET_CRS = "EPSG:3035"
 
 # EPSG:4326 envelope for bbox, dissolve, and mask operations.
 BOUNDS_ENVELOPE_4326 = (-14.5, 34.0, 40.5, 72.0)
-
-
-def _settings_areas() -> list[str]:
-    return [country.lower().replace(" ", "_") for country in settings.countries]
 
 
 def _warn_if_over_envelope(*, area: str, geom_4326) -> None:
@@ -288,7 +285,7 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "dissolved":
         create_dissolved_bounds(
             output_area=settings.output_area,
-            areas=_settings_areas(),
+            areas=slugify_areas(settings.countries),
             simplify_tolerance=args.simplify,
         )
     elif args.command == "geojson":

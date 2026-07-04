@@ -13,7 +13,13 @@ from pathlib import Path
 
 from raster import raster_settings as settings
 from raster.utils import bounds, clc, dem, gdal_common, gdal_controller, osm
-from raster.utils.helpers import banner, format_elapsed, timed_step
+from raster.utils.helpers import (
+    banner,
+    format_elapsed,
+    slugify_area,
+    slugify_areas,
+    timed_step,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -262,7 +268,7 @@ def _run_single_country(args: argparse.Namespace) -> None:
     Args:
         args: Parsed CLI arguments with `country` set.
     """
-    country = args.country.lower().replace(" ", "_")
+    country = slugify_area(args.country)
     banner("Single-country area raster workflow")
     print(f"Country: {country}")
 
@@ -318,7 +324,7 @@ def main() -> None:
     print(f"Output area: {settings.output_area}")
     print(f"Countries: {', '.join(settings.countries)}")
 
-    countries = [c.lower().replace(" ", "_") for c in settings.countries]
+    countries = slugify_areas(settings.countries)
 
     _ensure_source_roads_pbf(args)
 
