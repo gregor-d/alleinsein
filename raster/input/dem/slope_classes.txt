@@ -1,0 +1,5 @@
+[0, 235)=4
+[235, 246)=3
+[246, 249)=2
+[249, 250]=1
+DEFAULT = 0       # any unmapped input value becomes nodata
