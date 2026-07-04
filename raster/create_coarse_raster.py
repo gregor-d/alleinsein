@@ -11,7 +11,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 from raster import raster_settings as settings
-from raster.utils import gdal_common, gdal_controller
+from raster.utils import bounds, gdal_common, gdal_controller
 from raster.utils.helpers import banner, timed_step
 
 
@@ -203,6 +203,17 @@ def build_area(args: argparse.Namespace | None = None) -> None:
     print(f"Output area: {settings.output_area}")
     print(f"Countries: {', '.join(countries)}")
     print(f"Resolutions: {', '.join(f'{r}m' for r in settings.coarse_resolutions)}")
+
+    for country in countries:
+        if not (settings.bounds_dir / f"{country}.gpkg").is_file():
+            print(f"Geocoding bounds for {country}...")
+            bounds.geocode_area_to_gpkg(country)
+
+    # Rebuild the dissolved boundary so it always matches the configured countries.
+    banner(f"Build dissolved {settings.output_area} boundary")
+    bounds.create_dissolved_bounds(
+        output_area=settings.output_area, areas=countries, simplify_tolerance=10
+    )
 
     _check_area_inputs(countries=countries, dissolved_gpkg=dissolved_gpkg)
 
