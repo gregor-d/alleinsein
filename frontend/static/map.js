@@ -65,7 +65,13 @@ class MapLibreEngine {
         // toggles visibility. Hidden layers don't fetch tiles, so declaring
         // all of them upfront costs nothing.
         const sources = {};
-        const layers = [];
+        const layers = [
+            {
+                id: 'basemap-opacity-background',
+                type: 'background',
+                paint: { 'background-color': '#000000' },
+            },
+        ];
         MapLibreEngine.basemapKeys().forEach(function (key) {
             sources['basemap-' + key] = MapLibreEngine.rasterSource(
                 BASEMAPS[key],
