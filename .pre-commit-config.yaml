@@ -29,7 +29,9 @@ repos:
             name: ty check
             entry: uv run --active ty check
             language: system
-            pass_filenames: false
+            types_or:
+                - python
+                - pyi
             stages:
                 - pre-commit
 

@@ -1,360 +1,468 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alleinseinkarte</title>
-    <meta
-      name="description"
-      content="Map of places with low population density in Germany"
-    />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-
-    <link
-      href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
-      rel="stylesheet"
-    />
-    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-
-    <link rel="stylesheet" href="style.css" />
-
-    <script src="config.js"></script>
-    <script src="location.js"></script>
-    <script src="map.js"></script>
-    <script src="shared.js"></script>
-  </head>
-
-  <body>
-    <!-- Top bar -->
-    <header id="top-bar">
-      <div class="brand">
-        <span class="site-name">Alleinseinkarte</span>
-        <a
-          class="brand-icon"
-          href="https://www.linkedin.com/in/gregor-didenko-855a711a9"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="LinkedIn"
-          title="LinkedIn"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path
-              d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3V9zm6 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21H9V9z"
-            />
-          </svg>
-        </a>
-        <a
-          class="brand-icon"
-          href="https://github.com/gregor-d/alleinsein"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="GitHub repository"
-          title="GitHub repository"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path
-              d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.48l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.85.09-.67.35-1.12.63-1.38-2.22-.26-4.55-1.14-4.55-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.81c0 .27.18.59.69.48A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"
-            />
-          </svg>
-        </a>
-      </div>
-      <nav class="top-nav">
-        <a href="/impressum.html">Impressum</a>
-        <a href="mailto:kontakt@alleinseinkarte.de">Contact</a>
-        <button id="theme-toggle" class="icon-btn" aria-label="Switch theme">
-          <svg
-            class="icon-sun"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <circle cx="12" cy="12" r="4" />
-            <path
-              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-            />
-          </svg>
-          <svg
-            class="icon-moon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        </button>
-      </nav>
-    </header>
-
-    <!-- Map container -->
-    <div id="map"></div>
-
-    <!-- Settings cog (top-right of map, FAB style) -->
-    <button class="fab" id="settings-cog" aria-label="Settings">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="12" cy="12" r="3"></circle>
-        <path
-          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-        ></path>
-      </svg>
-    </button>
-
-    <!-- Settings panel (desktop sidebar / mobile bottom sheet) -->
-    <aside id="settings-panel" aria-label="Map settings"></aside>
-
-    <!-- FAB group -->
-    <div id="fab-group">
-      <!-- Overlay openers (round) -->
-      <button
-        class="fab"
-        id="fab-search"
-        aria-label="Search location"
-        title="Search location"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="M21 21L16.65 16.65" />
-        </svg>
-      </button>
-
-      <!-- Direct map-engine controls (connected capsule) -->
-      <div class="ctrl-rail" role="group" aria-label="Map controls">
-        <button
-          class="ctrl-btn"
-          id="ctrl-zoom-in"
-          aria-label="Zoom in"
-          title="Zoom in"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </button>
-        <button
-          class="ctrl-btn"
-          id="ctrl-zoom-out"
-          aria-label="Zoom out"
-          title="Zoom out"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <path d="M5 12h14" />
-          </svg>
-        </button>
-        <button
-          class="ctrl-btn"
-          id="fab-location"
-          aria-label="My location"
-          title="My location"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-          </svg>
-        </button>
-        <button
-          class="ctrl-btn"
-          id="fab-measure"
-          aria-label="Measure distance"
-          title="Measure distance"
-          aria-pressed="false"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="2" y="8" width="20" height="8" rx="1" />
-            <path d="M6 8v3M10 8v4M14 8v3M18 8v4" />
-          </svg>
-        </button>
-      </div>
-
-      <button
-        class="fab"
-        id="fab-settings"
-        aria-label="Quick settings"
-        title="Quick settings"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-          <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Mobile bottom layer strip -->
-    <div id="bottom-bar">
-      <div id="layer-strip"></div>
-      <!-- Controls row: opacity + water toggle, one line -->
-      <div id="bottom-controls">
-        <div class="controls-opacity">
-          <span class="controls-label">Opacity</span>
-          <input
-            type="range"
-            data-ctrl="data-opacity"
-            min="0"
-            max="100"
-            value="100"
-            aria-label="Layer opacity"
-          />
-          <span class="opacity-val" data-disp="data-opacity">100%</span>
-        </div>
-        <div class="controls-water">
-          <span class="controls-label">Water</span>
-          <label class="toggle">
-            <input
-              type="checkbox"
-              data-ctrl="layer-toggle"
-              data-layer="Water"
-              aria-label="Toggle water layer"
-            />
-            <span class="toggle-track"></span>
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mini quick-settings popover (opened by settings FAB) -->
-    <div id="mini-panel" hidden></div>
-
-    <!-- Pixel inspector readout — updates on each map click -->
-    <div id="pixel-info" hidden>
-      <button id="pixel-info-close" class="icon-btn" aria-label="Close">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        >
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
-      <div id="pixel-info-body"></div>
-    </div>
-
-    <!-- Location prompt popup (one-time per session) -->
-    <div id="location-prompt">
-      <button id="location-prompt-no" class="icon-btn" aria-label="Close">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        >
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
-      <p class="location-prompt-intro">
-        <b>alleinseinkarte.de</b> is a map for finding places where you can be
-        alone. By visualizing areas across different land-cover types with the
-        lowest chance of encountering other people, it guides you to spots where
-        you can escape and enjoy time by yourself.
-      </p>
-      <div class="location-prompt-row">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M12 2L19 21L12 18L5 21Z" />
-        </svg>
-        <span>Go to your location?</span>
-        <button id="location-prompt-yes" class="btn-go">Yes</button>
-        <button id="location-prompt-no-btn" class="btn-go">No</button>
-      </div>
-    </div>
-
-    <!-- Colormap preset picker (mobile bottom-bar color-ramp sheet) -->
-    <div id="color-sheet">
-      <div id="color-sheet-header"></div>
-      <div id="color-sheet-body"></div>
-      <!-- Tail pointing down at the layer tab currently being edited -->
-      <div id="color-sheet-arrow" aria-hidden="true"></div>
-    </div>
-    <div id="color-sheet-backdrop" hidden></div>
-
-    <!-- Search popover (shared by FAB + panel) -->
-    <div id="search-popover" hidden>
-      <div class="search-popover-inner">
-        <input
-          type="text"
-          id="search-popover-input"
-          placeholder="Search location…"
-          autocomplete="off"
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Alleinseinkarte</title>
+        <meta
+            name="description"
+            content="Map of places with low population density in Germany"
         />
-        <button class="btn-go" id="search-popover-go">Go</button>
-        <button class="icon-btn" id="search-popover-close" aria-label="Close">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-          >
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <ul id="search-popover-results" class="search-results"></ul>
-    </div>
 
-    <script src="app.js"></script>
-  </body>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+
+        <link
+            href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+            rel="stylesheet"
+        />
+        <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+
+        <link rel="stylesheet" href="style.css" />
+
+        <script src="config.js"></script>
+        <script src="location.js"></script>
+        <script src="map.js"></script>
+        <script src="shared.js"></script>
+    </head>
+
+    <body>
+        <!-- ░░░ DEV-BAR START — temporary developer toggles. Delete this whole
+         block (markup + <style>) to remove. The toggles share the same
+         data-ctrl values as the bottom-bar copies, so app.js keeps them in
+         sync automatically; no JS changes are needed. ░░░ -->
+        <style>
+            /* Height of the dev-bar; everything below is pushed down by this much.
+         Defined here so it's removed together with the block. */
+            :root {
+                --devbar-h: 34px;
+            }
+            #dev-bar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: var(--devbar-h);
+                z-index: 300;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                padding: 0 14px;
+                background: var(--c-surface);
+                border-bottom: 1px dashed var(--c-accent);
+                font-family: var(--font-ui, inherit);
+            }
+            /* Push the normal UI down so the dev-bar sits above it, not over the map. */
+            #top-bar {
+                top: var(--devbar-h);
+            }
+            #map,
+            #settings-panel {
+                top: calc(var(--topbar-h) + var(--devbar-h));
+            }
+            #settings-cog {
+                top: calc(var(--topbar-h) + 16px + var(--devbar-h));
+            }
+            #dev-bar .dev-bar-badge {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--c-accent);
+            }
+            #dev-bar .dev-bar-item {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+            }
+            #dev-bar .dev-bar-label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--c-text);
+                white-space: nowrap;
+            }
+            #dev-bar .btn-group {
+                height: 24px;
+            }
+            #dev-bar .seg-btn {
+                padding: 0 9px;
+                font-size: 11px;
+            }
+        </style>
+        <div id="dev-bar" role="group" aria-label="Developer toggles">
+            <span class="dev-bar-badge">Dev</span>
+            <div class="dev-bar-item">
+                <span class="dev-bar-label">Band</span>
+                <div class="btn-group" role="group" aria-label="Raster band">
+                    <button
+                        class="seg-btn active"
+                        data-ctrl="raster-band"
+                        data-raster-band="1"
+                    >
+                        1
+                    </button>
+                    <button
+                        class="seg-btn"
+                        data-ctrl="raster-band"
+                        data-raster-band="2"
+                    >
+                        2
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- ░░░ DEV-BAR END ░░░ -->
+
+        <!-- Top bar -->
+        <header id="top-bar">
+            <div class="brand">
+                <span class="site-name">Alleinseinkarte</span>
+                <a
+                    class="brand-icon"
+                    href="https://www.linkedin.com/in/gregor-didenko-855a711a9"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="LinkedIn"
+                    title="LinkedIn"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3V9zm6 0h3.8v1.7h.05c.53-1 1.83-2.05 3.77-2.05 4.03 0 4.78 2.65 4.78 6.1V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21H9V9z"
+                        />
+                    </svg>
+                </a>
+                <a
+                    class="brand-icon"
+                    href="https://github.com/gregor-d/alleinsein"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="GitHub repository"
+                    title="GitHub repository"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.48l-.01-1.7c-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.85.09-.67.35-1.12.63-1.38-2.22-.26-4.55-1.14-4.55-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9l-.01 2.81c0 .27.18.59.69.48A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"
+                        />
+                    </svg>
+                </a>
+            </div>
+            <nav class="top-nav">
+                <a href="/impressum.html">Impressum</a>
+                <a href="mailto:kontakt@alleinseinkarte.de">Contact</a>
+                <button
+                    id="theme-toggle"
+                    class="icon-btn"
+                    aria-label="Switch theme"
+                >
+                    <svg
+                        class="icon-sun"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    >
+                        <circle cx="12" cy="12" r="4" />
+                        <path
+                            d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                        />
+                    </svg>
+                    <svg
+                        class="icon-moon"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    >
+                        <path
+                            d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+                        />
+                    </svg>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Map container -->
+        <div id="map"></div>
+
+        <!-- Settings cog (top-right of map, FAB style) -->
+        <button class="fab" id="settings-cog" aria-label="Settings">
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                ></path>
+            </svg>
+        </button>
+
+        <!-- Settings panel (desktop sidebar / mobile bottom sheet) -->
+        <aside id="settings-panel" aria-label="Map settings"></aside>
+
+        <!-- FAB group -->
+        <div id="fab-group">
+            <!-- Overlay openers (round) -->
+            <button
+                class="fab"
+                id="fab-search"
+                aria-label="Search location"
+                title="Search location"
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="M21 21L16.65 16.65" />
+                </svg>
+            </button>
+
+            <!-- Direct map-engine controls (connected capsule) -->
+            <div class="ctrl-rail" role="group" aria-label="Map controls">
+                <button
+                    class="ctrl-btn"
+                    id="ctrl-zoom-in"
+                    aria-label="Zoom in"
+                    title="Zoom in"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    >
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                </button>
+                <button
+                    class="ctrl-btn"
+                    id="ctrl-zoom-out"
+                    aria-label="Zoom out"
+                    title="Zoom out"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    >
+                        <path d="M5 12h14" />
+                    </svg>
+                </button>
+                <button
+                    class="ctrl-btn"
+                    id="fab-location"
+                    aria-label="My location"
+                    title="My location"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                    </svg>
+                </button>
+                <button
+                    class="ctrl-btn"
+                    id="fab-measure"
+                    aria-label="Measure distance"
+                    title="Measure distance"
+                    aria-pressed="false"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <rect x="2" y="8" width="20" height="8" rx="1" />
+                        <path d="M6 8v3M10 8v4M14 8v3M18 8v4" />
+                    </svg>
+                </button>
+            </div>
+
+            <button
+                class="fab"
+                id="fab-settings"
+                aria-label="Quick settings"
+                title="Quick settings"
+            >
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Mobile bottom layer strip -->
+        <div id="bottom-bar">
+            <div id="layer-strip"></div>
+            <!-- Controls row: opacity + water toggle, one line -->
+            <div id="bottom-controls">
+                <div class="controls-opacity">
+                    <span class="controls-label">Opacity</span>
+                    <input
+                        type="range"
+                        data-ctrl="data-opacity"
+                        min="0"
+                        max="100"
+                        value="100"
+                        aria-label="Layer opacity"
+                    />
+                    <span class="opacity-val" data-disp="data-opacity"
+                        >100%</span
+                    >
+                </div>
+                <div class="controls-water">
+                    <span class="controls-label">Water</span>
+                    <label class="toggle">
+                        <input
+                            type="checkbox"
+                            data-ctrl="layer-toggle"
+                            data-layer="Water"
+                            aria-label="Toggle water layer"
+                        />
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mini quick-settings popover (opened by settings FAB) -->
+        <div id="mini-panel" hidden></div>
+
+        <!-- Pixel inspector readout — updates on each map click -->
+        <div id="pixel-info" hidden>
+            <button id="pixel-info-close" class="icon-btn" aria-label="Close">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+            <div id="pixel-info-body"></div>
+        </div>
+
+        <!-- Location prompt popup (one-time per session) -->
+        <div id="location-prompt">
+            <button id="location-prompt-no" class="icon-btn" aria-label="Close">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+            <p class="location-prompt-intro">
+                <b>alleinseinkarte.de</b> is a map for finding places where you
+                can be alone. By visualizing areas across different land-cover
+                types with the lowest chance of encountering other people, it
+                guides you to spots where you can escape and enjoy time by
+                yourself.
+            </p>
+            <div class="location-prompt-row">
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <path d="M12 2L19 21L12 18L5 21Z" />
+                </svg>
+                <span>Go to your location?</span>
+                <button id="location-prompt-yes" class="btn-go">Yes</button>
+                <button id="location-prompt-no-btn" class="btn-go">No</button>
+            </div>
+        </div>
+
+        <!-- Colormap preset picker (mobile bottom-bar color-ramp sheet) -->
+        <div id="color-sheet">
+            <div id="color-sheet-header"></div>
+            <div id="color-sheet-body"></div>
+            <!-- Tail pointing down at the layer tab currently being edited -->
+            <div id="color-sheet-arrow" aria-hidden="true"></div>
+        </div>
+        <div id="color-sheet-backdrop" hidden></div>
+
+        <!-- Search popover (shared by FAB + panel) -->
+        <div id="search-popover" hidden>
+            <div class="search-popover-inner">
+                <input
+                    type="text"
+                    id="search-popover-input"
+                    placeholder="Search location…"
+                    autocomplete="off"
+                />
+                <button class="btn-go" id="search-popover-go">Go</button>
+                <button
+                    class="icon-btn"
+                    id="search-popover-close"
+                    aria-label="Close"
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                    >
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <ul id="search-popover-results" class="search-results"></ul>
+        </div>
+
+        <script src="app.js"></script>
+    </body>
 </html>

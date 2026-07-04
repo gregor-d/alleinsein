@@ -7,33 +7,33 @@
  * to their current location. Uses the browser Geolocation API on confirmation.
  */
 function showLocationPrompt() {
-  if (!navigator.geolocation) return;
-  if (sessionStorage.getItem("loc-prompt-dismissed")) return;
+    if (!navigator.geolocation) return;
+    if (sessionStorage.getItem('loc-prompt-dismissed')) return;
 
-  const prompt = document.getElementById("location-prompt");
-  if (!prompt) return;
+    const prompt = document.getElementById('location-prompt');
+    if (!prompt) return;
 
-  function dismiss() {
-    prompt.classList.remove("open");
-    sessionStorage.setItem("loc-prompt-dismissed", "1");
-  }
+    function dismiss() {
+        prompt.classList.remove('open');
+        sessionStorage.setItem('loc-prompt-dismissed', '1');
+    }
 
-  document.getElementById("location-prompt-yes").onclick = function () {
-    dismiss();
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      if (mapEngine) {
-        mapEngine.flyTo(
-          [pos.coords.longitude, pos.coords.latitude],
-          CONFIG.location_zoom,
-        );
-      }
-    });
-  };
+    document.getElementById('location-prompt-yes').onclick = function () {
+        dismiss();
+        navigator.geolocation.getCurrentPosition(function (pos) {
+            if (mapEngine) {
+                mapEngine.flyTo(
+                    [pos.coords.longitude, pos.coords.latitude],
+                    CONFIG.location_zoom,
+                );
+            }
+        });
+    };
 
-  document.getElementById("location-prompt-no").onclick = dismiss;
-  document.getElementById("location-prompt-no-btn").onclick = dismiss;
+    document.getElementById('location-prompt-no').onclick = dismiss;
+    document.getElementById('location-prompt-no-btn').onclick = dismiss;
 
-  prompt.classList.add("open");
+    prompt.classList.add('open');
 }
 
 /**
@@ -42,26 +42,26 @@ function showLocationPrompt() {
  * Uses onclick to prevent duplicate listeners when the layout is rebuilt.
  */
 function bindLocBtn(id) {
-  const btn = document.getElementById(id);
-  if (!btn) return;
-  btn.onclick = function () {
-    if (!navigator.geolocation) return;
-    btn.classList.add("active");
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        btn.classList.remove("active");
-        if (mapEngine) {
-          mapEngine.flyTo(
-            [pos.coords.longitude, pos.coords.latitude],
-            CONFIG.location_zoom,
-          );
-        }
-      },
-      function () {
-        btn.classList.remove("active");
-      },
-    );
-  };
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.onclick = function () {
+        if (!navigator.geolocation) return;
+        btn.classList.add('active');
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                btn.classList.remove('active');
+                if (mapEngine) {
+                    mapEngine.flyTo(
+                        [pos.coords.longitude, pos.coords.latitude],
+                        CONFIG.location_zoom,
+                    );
+                }
+            },
+            function () {
+                btn.classList.remove('active');
+            },
+        );
+    };
 }
 
 // ─── PLACE SEARCH (geocoding) ─────────────────
@@ -69,76 +69,78 @@ function bindLocBtn(id) {
 // Resets a results list to a single header row carrying a close (×) button that
 // clears the list when clicked. Returns the header so callers can append to it.
 function resetResultsList(list, label) {
-  list.innerHTML = "";
-  var header = document.createElement("li");
-  header.className = "result-header";
-  header.innerHTML =
-    '<span class="result-status">' +
-    (label || "") +
-    "</span>" +
-    '<button type="button" class="result-close" aria-label="Close results">×</button>';
-  header.querySelector(".result-close").addEventListener("click", function () {
-    list.innerHTML = "";
-  });
-  list.appendChild(header);
-  return header;
+    list.innerHTML = '';
+    var header = document.createElement('li');
+    header.className = 'result-header';
+    header.innerHTML =
+        '<span class="result-status">' +
+        (label || '') +
+        '</span>' +
+        '<button type="button" class="result-close" aria-label="Close results">×</button>';
+    header
+        .querySelector('.result-close')
+        .addEventListener('click', function () {
+            list.innerHTML = '';
+        });
+    list.appendChild(header);
+    return header;
 }
 
 // Geocodes the query via Nominatim and renders up to 5 matches into the given
 // results list (defaults to the FAB popover's list). Picking a result flies the
 // map there and runs the optional onSelect callback (e.g. close the popover).
 async function doSearch(query, list, onSelect) {
-  if (!query || !mapEngine) return;
+    if (!query || !mapEngine) return;
 
-  list = list || document.getElementById("search-popover-results");
-  if (!list) return;
+    list = list || document.getElementById('search-popover-results');
+    if (!list) return;
 
-  resetResultsList(list, "Searching…");
+    resetResultsList(list, 'Searching…');
 
-  try {
-    var url =
-      "https://nominatim.openstreetmap.org/search?q=" +
-      encodeURIComponent(query) +
-      "&format=json&limit=5&countrycodes=de&email=kontakt@alleinseinkarte.de";
-    var res = await fetch(url, { headers: { "Accept-Language": "de" } });
-    var data = await res.json();
+    try {
+        var url =
+            'https://nominatim.openstreetmap.org/search?q=' +
+            encodeURIComponent(query) +
+            '&format=json&limit=5&countrycodes=de&email=kontakt@alleinseinkarte.de';
+        var res = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+        var data = await res.json();
 
-    if (!data || !data.length) {
-      resetResultsList(list, "No results found.");
-      return;
-    }
+        if (!data || !data.length) {
+            resetResultsList(list, 'No results found.');
+            return;
+        }
 
-    resetResultsList(
-      list,
-      data.length + (data.length === 1 ? " result" : " results"),
-    );
-
-    data.forEach(function (item) {
-      var parts = item.display_name.split(",");
-      var li = document.createElement("li");
-      li.innerHTML =
-        '<div class="result-name">' +
-        parts[0].trim() +
-        "</div>" +
-        '<div class="result-detail">' +
-        parts
-          .slice(1, 3)
-          .map(function (s) {
-            return s.trim();
-          })
-          .join(", ") +
-        "</div>";
-      li.addEventListener("click", function () {
-        mapEngine.flyTo(
-          [parseFloat(item.lon), parseFloat(item.lat)],
-          CONFIG.location_zoom,
+        resetResultsList(
+            list,
+            data.length + (data.length === 1 ? ' result' : ' results'),
         );
-        if (typeof onSelect === "function") onSelect();
-      });
-      list.appendChild(li);
-    });
-  } catch (err) {
-    console.warn("Search failed:", err);
-    resetResultsList(list, "Search failed.");
-  }
+
+        data.forEach(function (item) {
+            var parts = item.display_name.split(',');
+            var li = document.createElement('li');
+            li.innerHTML =
+                '<div class="result-name">' +
+                parts[0].trim() +
+                '</div>' +
+                '<div class="result-detail">' +
+                parts
+                    .slice(1, 3)
+                    .map(function (s) {
+                        return s.trim();
+                    })
+                    .join(', ') +
+                '</div>';
+            li.addEventListener('click', function () {
+                mapEngine.flyTo(
+                    [parseFloat(item.lon), parseFloat(item.lat)],
+                    CONFIG.location_zoom,
+                );
+                if (typeof onSelect === 'function') onSelect();
+            });
+            list.appendChild(li);
+        });
+    } catch (err) {
+        console.warn('Search failed:', err);
+        resetResultsList(list, 'Search failed.');
+    }
 }
