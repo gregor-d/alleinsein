@@ -1,57 +1,57 @@
 default_install_hook_types:
-  - pre-commit
-  - commit-msg
+    - pre-commit
+    - commit-msg
 
 repos:
-  - repo: local
-    hooks:
-      - id: ruff-check
-        name: ruff check
-        entry: uv run --active ruff check
-        language: system
-        types_or:
-          - python
-          - pyi
-        stages:
-          - pre-commit
+    - repo: local
+      hooks:
+          - id: ruff-check
+            name: ruff check
+            entry: uv run --active ruff check
+            language: system
+            types_or:
+                - python
+                - pyi
+            stages:
+                - pre-commit
 
-      - id: ruff-format-check
-        name: ruff format check
-        entry: uv run --active ruff format --check
-        language: system
-        types_or:
-          - python
-          - pyi
-        stages:
-          - pre-commit
+          - id: ruff-format-check
+            name: ruff format check
+            entry: uv run --active ruff format --check
+            language: system
+            types_or:
+                - python
+                - pyi
+            stages:
+                - pre-commit
 
-      - id: ty-check
-        name: ty check
-        entry: uv run --active ty check
-        language: system
-        pass_filenames: false
-        stages:
-          - pre-commit
+          - id: ty-check
+            name: ty check
+            entry: uv run --active ty check
+            language: system
+            pass_filenames: false
+            stages:
+                - pre-commit
 
-      - id: commitizen-check
-        name: commitizen check
-        entry: uv run --active cz check --commit-msg-file
-        language: system
-        stages:
-          - commit-msg
+          - id: commitizen-check
+            name: commitizen check
+            entry: uv run --active cz check --commit-msg-file
+            language: system
+            stages:
+                - commit-msg
 
-      - id: prettier-check
-        name: prettier check
-        entry: npx --yes prettier --check
-        language: system
-        files: ^(frontend/static|docs)/.*\.(html|css|js|json|md)$
-        stages:
-          - pre-commit
+          - id: prettier-check
+            name: prettier check
+            entry: npx --yes prettier --check
+            language: system
+            files: ^(frontend/static|docs)/.*\.(html|css|js|json|md)$
+            stages:
+                - pre-commit
 
-      - id: frontend-tests
-        name: frontend tests
-        entry: uv run --active pytest tests --ignore=tests/benchmark
-        language: system
-        pass_filenames: false
-        stages:
-          - pre-commit
+          - id: frontend-tests
+            name: frontend tests
+            entry: uv run --active pytest tests --ignore=tests/benchmark
+            language: system
+            pass_filenames: false
+            stages:
+                - pre-commit

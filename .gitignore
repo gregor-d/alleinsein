@@ -32,6 +32,7 @@ ENV/
 .coverage.*
 htmlcov/
 
+
 # Notebook checkpoints
 .ipynb_checkpoints/
 
@@ -56,7 +57,11 @@ Thumbs.db
 !raster/out/test_raster.tif
 *.gpkg
 *.osm.pbf
+*.vrt
 
 # UV specific environment files
 uv.lock
 cloud-config.env.txt
+
+cache/
+.claude/settings.local.json

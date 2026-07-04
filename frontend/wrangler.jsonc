@@ -1,18 +1,18 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "rough-frost-f369",
-  "compatibility_date": "2026-06-09",
-  "assets": {
-    "directory": "./static",
-  },
-  "routes": [
-    {
-      "pattern": "alleinseinkarte.de/*",
-      "zone_name": "alleinseinkarte.de",
+    "$schema": "./node_modules/wrangler/config-schema.json",
+    "name": "rough-frost-f369",
+    "compatibility_date": "2026-06-09",
+    "assets": {
+        "directory": "./static"
     },
-    {
-      "pattern": "www.alleinseinkarte.de/*",
-      "zone_name": "alleinseinkarte.de",
-    },
-  ],
+    "routes": [
+        {
+            "pattern": "alleinseinkarte.de/*",
+            "zone_name": "alleinseinkarte.de"
+        },
+        {
+            "pattern": "www.alleinseinkarte.de/*",
+            "zone_name": "alleinseinkarte.de"
+        }
+    ]
 }
