@@ -436,8 +436,8 @@ function backendSectionHTML(showLabel) {
             (activeBasemapKey === 'satellite' ? ' active' : '') +
             '" data-ctrl="basemap" data-basemap="satellite">Satellite</button>',
         '    <button class="seg-btn' +
-            (activeBasemapKey === 'schummerung' ? ' active' : '') +
-            '" data-ctrl="basemap" data-basemap="schummerung">Relief</button>',
+            (activeBasemapKey === 'hillshade-dark' ? ' active' : '') +
+            '" data-ctrl="basemap" data-basemap="hillshade-dark">Relief</button>',
         '  </div>',
         '  <div class="opacity-row">',
         '    <div class="opacity-head">',

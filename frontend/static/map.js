@@ -16,46 +16,28 @@ class MapLibreEngine {
     }
 
     /**
-     * Builds a MapLibre GL raster source spec from a BASEMAPS definition.
-     * Handles plain XYZ tile templates as well as WMS services (type: 'wms'),
-     * for which a GetMap tile URL is assembled from the entry's options.
+     * Builds a MapLibre GL raster source spec from a BASEMAPS definition
+     * (plain XYZ tile URL template).
      */
     static rasterSource(def) {
         const opts = def.options || {};
-        const tileSize = opts.tileSize || 256;
-
-        let tiles;
-        if (def.type === 'wms') {
-            const params = {
-                service: 'WMS',
-                version: opts.version || '1.1.1',
-                request: 'GetMap',
-                layers: opts.layers || '',
-                styles: '',
-                format: opts.format || 'image/png',
-                transparent: opts.transparent ? 'true' : 'false',
-                srs: opts.srs || 'EPSG:3857',
-                width: tileSize,
-                height: tileSize,
-            };
-            const query = Object.keys(params)
-                .map(function (k) {
-                    return k + '=' + encodeURIComponent(params[k]);
-                })
-                .join('&');
-            // bbox placeholder must stay un-encoded so MapLibre can substitute it.
-            tiles = [def.url + '?' + query + '&bbox={bbox-epsg-3857}'];
-        } else {
-            tiles = [def.url];
-        }
-
         return {
             type: 'raster',
-            tiles: tiles,
-            tileSize: tileSize,
+            tiles: [def.url],
+            tileSize: opts.tileSize || 256,
             attribution: opts.attribution || '',
             maxzoom: opts.maxZoom || 19,
         };
+    }
+
+    /**
+     * All BASEMAPS keys that are true basemaps (not 'overlay' entries),
+     * i.e. the keys switchBasemap/updateBasemapOpacity iterate over.
+     */
+    static basemapKeys() {
+        return Object.keys(BASEMAPS).filter(function (key) {
+            return BASEMAPS[key].type !== 'overlay';
+        });
     }
 
     // The app speaks the classic OSM/Leaflet "slippy" zoom convention (world = one
@@ -79,45 +61,31 @@ class MapLibreEngine {
     init(containerId, center, zoom) {
         const self = this;
 
+        // One source + one hidden layer per BASEMAPS entry; switchBasemap
+        // toggles visibility. Hidden layers don't fetch tiles, so declaring
+        // all of them upfront costs nothing.
+        const sources = {};
+        const layers = [];
+        MapLibreEngine.basemapKeys().forEach(function (key) {
+            sources['basemap-' + key] = MapLibreEngine.rasterSource(
+                BASEMAPS[key],
+            );
+            layers.push({
+                id: 'basemap-' + key + '-layer',
+                type: 'raster',
+                source: 'basemap-' + key,
+                layout: { visibility: 'none' },
+                paint: { 'raster-opacity': 1.0 },
+            });
+        });
+
         return new Promise(function (resolve) {
             self.map = new maplibregl.Map({
                 container: containerId,
                 style: {
                     version: 8,
-                    sources: {
-                        'basemap-osm': MapLibreEngine.rasterSource(
-                            BASEMAPS.osm,
-                        ),
-                        'basemap-satellite': MapLibreEngine.rasterSource(
-                            BASEMAPS.satellite,
-                        ),
-                        'basemap-schummerung': MapLibreEngine.rasterSource(
-                            BASEMAPS.schummerung,
-                        ),
-                    },
-                    layers: [
-                        {
-                            id: 'basemap-osm-layer',
-                            type: 'raster',
-                            source: 'basemap-osm',
-                            layout: { visibility: 'none' },
-                            paint: { 'raster-opacity': 1.0 },
-                        },
-                        {
-                            id: 'basemap-satellite-layer',
-                            type: 'raster',
-                            source: 'basemap-satellite',
-                            layout: { visibility: 'none' },
-                            paint: { 'raster-opacity': 1.0 },
-                        },
-                        {
-                            id: 'basemap-schummerung-layer',
-                            type: 'raster',
-                            source: 'basemap-schummerung',
-                            layout: { visibility: 'none' },
-                            paint: { 'raster-opacity': 1.0 },
-                        },
-                    ],
+                    sources: sources,
+                    layers: layers,
                 },
                 center: center,
                 zoom: MapLibreEngine.toCameraZoom(zoom),
@@ -152,15 +120,15 @@ class MapLibreEngine {
                     })
                     .then(function (data) {
                         if (!self.map) return;
-                        self.map.addSource(CONFIG.mask_source_id, {
+                        self.map.addSource('mask-source', {
                             type: 'geojson',
                             data: data,
                         });
                         self.map.addLayer(
                             {
-                                id: CONFIG.mask_layer_id,
+                                id: 'mask-layer',
                                 type: 'fill',
-                                source: CONFIG.mask_source_id,
+                                source: 'mask-source',
                                 paint: {
                                     'fill-color': CONFIG.mask_color,
                                     'fill-opacity': CONFIG.mask_opacity,
@@ -331,27 +299,17 @@ class MapLibreEngine {
      */
     switchBasemap(key) {
         if (!this.map) return;
-        if (this.map.getLayer('basemap-osm-layer')) {
-            this.map.setLayoutProperty(
-                'basemap-osm-layer',
-                'visibility',
-                key === 'osm' ? 'visible' : 'none',
-            );
-        }
-        if (this.map.getLayer('basemap-satellite-layer')) {
-            this.map.setLayoutProperty(
-                'basemap-satellite-layer',
-                'visibility',
-                key === 'satellite' ? 'visible' : 'none',
-            );
-        }
-        if (this.map.getLayer('basemap-schummerung-layer')) {
-            this.map.setLayoutProperty(
-                'basemap-schummerung-layer',
-                'visibility',
-                key === 'schummerung' ? 'visible' : 'none',
-            );
-        }
+        const self = this;
+        MapLibreEngine.basemapKeys().forEach(function (k) {
+            const layerId = 'basemap-' + k + '-layer';
+            if (self.map.getLayer(layerId)) {
+                self.map.setLayoutProperty(
+                    layerId,
+                    'visibility',
+                    k === key ? 'visible' : 'none',
+                );
+            }
+        });
     }
 
     /**
@@ -359,27 +317,13 @@ class MapLibreEngine {
      */
     updateBasemapOpacity(opacity) {
         if (!this.map) return;
-        if (this.map.getLayer('basemap-osm-layer')) {
-            this.map.setPaintProperty(
-                'basemap-osm-layer',
-                'raster-opacity',
-                opacity,
-            );
-        }
-        if (this.map.getLayer('basemap-satellite-layer')) {
-            this.map.setPaintProperty(
-                'basemap-satellite-layer',
-                'raster-opacity',
-                opacity,
-            );
-        }
-        if (this.map.getLayer('basemap-schummerung-layer')) {
-            this.map.setPaintProperty(
-                'basemap-schummerung-layer',
-                'raster-opacity',
-                opacity,
-            );
-        }
+        const self = this;
+        MapLibreEngine.basemapKeys().forEach(function (k) {
+            const layerId = 'basemap-' + k + '-layer';
+            if (self.map.getLayer(layerId)) {
+                self.map.setPaintProperty(layerId, 'raster-opacity', opacity);
+            }
+        });
     }
 
     /**

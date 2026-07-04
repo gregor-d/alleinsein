@@ -10,8 +10,6 @@ const CONFIG = {
     tile_json_path: 'WebMercatorQuad/tilejson.json',
     tile_size: 512,
     mask_geojson_path: 'raster-data-mask.geojson',
-    mask_source_id: 'mask-source',
-    mask_layer_id: 'mask-layer',
     mask_opacity: 0.45,
     mask_color: '#111111',
     measure_color: '#e6007e',
@@ -133,7 +131,7 @@ const BASEMAPS = {
     // • OSM standard tiles ...................... 256 px
     // • Esri World Imagery (ArcGIS XYZ) ......... 256 px
     // • Waymarked Trails (hiking/cycling) ....... 256 px
-    // • basemap.de Schummerung WMS .............. any size via width/height (256 px requested)
+    // • Esri World Hillshade Dark (ArcGIS XYZ) .. 256 px
     // The titiler data raster uses CONFIG.tile_size (512) instead — that is separate.
     osm: {
         label: 'OpenStreetMap',
@@ -155,19 +153,16 @@ const BASEMAPS = {
             maxZoom: 19,
         },
     },
-    schummerung: {
+    // Esri World Hillshade Dark — EU-wide relief (replaced the Germany-only
+    // basemap.de Schummerung WMS once the raster data grew beyond Germany).
+    'hillshade-dark': {
         label: 'Relief',
-        type: 'wms',
-        url: 'https://sgx.geodatenzentrum.de/wms_basemapde_schummerung',
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade_Dark/MapServer/tile/{z}/{y}/{x}',
         options: {
-            layers: 'de_basemapde_web_raster_combshade',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            srs: 'EPSG:3857',
-            attribution: '&copy; <a href="https://www.bkg.bund.de">BKG</a>',
+            attribution:
+                '&copy; <a href="https://www.esri.com/">Esri</a> · Sources: Esri, USGS, FAO, NOAA',
             tileSize: 256,
-            maxZoom: 18,
+            maxZoom: 16,
         },
     },
     hiking: {
