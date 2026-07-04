@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cleanup() { kill "$backend_pid" "$frontend_pid" 2>/dev/null || true; }
+cleanup() {
+  trap - EXIT INT TERM
+  kill -TERM -"${backend_pid:-}" -"${frontend_pid:-}" 2>/dev/null || true
+  for _ in 1 2 3 4 5 6; do
+    kill -0 -"${backend_pid:-}" 2>/dev/null || kill -0 -"${frontend_pid:-}" 2>/dev/null || return 0
+    sleep 0.5
+  done
+  kill -KILL -"${backend_pid:-}" -"${frontend_pid:-}" 2>/dev/null || true
+}
 trap cleanup EXIT INT TERM
 
-uv run uvicorn backend.main:app --port 8000 --reload --reload-dir backend &
+setsid uv run uvicorn backend.main:app --port 8000 --reload --reload-dir backend &
 backend_pid=$!
 
 until curl --silent --fail http://127.0.0.1:8000/healthz &>/dev/null; do
@@ -14,7 +22,7 @@ done
 
 bash "$(dirname "$0")/smoke-test.sh"
 
-npx --yes browser-sync start \
+setsid npx --yes browser-sync start \
   --server frontend/static \
   --files "frontend/static/**/*" \
   --port 5173 --host 127.0.0.1 &
