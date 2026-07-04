@@ -1,0 +1,40 @@
+name: CI
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+
+permissions:
+    contents: read
+
+jobs:
+    lint-and-type-check:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
+
+            - name: Set up uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  enable-cache: true
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.13"
+
+            - name: Install dependencies
+              run: uv sync --locked --no-dev --group lint
+
+            - name: Ruff lint
+              run: uv run ruff check .
+
+            - name: Ruff format
+              run: uv run ruff format --check .
+
+            - name: Ty type check
+              run: uv run ty check
