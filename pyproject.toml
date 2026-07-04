@@ -10,14 +10,23 @@ dependencies = [
     "pydantic-settings>=2.14.1",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["raster", "backend"]
+
 [dependency-groups]
-dev = [
+lint = [
     "commitizen>=4.0.0",
-    "ty>=0.0.46",
     "pre-commit>=4.0.0",
-    "ruff>=0.15.16",
     "pytest>=9.0.3",
-    "rio-cogeo>=7.0.2",
+    "ruff>=0.15.16",
+    "ty>=0.0.46",
+]
+dev = [
+    { include-group = "lint" },
     "osmnx>=2.1.0",
     "python-dotenv>=1.0.1",
     "gdal==3.12.2; sys_platform != 'win32'",
@@ -32,6 +41,31 @@ dev = [
 addopts = "-s"
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "I",
+    "B",
+    "UP",
+    "RUF",
+]
+
+[tool.ty.src]
+include = ["backend", "raster", "tests"]
+
+[tool.ty.terminal]
+output-format = "concise"
+
+[tool.ty.rules]
+unused-ignore-comment = "error"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
