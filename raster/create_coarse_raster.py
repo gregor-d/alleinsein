@@ -12,7 +12,7 @@ from pathlib import Path
 
 from raster import raster_settings as settings
 from raster.utils import bounds, gdal_common, gdal_controller
-from raster.utils.helpers import banner, timed_step
+from raster.utils.helpers import banner, slugify_areas, timed_step
 
 
 def parse_args() -> argparse.Namespace:
@@ -196,7 +196,7 @@ def build_area(args: argparse.Namespace | None = None) -> None:
     if args is None:
         args = argparse.Namespace(jobs=4)
 
-    countries = [c.lower().replace(" ", "_") for c in settings.countries]
+    countries = slugify_areas(settings.countries)
     dissolved_gpkg = settings.bounds_dir / f"{settings.output_area}.gpkg"
 
     banner("Multi-country coarse raster workflow")
