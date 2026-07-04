@@ -336,27 +336,26 @@ def main() -> None:
         output_area=settings.output_area, areas=countries, simplify_tolerance=10
     )
 
-    stacked_mosaic_vrt = (
-        settings.pre_out_dir
-        / f"{settings.output_area}_3035_{settings.raster_version}.vrt"
-    )
-    with timed_step(f"Mosaic {settings.output_area} 2-band country outputs"):
-        gdal_controller.mosaic_rasters(
-            rasters=per_country_outputs, mosaic_vrt=stacked_mosaic_vrt
-        )
-
     output_cog = settings.area_output_cog
 
     if output_cog.exists():
         print(f"Nothing to do, reuse existing {output_cog}")
     else:
-        with timed_step(f"Create {settings.output_area} web COG"):
-            gdal_controller.create_web_cog_from_stacked(
-                stacked_3035=stacked_mosaic_vrt,
-                output_cog=output_cog,
-                bounds_gpkg=dissolved_gpkg,
-                boundary_name=settings.output_area,
+        with tempfile.TemporaryDirectory(dir=settings.temp_dir) as tmp:
+            stacked_mosaic_vrt = (
+                Path(tmp) / f"{settings.output_area}_3035_{settings.raster_version}.vrt"
             )
+            with timed_step(f"Mosaic {settings.output_area} 2-band country outputs"):
+                gdal_controller.mosaic_rasters(
+                    rasters=per_country_outputs, mosaic_vrt=stacked_mosaic_vrt
+                )
+            with timed_step(f"Create {settings.output_area} web COG"):
+                gdal_controller.create_web_cog_from_stacked(
+                    stacked_3035=stacked_mosaic_vrt,
+                    output_cog=output_cog,
+                    bounds_gpkg=dissolved_gpkg,
+                    boundary_name=settings.output_area,
+                )
 
     banner(f"Successfully created {settings.output_area} COG: {output_cog}")
     print(
