@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Raster Dev Viewer</title>
+        <meta name="description" content="Dev viewer for raster/out files" />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+
+        <link
+            href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+            rel="stylesheet"
+        />
+        <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+
+        <style>
+            /* ─── Theme tokens (copied from style.css) ─── */
+            :root {
+                --c-bg: rgb(255, 255, 255);
+                --c-surface: rgb(235, 235, 235);
+                --c-button: rgb(215, 215, 215);
+                --c-border: rgb(0, 0, 0);
+                --c-text: rgb(0, 0, 0);
+                --c-text-muted: rgb(80, 80, 80);
+                --c-text-hi: white;
+                --c-accent: rgb(85, 76, 255);
+                --c-accent-hover: rgba(85, 76, 255, 0.5);
+                --c-shadow: rgb(0, 0, 0);
+                --box-shadow: 3px 3px 0 rgb(0, 0, 0);
+
+                --topbar-h: 40px;
+                --panel-w: 280px;
+                --gap: 8px;
+                --r: 7px;
+                --r-sm: 5px;
+                --t: 0.18s ease;
+
+                --font-ui: 'Inter', system-ui, sans-serif;
+                --font-brand: 'Nunito', system-ui, sans-serif;
+                --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
+            }
+            [data-theme='dark'] {
+                --c-bg: rgb(0, 0, 0);
+                --c-surface: rgb(20, 20, 20);
+                --c-button: rgb(40, 40, 40);
+                --c-border: rgba(255, 255, 255, 0.205);
+                --c-text: rgb(255, 255, 255);
+                --c-text-muted: rgb(180, 180, 180);
+                --c-text-hi: rgb(0, 0, 0);
+                --c-accent: rgb(129, 122, 248);
+                --c-accent-hover: rgba(85, 76, 255, 0.5);
+                --c-shadow: rgb(0, 0, 0);
+                --box-shadow: 3px 3px 0 rgb(0, 0, 0);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                margin: 0;
+                height: 100%;
+                font-family: var(--font-ui);
+                background: var(--c-bg);
+                color: var(--c-text);
+            }
+
+            /* ─── Top bar ─── */
+            #top-bar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: var(--topbar-h);
+                z-index: 300;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                padding: 0 14px;
+                background: var(--c-surface);
+                border-bottom: 1px dashed var(--c-accent);
+            }
+            .brand {
+                display: flex;
+                align-items: baseline;
+                gap: 10px;
+            }
+            .site-name {
+                font-family: var(--font-brand);
+                font-weight: 700;
+                font-size: 16px;
+            }
+            .dev-badge {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--c-accent);
+            }
+            #status {
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                font-family: var(--font-mono);
+                font-size: 11px;
+                color: var(--c-text-muted);
+                text-align: right;
+            }
+            #status.error {
+                color: #d40000;
+            }
+
+            .icon-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 26px;
+                height: 26px;
+                padding: 0;
+                border: 1px solid var(--c-border);
+                border-radius: var(--r-sm);
+                background: var(--c-button);
+                color: var(--c-text);
+                cursor: pointer;
+                transition: background var(--t);
+                flex: none;
+            }
+            .icon-btn:hover {
+                background: var(--c-accent-hover);
+            }
+            .icon-btn svg {
+                width: 15px;
+                height: 15px;
+            }
+            [data-theme='light'] .icon-moon,
+            [data-theme='dark'] .icon-sun {
+                display: none;
+            }
+
+            /* ─── Layout ─── */
+            #panel {
+                position: fixed;
+                top: var(--topbar-h);
+                left: 0;
+                bottom: 0;
+                width: var(--panel-w);
+                z-index: 200;
+                display: flex;
+                flex-direction: column;
+                background: var(--c-surface);
+                border-right: 1px solid var(--c-border);
+                overflow-y: auto;
+                padding: 10px;
+                gap: 12px;
+            }
+            #map {
+                position: fixed;
+                top: var(--topbar-h);
+                left: var(--panel-w);
+                right: 0;
+                bottom: 0;
+            }
+
+            .section-title {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--c-text-muted);
+                margin: 2px 0 6px;
+            }
+
+            /* ─── File list ─── */
+            #file-list {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+            .file-btn {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 8px;
+                width: 100%;
+                padding: 6px 8px;
+                border: 1px solid var(--c-border);
+                border-radius: var(--r-sm);
+                background: var(--c-button);
+                color: var(--c-text);
+                font-family: var(--font-mono);
+                font-size: 11px;
+                text-align: left;
+                cursor: pointer;
+                transition: background var(--t), color var(--t);
+                overflow-wrap: anywhere;
+            }
+            .file-btn:hover {
+                background: var(--c-accent-hover);
+            }
+            .file-btn.active {
+                background: var(--c-accent);
+                color: var(--c-text-hi);
+                border-color: var(--c-accent);
+            }
+
+            /* ─── Controls ─── */
+            .ctl-row {
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                margin-bottom: 8px;
+            }
+            .ctl-label {
+                font-size: 12px;
+                font-weight: 500;
+                white-space: nowrap;
+                width: 58px;
+                flex: none;
+            }
+            select,
+            input[type='number'] {
+                width: 100%;
+                min-width: 0;
+                padding: 4px 6px;
+                border: 1px solid var(--c-border);
+                border-radius: var(--r-sm);
+                background: var(--c-button);
+                color: var(--c-text);
+                font-family: var(--font-mono);
+                font-size: 11px;
+            }
+            input[type='range'] {
+                width: 100%;
+                accent-color: var(--c-accent);
+            }
+            .btn-group {
+                display: inline-flex;
+                height: 24px;
+                border: 1px solid var(--c-border);
+                border-radius: var(--r-sm);
+                overflow: hidden;
+            }
+            .seg-btn {
+                padding: 0 9px;
+                font-size: 11px;
+                border: none;
+                background: var(--c-button);
+                color: var(--c-text);
+                cursor: pointer;
+                transition: background var(--t);
+            }
+            .seg-btn + .seg-btn {
+                border-left: 1px solid var(--c-border);
+            }
+            .seg-btn:hover {
+                background: var(--c-accent-hover);
+            }
+            .seg-btn.active {
+                background: var(--c-accent);
+                color: var(--c-text-hi);
+            }
+            .mono-val {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                color: var(--c-text-muted);
+                min-width: 36px;
+                text-align: right;
+            }
+
+            /* ─── Info / point readout ─── */
+            .info-box {
+                font-family: var(--font-mono);
+                font-size: 11px;
+                line-height: 1.5;
+                background: var(--c-bg);
+                border: 1px solid var(--c-border);
+                border-radius: var(--r-sm);
+                padding: 7px 8px;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                color: var(--c-text);
+            }
+            .info-box:empty {
+                display: none;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header id="top-bar">
+            <div class="brand">
+                <span class="site-name">Raster Viewer</span>
+                <span class="dev-badge">Dev</span>
+            </div>
+            <div id="status"></div>
+            <button
+                id="theme-toggle"
+                class="icon-btn"
+                aria-label="Switch theme"
+            >
+                <svg
+                    class="icon-sun"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                >
+                    <circle cx="12" cy="12" r="4" />
+                    <path
+                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                    />
+                </svg>
+                <svg
+                    class="icon-moon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                >
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+            </button>
+        </header>
+
+        <aside id="panel">
+            <section>
+                <div class="section-title">
+                    <span>Files (raster/out)</span>
+                    <button
+                        id="refresh-btn"
+                        class="icon-btn"
+                        aria-label="Refresh list"
+                        title="Refresh list"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                            <path d="M21 3v6h-6" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="file-list"></div>
+            </section>
+
+            <section>
+                <div class="section-title"><span>Render</span></div>
+                <div class="ctl-row">
+                    <span class="ctl-label">Band</span>
+                    <div class="btn-group" id="band-group"></div>
+                </div>
+                <div class="ctl-row">
+                    <span class="ctl-label">Colormap</span>
+                    <select id="colormap-select">
+                        <option value="viridis" selected>viridis</option>
+                        <option value="plasma">plasma</option>
+                        <option value="inferno">inferno</option>
+                        <option value="magma">magma</option>
+                        <option value="terrain">terrain</option>
+                        <option value="spectral_r">spectral_r</option>
+                        <option value="rdylgn">rdylgn</option>
+                        <option value="gray">gray</option>
+                        <option value="">none (raw)</option>
+                    </select>
+                </div>
+                <div class="ctl-row">
+                    <span class="ctl-label">Rescale</span>
+                    <input
+                        type="number"
+                        id="rescale-min"
+                        step="any"
+                        aria-label="Rescale min"
+                    />
+                    <input
+                        type="number"
+                        id="rescale-max"
+                        step="any"
+                        aria-label="Rescale max"
+                    />
+                </div>
+                <div class="ctl-row">
+                    <span class="ctl-label">Opacity</span>
+                    <input
+                        type="range"
+                        id="opacity-range"
+                        min="0"
+                        max="100"
+                        value="80"
+                        aria-label="Layer opacity"
+                    />
+                    <span class="mono-val" id="opacity-val">80%</span>
+                </div>
+            </section>
+
+            <section>
+                <div class="section-title"><span>File info</span></div>
+                <div class="info-box" id="file-info"></div>
+            </section>
+
+            <section>
+                <div class="section-title"><span>Pixel (click map)</span></div>
+                <div class="info-box" id="point-info"></div>
+            </section>
+        </aside>
+
+        <div id="map"></div>
+
+        <script>
+            'use strict';
+
+            // Dev page: talk to the local titiler backend directly (same host
+            // logic as config.js, but this page is only meant for local dev).
+            const isLocal =
+                window.location.hostname === 'localhost' ||
+                window.location.hostname === '127.0.0.1' ||
+                window.location.hostname === '';
+            const API = isLocal
+                ? 'http://127.0.0.1:8000'
+                : 'https://tiles.alleinseinkarte.de';
+
+            const state = {
+                raster: null,
+                band: 1,
+                bandCount: 1,
+                colormap: 'viridis',
+                rescale: { min: 0, max: 255 },
+                opacity: 0.8,
+                fitted: false, // fitBounds once per selected file
+            };
+
+            const $ = (id) => document.getElementById(id);
+            const statusEl = $('status');
+
+            function setStatus(msg, isError) {
+                statusEl.textContent = msg || '';
+                statusEl.classList.toggle('error', !!isError);
+            }
+
+            // ─── Theme toggle ───
+            $('theme-toggle').addEventListener('click', () => {
+                const root = document.documentElement;
+                root.dataset.theme =
+                    root.dataset.theme === 'dark' ? 'light' : 'dark';
+            });
+
+            // ─── Map (OSM basemap) ───
+            const map = new maplibregl.Map({
+                container: 'map',
+                center: [10.45, 51.16],
+                zoom: 5,
+                style: {
+                    version: 8,
+                    sources: {
+                        osm: {
+                            type: 'raster',
+                            tiles: [
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            ],
+                            tileSize: 256,
+                            maxzoom: 19,
+                            attribution:
+                                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                        },
+                    },
+                    layers: [
+                        {
+                            id: 'osm',
+                            type: 'raster',
+                            source: 'osm',
+                            paint: { 'raster-opacity': 0.8 },
+                        },
+                    ],
+                },
+            });
+            map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+            // ─── File list ───
+            async function loadFileList() {
+                setStatus('loading file list…');
+                try {
+                    const res = await fetch(`${API}/rasters`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const files = await res.json();
+                    renderFileList(files);
+                    setStatus(`${files.length} files`);
+                } catch (e) {
+                    setStatus(
+                        `cannot list rasters (${e.message}) — is the backend running with APP_ENV=dev?`,
+                        true,
+                    );
+                }
+            }
+
+            function renderFileList(files) {
+                const list = $('file-list');
+                list.innerHTML = '';
+                for (const name of files) {
+                    const btn = document.createElement('button');
+                    btn.className =
+                        'file-btn' + (name === state.raster ? ' active' : '');
+                    btn.textContent = name;
+                    btn.addEventListener('click', () => selectFile(name));
+                    list.appendChild(btn);
+                }
+            }
+
+            function markActiveFile() {
+                document.querySelectorAll('.file-btn').forEach((b) => {
+                    b.classList.toggle(
+                        'active',
+                        b.textContent === state.raster,
+                    );
+                });
+            }
+
+            // ─── File selection ───
+            async function selectFile(name) {
+                state.raster = name;
+                state.fitted = false;
+                markActiveFile();
+                $('point-info').textContent = '';
+                setStatus(`loading ${name}…`);
+
+                try {
+                    // Band count + metadata from /info, default rescale from /statistics.
+                    const info = await fetchJson(
+                        `${API}/info?raster=${encodeURIComponent(name)}`,
+                    );
+                    state.bandCount = info.count || 1;
+                    if (state.band > state.bandCount) state.band = 1;
+                    renderBandButtons();
+                    renderFileInfo(info);
+
+                    await autoRescale();
+                    await updateLayer();
+                    setStatus(name);
+                } catch (e) {
+                    setStatus(`${name}: ${e.message}`, true);
+                }
+            }
+
+            async function fetchJson(url) {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            }
+
+            function renderFileInfo(info) {
+                const lines = [
+                    `dtype:  ${info.dtype}`,
+                    `bands:  ${info.count}`,
+                    `size:   ${info.width} × ${info.height}`,
+                    `nodata: ${info.nodata_value ?? info.nodata_type ?? '—'}`,
+                    `bounds: ${(info.bounds || [])
+                        .map((v) => Number(v).toFixed(3))
+                        .join(', ')}`,
+                ];
+                if (info.overviews && info.overviews.length)
+                    lines.push(`ovr:    ${info.overviews.join(', ')}`);
+                $('file-info').textContent = lines.join('\n');
+            }
+
+            function renderBandButtons() {
+                const group = $('band-group');
+                group.innerHTML = '';
+                for (let b = 1; b <= state.bandCount; b++) {
+                    const btn = document.createElement('button');
+                    btn.className =
+                        'seg-btn' + (b === state.band ? ' active' : '');
+                    btn.textContent = b;
+                    btn.addEventListener('click', async () => {
+                        state.band = b;
+                        renderBandButtons();
+                        try {
+                            await autoRescale();
+                            await updateLayer();
+                        } catch (e) {
+                            setStatus(e.message, true);
+                        }
+                    });
+                    group.appendChild(btn);
+                }
+            }
+
+            // Fill the rescale inputs from the band's min/max (overview-level stats).
+            async function autoRescale() {
+                if (!state.raster) return;
+                const stats = await fetchJson(
+                    `${API}/statistics?raster=${encodeURIComponent(
+                        state.raster,
+                    )}&bidx=${state.band}`,
+                );
+                const band = Object.values(stats)[0];
+                if (!band) return;
+                state.rescale = { min: band.min, max: band.max };
+                $('rescale-min').value = band.min;
+                $('rescale-max').value = band.max;
+            }
+
+            // ─── Data layer ───
+            let layerReqSeq = 0;
+            async function updateLayer() {
+                if (!state.raster) return;
+                const reqId = ++layerReqSeq;
+
+                const url = new URL(`${API}/WebMercatorQuad/tilejson.json`);
+                url.searchParams.set('raster', state.raster);
+                url.searchParams.set('bidx', state.band);
+                url.searchParams.set(
+                    'rescale',
+                    `${state.rescale.min},${state.rescale.max}`,
+                );
+                if (state.colormap)
+                    url.searchParams.set('colormap_name', state.colormap);
+
+                const tj = await fetchJson(url.toString());
+                if (reqId !== layerReqSeq) return; // stale response
+                if (!tj.tiles || !tj.tiles.length)
+                    throw new Error('tilejson has no tiles');
+
+                if (map.getLayer('data-layer')) map.removeLayer('data-layer');
+                if (map.getSource('data-source'))
+                    map.removeSource('data-source');
+
+                map.addSource('data-source', {
+                    type: 'raster',
+                    tiles: [tj.tiles[0]],
+                    tileSize: 512,
+                    bounds: tj.bounds || undefined,
+                    minzoom: tj.minzoom,
+                    maxzoom: tj.maxzoom || 12,
+                });
+                map.addLayer({
+                    id: 'data-layer',
+                    type: 'raster',
+                    source: 'data-source',
+                    paint: {
+                        'raster-opacity': state.opacity,
+                        'raster-fade-duration': 0,
+                        'raster-resampling': 'nearest',
+                    },
+                });
+
+                if (!state.fitted && tj.bounds) {
+                    const [w, s, e, n] = tj.bounds;
+                    map.fitBounds(
+                        [
+                            [w, s],
+                            [e, n],
+                        ],
+                        { padding: 20 },
+                    );
+                    state.fitted = true;
+                }
+            }
+
+            // ─── Controls ───
+            $('refresh-btn').addEventListener('click', loadFileList);
+
+            $('colormap-select').addEventListener('change', (e) => {
+                state.colormap = e.target.value;
+                updateLayer().catch((err) => setStatus(err.message, true));
+            });
+
+            let rescaleTimer;
+            function onRescaleInput() {
+                clearTimeout(rescaleTimer);
+                rescaleTimer = setTimeout(() => {
+                    const min = parseFloat($('rescale-min').value);
+                    const max = parseFloat($('rescale-max').value);
+                    if (!Number.isFinite(min) || !Number.isFinite(max)) return;
+                    state.rescale = { min, max };
+                    updateLayer().catch((err) => setStatus(err.message, true));
+                }, 400);
+            }
+            $('rescale-min').addEventListener('input', onRescaleInput);
+            $('rescale-max').addEventListener('input', onRescaleInput);
+
+            $('opacity-range').addEventListener('input', (e) => {
+                state.opacity = e.target.value / 100;
+                $('opacity-val').textContent = `${e.target.value}%`;
+                if (map.getLayer('data-layer'))
+                    map.setPaintProperty(
+                        'data-layer',
+                        'raster-opacity',
+                        state.opacity,
+                    );
+            });
+
+            // ─── Pixel readout ───
+            map.on('click', async (e) => {
+                if (!state.raster) return;
+                const { lng, lat } = e.lngLat;
+                try {
+                    const pt = await fetchJson(
+                        `${API}/point/${lng},${lat}?raster=${encodeURIComponent(
+                            state.raster,
+                        )}`,
+                    );
+                    $('point-info').textContent = [
+                        `lon: ${lng.toFixed(5)}  lat: ${lat.toFixed(5)}`,
+                        `values: ${JSON.stringify(pt.values)}`,
+                    ].join('\n');
+                } catch (err) {
+                    $('point-info').textContent = `lon: ${lng.toFixed(
+                        5,
+                    )}  lat: ${lat.toFixed(5)}\nno data (${err.message})`;
+                }
+            });
+
+            loadFileList();
+        </script>
+    </body>
+</html>
