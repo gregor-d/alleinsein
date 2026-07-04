@@ -13,7 +13,26 @@ def client():
         yield client
 
 
-def test_raster_default_endpoint(client):
+@pytest.fixture
+def pin_default_raster(monkeypatch):
+    """Resolve every zoom tier to the committed fixture raster.
+
+    Endpoints hit without ``?raster=`` (and ``get_raster_path`` called without an
+    explicit raster) otherwise resolve the tier files derived from backend/.env's
+    area/version, which are not generated in the test environment. Pinning each
+    tier to the committed fixture keeps those tests hermetic.
+    """
+    monkeypatch.setattr(main.settings, "raster_path", "raster/out")
+    for attr in (
+        "raster_file_z6",
+        "raster_file_z7",
+        "raster_file_z8",
+        "raster_file_z99",
+    ):
+        monkeypatch.setattr(main.settings, attr, "test_raster.tif")
+
+
+def test_raster_default_endpoint(client, pin_default_raster):
     print("Testing default raster endpoint...")
     response = client.get("/tiles/WebMercatorQuad/0/0/0")
     print(response.headers)
@@ -34,7 +53,7 @@ def test_raster_endpoint(client):
 def test_raster_non_existent_endpoint(client):
     print("Testing non-existent raster endpoint...")
     response = client.get("/tiles/WebMercatorQuad/0/0/0?raster=wrong_test_raster.tif")
-    assert response.status_code == 500
+    assert response.status_code == 404
 
 
 def test_directory_traversal(client):
@@ -42,15 +61,16 @@ def test_directory_traversal(client):
     response = client.get(
         "/tiles/WebMercatorQuad/0/0/0?raster=../tests/test_raster.tif"
     )
-    assert response.status_code == 500
+    # Blocked path resolves to 404 (not 500) so file existence is not disclosed.
+    assert response.status_code == 404
 
 
 # ─── RasterTier zoom tiering ───
 
 
-# The zoom breaks are fixed (6/7/8/9/99); only the file per tier is configurable,
-# one env var per tier. Synthetic file names — one per break — let the selection
-# logic be exercised independently of the real raster files on disk.
+# The zoom breaks are fixed (6/7/8/99). Tier filenames are derived from
+# area/version by default, with optional per-tier file overrides. Synthetic file
+# names let the selection logic run independently of real raster files on disk.
 @pytest.fixture
 def synthetic_tiers(monkeypatch):
     monkeypatch.setattr(main.settings, "raster_file_z6", "coarse.tif")
@@ -81,9 +101,41 @@ def test_select_tier_raster_none_returns_finest(synthetic_tiers):
     assert main.select_tier_raster(None) == "fine.tif"
 
 
-def test_get_raster_path_tiers_by_zoom():
-    # With the real default config, a coarse zoom resolves to the coarsest tier
-    # file and a fine zoom to the finest — and both files exist on disk.
+def test_settings_raster_tiers_derive_from_area_and_version():
+    settings = main.Settings(
+        _env_file=None,  # ty: ignore[unknown-argument]
+        area="example",
+        raster_version="v42",
+    )
+
+    assert [tier.raster for tier in settings.raster_tiers] == [
+        "example_1280m_v42.tif",
+        "example_640m_v42.tif",
+        "example_320m_v42.tif",
+        "example_20m_v42.tif",
+    ]
+
+
+def test_settings_raster_tiers_allow_per_tier_overrides():
+    settings = main.Settings(
+        _env_file=None,  # ty: ignore[unknown-argument]
+        area="example",
+        raster_version="v42",
+        raster_file_z6="custom-z6.tif",
+        raster_file_z99="custom-z99.tif",
+    )
+
+    assert [tier.raster for tier in settings.raster_tiers] == [
+        "custom-z6.tif",
+        "example_640m_v42.tif",
+        "example_320m_v42.tif",
+        "custom-z99.tif",
+    ]
+
+
+def test_get_raster_path_tiers_by_zoom(pin_default_raster):
+    # A coarse zoom resolves to the coarsest tier file and a fine zoom to the
+    # finest; with the tiers pinned to the fixture, both files exist on disk.
     coarse = main.get_raster_path(z=0)
     fine = main.get_raster_path(z=500)
     assert coarse.name == main.settings.raster_tiers[0].raster
@@ -111,27 +163,47 @@ def test_env_example_sets_all_settings(monkeypatch):
     env_example = main.APP_DIR / ".env.example"
     settings = main.Settings(_env_file=env_example)  # ty: ignore[unknown-argument]
 
-    # Every field is set by the example file (one APP_<FIELD> entry per field).
+    # Every required/base field is set by the example file. The per-tier file
+    # settings are optional overrides; .env.example documents the derived naming
+    # path through APP_AREA + APP_RASTER_VERSION instead.
     file_keys = {
         line.split("=", 1)[0].strip()
         for line in env_example.read_text().splitlines()
         if "=" in line and not line.lstrip().startswith("#")
     }
-    expected_keys = {f"APP_{name.upper()}" for name in main.Settings.model_fields}
+    optional_override_fields = {
+        "raster_file_z6",
+        "raster_file_z7",
+        "raster_file_z8",
+        "raster_file_z99",
+    }
+    expected_keys = {
+        f"APP_{name.upper()}"
+        for name in main.Settings.model_fields
+        if name not in optional_override_fields
+    }
     assert file_keys == expected_keys
 
     # Values parse to the documented example values, across every type.
     assert settings.env == "dev"
+    assert settings.area == "comb"
+    assert settings.raster_version == "v5"
     assert settings.allowed_tms == "WebMercatorQuad"
     assert settings.raster_path == "raster/out"
     assert settings.cors_origins == [
         "https://alleinseinkarte.de",
         "https://www.alleinseinkarte.de",
     ]
-    assert settings.raster_file_z6 == "germany_1280m_v3.tif"
-    assert settings.raster_file_z7 == "germany_640m_v3.tif"
-    assert settings.raster_file_z8 == "germany_320m_v3.tif"
-    assert settings.raster_file_z99 == "germany_20m_v3.tif"
+    assert settings.raster_file_z6 is None
+    assert settings.raster_file_z7 is None
+    assert settings.raster_file_z8 is None
+    assert settings.raster_file_z99 is None
+    assert [tier.raster for tier in settings.raster_tiers] == [
+        "comb_1280m_v5.tif",
+        "comb_640m_v5.tif",
+        "comb_320m_v5.tif",
+        "comb_20m_v5.tif",
+    ]
     assert settings.enable_docs is True
     assert settings.add_preview is True
     assert settings.add_part is True
