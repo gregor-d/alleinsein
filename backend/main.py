@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import cast
 
 import morecantile
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from morecantile.defaults import TileMatrixSets
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -33,20 +33,31 @@ class Settings(BaseSettings):
     ]
     allowed_tms: str = "WebMercatorQuad"
     raster_path: str = "raster/out"
-    raster_file_z6: str = "germany_1280m_v3.tif"
-    raster_file_z7: str = "germany_640m_v3.tif"
-    raster_file_z8: str = "germany_320m_v3.tif"
-    raster_file_z99: str = "germany_20m_v3.tif"
+    area: str = "germany"
+    raster_version: str = "v3"
+    # Per-tier file name overrides; when unset, the name is derived from
+    # `area` and `raster_version` in `raster_tiers`.
+    raster_file_z6: str | None = None
+    raster_file_z7: str | None = None
+    raster_file_z8: str | None = None
+    raster_file_z99: str | None = None
+
+    def _tier_file(self, resolution: str, override: str | None) -> str:
+        return override or f"{self.area}_{resolution}_{self.raster_version}.tif"
 
     @property
     def raster_tiers(self) -> list[RasterTier]:
         """Combine the per-tier raster files with their fixed zoom breaks,
         coarsest first / ascending max_zoom."""
         return [
-            RasterTier(raster=self.raster_file_z6, max_zoom=6),
-            RasterTier(raster=self.raster_file_z7, max_zoom=7),
-            RasterTier(raster=self.raster_file_z8, max_zoom=8),
-            RasterTier(raster=self.raster_file_z99, max_zoom=99),
+            RasterTier(
+                raster=self._tier_file("1280m", self.raster_file_z6), max_zoom=6
+            ),
+            RasterTier(raster=self._tier_file("640m", self.raster_file_z7), max_zoom=7),
+            RasterTier(raster=self._tier_file("320m", self.raster_file_z8), max_zoom=8),
+            RasterTier(
+                raster=self._tier_file("20m", self.raster_file_z99), max_zoom=99
+            ),
         ]
 
     enable_docs: bool = False
@@ -111,7 +122,13 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.enable_docs else None,
 )
 
-add_exception_handlers(app, cast(dict[type[Exception], int], DEFAULT_STATUS_CODES))
+add_exception_handlers(
+    app,
+    cast(
+        dict[type[Exception], int],
+        {**DEFAULT_STATUS_CODES, FileNotFoundError: status.HTTP_404_NOT_FOUND},
+    ),
+)
 
 app.add_middleware(
     CORSMiddleware,

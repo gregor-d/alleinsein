@@ -10,12 +10,16 @@ from backend._version import __version__
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
+TEST_RASTER_FILE = "test_raster.tif"
+
 APP_ENV_KEYS = [
     "APP_ENV",
     "APP_ENABLE_DOCS",
     "APP_CORS_ORIGINS",
     "APP_ALLOWED_TMS",
     "APP_RASTER_PATH",
+    "APP_AREA",
+    "APP_RASTER_VERSION",
     "APP_ADD_PREVIEW",
     "APP_ADD_PART",
     "APP_ADD_VIEWER",
@@ -27,6 +31,7 @@ APP_ENV_KEYS = [
 def clean_app_env(monkeypatch: pytest.MonkeyPatch):
     for key in APP_ENV_KEYS:
         monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("APP_RASTER_FILE_Z99", TEST_RASTER_FILE)
 
 
 def reload_main():
