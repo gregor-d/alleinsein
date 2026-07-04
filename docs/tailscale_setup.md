@@ -7,12 +7,12 @@ Tailscale is utilized to create a secure, private network (Tailnet) between deve
 1. **On the VPS (Hetzner)**:
    Follow the standard Tailscale installation script:
 
-   ```bash
-   curl -fsSL https://tailscale.com/install.sh | sh
-   sudo tailscale up
-   ```
+    ```bash
+    curl -fsSL https://tailscale.com/install.sh | sh
+    sudo tailscale up
+    ```
 
-   Authenticate using the link provided in the console to add the VPS to your Tailnet.
+    Authenticate using the link provided in the console to add the VPS to your Tailnet.
 
 2. **On the Local Development Machine**:
    Install the Tailscale client for your operating system (Windows, macOS, or Linux) from the [Tailscale website](https://tailscale.com/download) and authenticate to the same network.

@@ -23,7 +23,7 @@
 ### Feat
 
 - update colormap presets and adjust hotspot color
-- add logging configuration and rotation for tiler service.  include Docker log rotation instructions in VPS setup
+- add logging configuration and rotation for tiler service. include Docker log rotation instructions in VPS setup
 
 ### Refactor
 

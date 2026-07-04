@@ -29,21 +29,21 @@ Rules we follow to stay in the low-risk anonymous-aggregate zone:
 ```js
 // frontend/static/  (e.g. in shared.js or a new telemetry.js)
 function track(action, value) {
-  try {
-    navigator.sendBeacon(
-      `${CONFIG.fqdn}/event`,
-      JSON.stringify({ action, value }),
-    );
-  } catch {
-    /* telemetry must never break the app */
-  }
+    try {
+        navigator.sendBeacon(
+            `${CONFIG.fqdn}/event`,
+            JSON.stringify({ action, value }),
+        );
+    } catch {
+        /* telemetry must never break the app */
+    }
 }
 
 // Example call sites:
-track("ramp", preset); // "magma", "viridis", ...
-track("basemap", basemapId); // "satellite", "osm", ...
-track("layer_toggle", "water"); // which data layer was toggled
-track("bottombar", "open"); // "open" | "close"
+track('ramp', preset); // "magma", "viridis", ...
+track('basemap', basemapId); // "satellite", "osm", ...
+track('layer_toggle', 'water'); // which data layer was toggled
+track('bottombar', 'open'); // "open" | "close"
 ```
 
 ### 2. Backend — `/event` (write) + `/stats` (read) in `backend/main.py`
@@ -123,8 +123,8 @@ In `docker-compose.yaml`, under the `tiler` service `volumes:`:
 
 ```yaml
 volumes:
-  - ./raster/out:/raster/out
-  - ./data:/data # SQLite telemetry DB lives here, survives redeploys
+    - ./raster/out:/raster/out
+    - ./data:/data # SQLite telemetry DB lives here, survives redeploys
 ```
 
 ---
