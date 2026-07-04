@@ -16,14 +16,6 @@ function hexToRgba(hex) {
 }
 
 /**
- * Returns the colour list for a named COLORMAP_PRESETS entry as a fresh array,
- */
-function resolveColors(preset) {
-    const colors = [...COLORMAP_PRESETS[preset]];
-    return colors;
-}
-
-/**
  * Builds a CSS background value from a named COLORMAP_PRESETS entry: the colours
  * shown as equal-width discrete blocks (one per data bucket)
  *
@@ -36,7 +28,7 @@ function resolveColors(preset) {
  */
 function buildGradient(preset, opts) {
     opts = opts || {};
-    const colors = resolveColors(preset);
+    const colors = COLORMAP_PRESETS[preset];
 
     // Hotspot mode (and degenerate single-colour presets) collapse to a solid swatch.
     if ((hotspotMode && !opts.forceFull) || colors.length <= 1) {
@@ -107,11 +99,10 @@ function getCombinedColormapJson() {
             return;
         }
 
-        const colors = resolveColors(layer.preset);
+        const colors = COLORMAP_PRESETS[layer.preset];
         if (hotspotMode) {
-            // Hotspot mode highlights the two highest buckets, each in its own colour.
+            // Hotspot mode highlights only the two highest buckets, both in the ramp's mid colour.
             cmap[layer.start] = hexToRgba(colors[4]);
-            // cmap[layer.start + 1] = hexToRgba(colors[1]);
             cmap[layer.start + 1] = hexToRgba(colors[4]);
         } else {
             colors.forEach(function (color, i) {

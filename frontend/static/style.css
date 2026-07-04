@@ -16,7 +16,6 @@
     --c-text-hi: white;
     --c-accent: rgb(85, 76, 255);
     --c-accent-hover: rgba(85, 76, 255, 0.5);
-    --c-shadow: rgb(0, 0, 0);
 
     --box-shadow: 3px 3px 0 rgb(0, 0, 0);
     --c-measure: #e6007e;
@@ -47,10 +46,6 @@
     --c-text-muted: rgb(180, 180, 180);
     --c-text-hi: rgb(0, 0, 0);
     --c-accent: rgb(129, 122, 248);
-    --c-accent-hover: rgba(85, 76, 255, 0.5);
-    --c-shadow: rgb(0, 0, 0);
-
-    --box-shadow: 3px 3px 0 rgb(0, 0, 0);
 }
 
 /* ── RESET ───────────────────────────────────── */
@@ -182,9 +177,6 @@ body {
     padding-bottom: 10px;
     flex-shrink: 0;
 }
-.panel-header--end {
-    justify-content: flex-end;
-}
 .theme-switch {
     display: flex;
     align-items: center;
@@ -197,10 +189,12 @@ body {
     text-transform: uppercase;
     color: var(--c-text-muted);
 }
-.theme-switch .btn-group {
+.theme-switch .btn-group,
+.raster-source-row .btn-group {
     flex-wrap: nowrap;
 }
-.theme-switch .seg-btn {
+.theme-switch .seg-btn,
+.raster-source-row .seg-btn {
     flex: 0 0 auto;
     padding: 3px 10px;
     font-size: 11px;
@@ -232,13 +226,6 @@ body {
     text-transform: uppercase;
     color: var(--c-text-muted);
     padding: 10px 0 5px;
-}
-
-.divider {
-    height: 1px;
-    background: var(--c-border);
-    margin: 4px 0;
-    flex-shrink: 0;
 }
 
 /* ── TOGGLE SWITCH ───────────────────────────── */
@@ -380,8 +367,10 @@ body {
     color: var(--c-text-muted);
     white-space: nowrap;
 }
-.opacity-row input[type='range'] {
+.opacity-row input[type='range'],
+.controls-opacity input[type='range'] {
     width: 100%;
+    min-width: 0;
     height: 4px;
     -webkit-appearance: none;
     appearance: none;
@@ -452,14 +441,6 @@ body {
 .raster-source-row {
     margin-top: 10px;
 }
-.raster-source-row .btn-group {
-    flex-wrap: nowrap;
-}
-.raster-source-row .seg-btn {
-    flex: 0 0 auto;
-    padding: 3px 10px;
-    font-size: 11px;
-}
 
 /* ── BUTTON GROUP ────────────────────────────── */
 .btn-group {
@@ -486,7 +467,6 @@ body {
 }
 .seg-btn:hover {
     color: var(--c-text);
-    /* font-weight: 500; */
     background: var(--c-accent-hover);
 }
 
@@ -620,7 +600,6 @@ body {
     font-size: 12px;
     font-family: var(--font-ui);
     text-decoration: none;
-    /* border-radius: var(--r-sm); */
     transition: color var(--t);
 }
 .panel-link + .panel-link {
@@ -717,13 +696,6 @@ body {
     width: 18px;
     height: 18px;
 }
-#compass-needle {
-    transition: transform 0.1s linear;
-}
-#compass-needle .compass-n {
-    fill: var(--c-accent);
-    stroke: none;
-}
 .ctrl-btn:hover {
     background: var(--c-accent-hover);
 }
@@ -748,8 +720,7 @@ body {
 }
 
 /* ── PIXEL INSPECTOR ─────────────────────────── */
-/* Fixed readout that updates on each map click. Anchored top-left, to the right
-   of the MapLibre compass control so the two never overlap. */
+/* Fixed readout that updates on each map click. */
 #pixel-info {
     position: fixed;
     /* top/left are set by JS to sit next to the clicked point (see
@@ -767,9 +738,6 @@ body {
     color: var(--c-text);
     font-size: 12px;
     line-height: 1.35;
-}
-#pixel-info[hidden] {
-    display: none;
 }
 #pixel-info-close {
     position: absolute;
@@ -856,8 +824,7 @@ body {
     width: 14px;
     height: 14px;
 }
-.pixel-info-loading,
-.pixel-info-empty {
+.pixel-info-loading {
     color: var(--c-text-muted);
 }
 
@@ -909,7 +876,6 @@ body {
     -webkit-backdrop-filter: blur(14px) saturate(1.4);
     border-top: 1px solid var(--c-border);
     z-index: 100;
-    display: block;
 }
 
 /* Hidden via the settings → Theme "Bottom Bar" toggle. */
@@ -934,17 +900,8 @@ body.bottombar-hidden #bottom-bar {
 }
 .controls-opacity input[type='range'] {
     flex: 1;
-    min-width: 0;
-    height: 4px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: var(--c-border);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
 }
-.controls-water,
-.controls-detail {
+.controls-water {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -967,7 +924,7 @@ body.bottombar-hidden #bottom-bar {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 3px 3px 3px 3px;
+    margin: 3px;
     border: 1px solid var(--c-border);
     border-radius: var(--r);
     background: var(--c-button);
@@ -979,8 +936,6 @@ body.bottombar-hidden #bottom-bar {
 
 .layer-tab.active {
     color: var(--c-text);
-    padding: 0px;
-    background: var(--c-button);
     border: 1px solid var(--c-accent);
 }
 
@@ -1179,7 +1134,7 @@ body.bottombar-hidden #bottom-bar {
     background: var(--c-bg);
     border: 1px solid var(--c-border);
     border-radius: var(--r);
-    box-shadow: 0 6px 28px var(--c-shadow);
+    box-shadow: 0 6px 28px var(--c-border);
     padding: 8px 12px;
 }
 /* Last card already has its own margin; drop it so the panel closes tight. */
@@ -1198,38 +1153,9 @@ body.bottombar-hidden #bottom-bar {
 }
 
 /* ── MAPLIBRE OVERRIDES ──────────────────────── */
-.maplibregl-ctrl-group:has(.maplibregl-ctrl-compass) {
-    background: rgba(255, 255, 255, 0.46) !important;
-    backdrop-filter: blur(10px) saturate(1.25);
-    -webkit-backdrop-filter: blur(10px) saturate(1.25);
-}
-[data-theme='dark'] .maplibregl-ctrl-group:has(.maplibregl-ctrl-compass) {
-    background: rgba(35, 41, 32, 0.58) !important;
-}
-.maplibregl-ctrl-compass {
-    background: transparent !important;
-}
-/* .maplibregl-ctrl-compass .maplibregl-ctrl-icon, */
-/* .maplibregl-ctrl-compass.maplibregl-ctrl-icon { */
-/* position: relative; */
-/* } */
-.maplibregl-ctrl-compass .maplibregl-ctrl-icon::after,
-.maplibregl-ctrl-compass.maplibregl-ctrl-icon::after {
-    content: '';
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-right: 4px solid transparent;
-    border-bottom: 8px solid #d71920;
-    border-left: 4px solid transparent;
-    transform: translateX(-50%);
-}
 .maplibregl-ctrl-scale {
     border-color: black !important;
     border-style: none solid solid solid !important;
-    /* border-width: 0 2px 2px 2px !important; */
     box-sizing: border-box;
     color: black !important;
     font-size: 10px !important;
@@ -1283,13 +1209,9 @@ body.bottombar-hidden #bottom-bar {
 /* Outline the layer block whose scheme dropdown is open so it's clear
    which layer the swatches belong to. */
 .layer-block:has(.scheme-dropdown.open) {
-    /* border-top: 1px solid var(--c-border); */
     border-bottom: 1px solid var(--c-border);
-    /* border-radius: var(--r-sm); */
-    /* background: var(--c-surface); */
     padding-top: 3px;
     padding-bottom: 3px;
-    /* margin: 2px 0; */
 }
 
 .scheme-grid {
@@ -1421,17 +1343,12 @@ body.bottombar-hidden #bottom-bar {
     border-top: 12px solid var(--c-surface);
 }
 
+/* Invisible click-catcher; closing the sheet is its only job. */
 #color-sheet-backdrop {
     position: fixed;
     inset: 0;
-    background: var(--c-overlay);
+    background: transparent;
     z-index: 315;
-    transition: opacity 0.28s;
-    opacity: 0;
-}
-#color-sheet-backdrop:not([hidden]) {
-    opacity: 1;
-    display: block;
 }
 
 /* ── LOCATION PROMPT POPUP ───────────────────── */

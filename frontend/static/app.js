@@ -777,35 +777,26 @@ function onControlChange(e) {
 
 function onControlInput(e) {
     var ctrl = e.target.dataset.ctrl;
-    if (!ctrl) return;
+    if (ctrl !== 'data-opacity' && ctrl !== 'basemap-opacity') return;
+
+    // Mirror the value onto every sibling slider and % readout of the same control.
+    var val = e.target.value;
+    document
+        .querySelectorAll('[data-disp="' + ctrl + '"]')
+        .forEach(function (el) {
+            el.textContent = val + '%';
+        });
+    document
+        .querySelectorAll('[data-ctrl="' + ctrl + '"]')
+        .forEach(function (el) {
+            if (el !== e.target) el.value = val;
+        });
 
     if (ctrl === 'data-opacity') {
-        dataLayerOpacity = e.target.value / 100;
-        document
-            .querySelectorAll('[data-disp="data-opacity"]')
-            .forEach(function (el) {
-                el.textContent = e.target.value + '%';
-            });
-        document
-            .querySelectorAll('[data-ctrl="data-opacity"]')
-            .forEach(function (el) {
-                if (el !== e.target) el.value = e.target.value;
-            });
+        dataLayerOpacity = val / 100;
         if (mapEngine) mapEngine.updateDataLayerOpacity(dataLayerOpacity);
-    }
-
-    if (ctrl === 'basemap-opacity') {
-        basemapOpacity = e.target.value / 100;
-        document
-            .querySelectorAll('[data-disp="basemap-opacity"]')
-            .forEach(function (el) {
-                el.textContent = e.target.value + '%';
-            });
-        document
-            .querySelectorAll('[data-ctrl="basemap-opacity"]')
-            .forEach(function (el) {
-                if (el !== e.target) el.value = e.target.value;
-            });
+    } else {
+        basemapOpacity = val / 100;
         if (mapEngine) mapEngine.updateBasemapOpacity(basemapOpacity);
     }
 }
@@ -825,10 +816,6 @@ function onControlClick(e) {
 
     if (ctrl === 'mini-close') {
         hideMiniPanel();
-    }
-
-    if (ctrl === 'measure') {
-        toggleMeasure();
     }
 
     if (ctrl === 'colormap-pick') {
@@ -852,12 +839,7 @@ function onControlClick(e) {
         var bm = btn.dataset.basemap;
         activeBasemapKey = bm;
         syncActiveBtn('basemap', bm);
-        // ensure basemap toggle is checked
-        document
-            .querySelectorAll('[data-ctrl="basemap-toggle"]')
-            .forEach(function (el) {
-                el.checked = true;
-            });
+        syncCheckboxes('basemap-toggle', null, true);
         if (mapEngine) mapEngine.switchBasemap(bm);
     }
 
@@ -877,8 +859,7 @@ function onControlClick(e) {
     if (ctrl === 'overlay') {
         var ov = btn.dataset.overlay;
         activeOverlays[ov] = !activeOverlays[ov];
-        btn.classList.toggle('toggled', activeOverlays[ov]);
-        // sync sibling button in other panel
+        // sync this and the sibling button in the other panel
         document
             .querySelectorAll(
                 '[data-ctrl="overlay"][data-overlay="' + ov + '"]',
@@ -916,13 +897,7 @@ document.addEventListener('keydown', function (e) {
         runPanelSearch(e.target);
     }
     if (e.target.id === 'search-popover-input') {
-        if (e.target.value.trim()) {
-            doSearch(
-                e.target.value.trim(),
-                document.getElementById('search-popover-results'),
-                hideSearchPopover,
-            );
-        }
+        runPopoverSearch();
     }
 });
 
@@ -1023,11 +998,7 @@ function buildLayerStrip() {
         if (tab.hasAttribute('data-tab-hotspot')) {
             hotspotMode = !hotspotMode;
             tab.classList.toggle('active', hotspotMode);
-            document
-                .querySelectorAll('[data-ctrl="hotspot"]')
-                .forEach(function (el) {
-                    el.checked = hotspotMode;
-                });
+            syncCheckboxes('hotspot', null, hotspotMode);
             refreshDataLayer();
             repaintAllGradients();
             return;
@@ -1046,12 +1017,7 @@ function buildLayerStrip() {
         });
         if (!layer) return;
         layer.visible = !layer.visible;
-        tab.classList.toggle('active', layer.visible);
-        tab.querySelector('svg').outerHTML; // replaced below
-        tab.querySelector('svg').remove();
-        var iconEl = document.createElement('div');
-        iconEl.innerHTML = layer.visible ? EYE_ON : EYE_OFF;
-        tab.insertBefore(iconEl.firstElementChild, tab.firstElementChild);
+        updateLayerTab(id, layer.visible);
         syncCheckboxes('layer-toggle', id, layer.visible);
         refreshDataLayer();
     });
@@ -1093,14 +1059,11 @@ function toggleSchemeDropdown(layerId, gradEl) {
 
 // ─── COLOR-RAMP SHEET (mobile bottom bar) ─────
 
-var _csLayerId = null;
-
 function openColorSheet(layerId) {
     var layer = layerState.find(function (l) {
         return l.id === layerId;
     });
     if (!layer || layer.type === 'solid') return;
-    _csLayerId = layerId;
 
     var header = document.getElementById('color-sheet-header');
     var body = document.getElementById('color-sheet-body');
@@ -1169,7 +1132,6 @@ function closeColorSheet() {
     var backdrop = document.getElementById('color-sheet-backdrop');
     if (sheet) sheet.classList.remove('open');
     if (backdrop) backdrop.setAttribute('hidden', '');
-    _csLayerId = null;
 }
 
 // ─── TOP BAR ──────────────────────────────────
@@ -1209,18 +1171,10 @@ function wireFabs() {
     }
 
     var fabSearch = document.getElementById('fab-search');
-    if (fabSearch) {
-        fabSearch.addEventListener('click', function () {
-            toggleSearchPopover();
-        });
-    }
+    if (fabSearch) fabSearch.addEventListener('click', toggleSearchPopover);
 
     var fabSettings = document.getElementById('fab-settings');
-    if (fabSettings) {
-        fabSettings.addEventListener('click', function () {
-            toggleMiniPanel();
-        });
-    }
+    if (fabSettings) fabSettings.addEventListener('click', toggleMiniPanel);
 
     var zoomIn = document.getElementById('ctrl-zoom-in');
     if (zoomIn) {
@@ -1263,16 +1217,13 @@ function stopMeasure() {
     if (mapEngine) mapEngine.stopMeasure();
 }
 
-// Reflects the current measuring state on the FAB and the sidebar/drawer buttons.
+// Reflects the current measuring state on the measure FAB.
 function syncMeasureButtons() {
     var fab = document.getElementById('fab-measure');
     if (fab) {
         fab.classList.toggle('active', measureActive);
         fab.setAttribute('aria-pressed', measureActive ? 'true' : 'false');
     }
-    document.querySelectorAll('[data-ctrl="measure"]').forEach(function (btn) {
-        btn.classList.toggle('active', measureActive);
-    });
 }
 
 // ─── MINI QUICK-SETTINGS PANEL ────────────────
@@ -1298,25 +1249,21 @@ function hideMiniPanel() {
 
 function wireSearch() {
     var goBtn = document.getElementById('search-popover-go');
-    if (goBtn) {
-        goBtn.addEventListener('click', function () {
-            var input = document.getElementById('search-popover-input');
-            if (input && input.value.trim()) {
-                doSearch(
-                    input.value.trim(),
-                    document.getElementById('search-popover-results'),
-                    hideSearchPopover,
-                );
-            }
-        });
-    }
+    if (goBtn) goBtn.addEventListener('click', runPopoverSearch);
 
     var closeBtn = document.getElementById('search-popover-close');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function () {
-            hideSearchPopover();
-        });
-    }
+    if (closeBtn) closeBtn.addEventListener('click', hideSearchPopover);
+}
+
+// Runs a search from the FAB popover; picking a result closes the popover.
+function runPopoverSearch() {
+    var input = document.getElementById('search-popover-input');
+    if (!input || !input.value.trim()) return;
+    doSearch(
+        input.value.trim(),
+        document.getElementById('search-popover-results'),
+        hideSearchPopover,
+    );
 }
 
 function toggleSearchPopover() {
@@ -1337,6 +1284,24 @@ function hideSearchPopover() {
     var results = document.getElementById('search-popover-results');
     if (results) results.innerHTML = '';
 }
+
+// Close the mini panel and search popover when clicking/tapping anywhere
+// outside them. Clicks on the popover itself or its opener FAB are excluded —
+// the FAB's own handler already toggles it.
+document.addEventListener('click', function (e) {
+    var mp = document.getElementById('mini-panel');
+    if (mp && !mp.hidden && !e.target.closest('#mini-panel, #fab-settings')) {
+        hideMiniPanel();
+    }
+    var pop = document.getElementById('search-popover');
+    if (
+        pop &&
+        !pop.hidden &&
+        !e.target.closest('#search-popover, #fab-search')
+    ) {
+        hideSearchPopover();
+    }
+});
 
 // ─── LOCATION BUTTON ──────────────────────────
 
