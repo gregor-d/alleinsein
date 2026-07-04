@@ -3,9 +3,9 @@
 # repo (`prettier .`) and this file narrows it down.
 
 # Ignore everything, then un-ignore only the frontend/static source dir.
-# /*
-# !/frontend/
-# !/docs/
-# !/README.md
+/*
+!/frontend/
+!/docs/
+!/README.md
 # Within the included dir, skip data files (not hand-formatted source).
 *.geojson
