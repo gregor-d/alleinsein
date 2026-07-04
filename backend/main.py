@@ -168,6 +168,15 @@ app.include_router(
 )
 
 
+if settings.env == "dev":
+
+    @app.get("/rasters", include_in_schema=False)
+    def list_rasters() -> list[str]:
+        """Dev-only: list the raster files available in `raster_path`."""
+        out_dir = PROJECT_DIR / settings.raster_path
+        return sorted(p.name for p in out_dir.glob("*.tif"))
+
+
 @app.get("/healthz", include_in_schema=False)
 def healthz():
     return {
