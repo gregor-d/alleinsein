@@ -69,7 +69,7 @@ class MapLibreEngine {
             {
                 id: 'basemap-opacity-background',
                 type: 'background',
-                paint: { 'background-color': '#000000' },
+                paint: { 'background-color': '#727272' },
             },
         ];
         MapLibreEngine.basemapKeys().forEach(function (key) {
@@ -253,14 +253,12 @@ class MapLibreEngine {
                         maxzoom: tj.maxzoom || 12,
                     });
 
-                    let beforeId;
-                    const layers = self.map.getStyle().layers;
-                    if (layers) {
-                        const firstOverlay = layers.find(function (l) {
-                            return l.id.startsWith('overlay-layer-');
-                        });
-                        if (firstOverlay) beforeId = firstOverlay.id;
-                    }
+                    // Keep the data layer below any trail overlays.
+                    const firstOverlay = (
+                        self.map.getStyle().layers || []
+                    ).find(function (l) {
+                        return l.id.startsWith('overlay-layer-');
+                    });
 
                     self.map.addLayer(
                         {
@@ -273,7 +271,7 @@ class MapLibreEngine {
                                 'raster-resampling': 'nearest',
                             },
                         },
-                        beforeId,
+                        firstOverlay ? firstOverlay.id : undefined,
                     );
                 } else {
                     self.map.getSource('data-source').setTiles([tileUrl]);
@@ -300,21 +298,29 @@ class MapLibreEngine {
     }
 
     /**
+     * Runs fn(layerId, key) for every basemap layer that exists on the map.
+     */
+    _eachBasemapLayer(fn) {
+        if (!this.map) return;
+        const self = this;
+        MapLibreEngine.basemapKeys().forEach(function (key) {
+            const layerId = 'basemap-' + key + '-layer';
+            if (self.map.getLayer(layerId)) fn(layerId, key);
+        });
+    }
+
+    /**
      * Shows the basemap layer identified by key and hides all others.
      * Pass 'none' to hide every basemap layer.
      */
     switchBasemap(key) {
-        if (!this.map) return;
-        const self = this;
-        MapLibreEngine.basemapKeys().forEach(function (k) {
-            const layerId = 'basemap-' + k + '-layer';
-            if (self.map.getLayer(layerId)) {
-                self.map.setLayoutProperty(
-                    layerId,
-                    'visibility',
-                    k === key ? 'visible' : 'none',
-                );
-            }
+        const map = this.map;
+        this._eachBasemapLayer(function (layerId, k) {
+            map.setLayoutProperty(
+                layerId,
+                'visibility',
+                k === key ? 'visible' : 'none',
+            );
         });
     }
 
@@ -322,13 +328,9 @@ class MapLibreEngine {
      * Sets the raster-opacity of all basemap layers simultaneously.
      */
     updateBasemapOpacity(opacity) {
-        if (!this.map) return;
-        const self = this;
-        MapLibreEngine.basemapKeys().forEach(function (k) {
-            const layerId = 'basemap-' + k + '-layer';
-            if (self.map.getLayer(layerId)) {
-                self.map.setPaintProperty(layerId, 'raster-opacity', opacity);
-            }
+        const map = this.map;
+        this._eachBasemapLayer(function (layerId) {
+            map.setPaintProperty(layerId, 'raster-opacity', opacity);
         });
     }
 
@@ -379,18 +381,14 @@ class MapLibreEngine {
      * Smoothly zooms the map in by one level from the custom zoom control.
      */
     zoomIn() {
-        if (this.map) {
-            this.map.zoomIn({ duration: 250, essential: true });
-        }
+        if (this.map) this.map.zoomIn({ duration: 250, essential: true });
     }
 
     /**
      * Smoothly zooms the map out by one level from the custom zoom control.
      */
     zoomOut() {
-        if (this.map) {
-            this.map.zoomOut({ duration: 250, essential: true });
-        }
+        if (this.map) this.map.zoomOut({ duration: 250, essential: true });
     }
 
     /**
