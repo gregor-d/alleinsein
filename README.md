@@ -10,14 +10,15 @@ The project utilizes Cloud Optimized GeoTIFFs (COGs) served by a [Titiler](https
 
 # Table of Contents
 
-- [Technical Features](#technical-features)
-- [Production System Architecture](#production-system-architecture)
-- [Raster Pipeline](#raster-pipeline)
-- [How to Run Locally](#how-to-run-locally)
-  - [Run Docker Container](#run-docker-container)
-    - [How to Use in Production](#how-to-use-in-production)
-- [Helper Scripts](#helper-scripts)
-- [Documentation](#documentation)
+-   [Technical Features](#technical-features)
+-   [Production System Architecture](#production-system-architecture)
+-   [Raster Pipeline](#raster-pipeline)
+-   [Value Encoding and Aloneness Scale](#value-encoding-and-aloneness-scale)
+-   [How to Run Locally](#how-to-run-locally)
+    -   [Run Docker Container](#run-docker-container)
+        -   [How to Use in Production](#how-to-use-in-production)
+-   [Helper Scripts](#helper-scripts)
+-   [Documentation](#documentation)
 
 # Technical Features
 
@@ -108,60 +109,93 @@ graph TD
 
 A single tiled frontend source transparently spans the full zoom range; `backend/main.py` picks the matching COG per tile.
 
+# Value Encoding and Aloneness Scale
+
+Each pixel in the final COG is a single `Byte` that encodes **both** a land-cover class and a road-proximity ("aloneness") score, so the frontend needs only one tile request per viewport instead of one per layer. The encoding is assembled in [`raster/create_raster.sh`](raster/create_raster.sh):
+
+```
+where(F==1, 200, A*B + (A+10)*C + (A+20)*D + (A+30)*E)
+```
+
+where `A` is the road-proximity score (`1`–`10`) and `B`–`F` are the one-hot land-cover masks (Nature, Farm, Park, Urban, Water). Offsetting `A` per land cover packs every class into its own value range:
+
+| Pixel range | Class                  | Raster score                    |
+| ----------- | ---------------------- | ------------------------------- |
+| 0           | No data / unclassified | —                               |
+| 1–10        | Nature                 | `1` = remote, `10` = near roads |
+| 11–20       | Farm                   | `1` = remote, `10` = near roads |
+| 21–30       | Park                   | `1` = remote, `10` = near roads |
+| 31–40       | Urban                  | `1` = remote, `10` = near roads |
+| 200         | Water                  | —                               |
+
+> In the raster itself, **low = most alone** — `1` is the most remote pixel in each band. See [Raster Creation → Stage 5](docs/raster_creation.md#stage-5--value-encoding-and-cog-assembly) for the full derivation.
+
+## Frontend scale is inverted
+
+For the user the scale is **flipped so that higher = more alone**, which reads more intuitively. The raw raster value `1` (most remote) is presented as aloneness level **10 / 10**:
+
+-   **Pixel readout** ([`frontend/static/app.js`](frontend/static/app.js)): `level = CATEGORY_SPAN - bucket`, so raw `1` → `10 / 10` and raw `10` → `1 / 10`.
+-   **Colormap & legend** ([`frontend/static/shared.js`](frontend/static/shared.js)): the most-alone end is coloured first (`colors[0]`) and placed on the "higher →" side of the legend; hotspot mode highlights it. The least-alone pixel (raw value `10`) is left transparent — only buckets `1`–`9` are coloured.
+
+| Raw raster value | Frontend aloneness level |
+| ---------------- | ------------------------ |
+| 1 (most remote)  | 10 / 10 (most alone)     |
+| 10 (near roads)  | 1 / 10 (least alone)     |
+
 # How to Run Locally
 
 To develop or test the application on your local machine, use `uv` for Python dependency management.
 
 1. **Install dependencies**:
 
-   ```bash
-   uv sync --python 3.12
-   ```
+    ```bash
+    uv sync --python 3.12
+    ```
 
 2. **Start the backend server**:
 
-   ```bash
-   uv run uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
-   ```
+    ```bash
+    uv run uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+    ```
 
 3. **Run Frontend**:
-   ```bash
-   npx --yes browser-sync start --server "frontend/static" --files "frontend/static/*.html" "frontend/static/*.css" "frontend/static/themes/*.css" "frontend/static/*.js" --port 5173 --no-ui --no-open --host 127.0.0.1
-   ```
+    ```bash
+    npx --yes browser-sync start --server "frontend/static" --files "frontend/static/*.html" "frontend/static/*.css" "frontend/static/themes/*.css" "frontend/static/*.js" --port 5173 --no-ui --no-open --host 127.0.0.1
+    ```
 
 Once running:
 
-- **Frontend URL**: `http://127.0.0.1:5173`
-- **Backend URL**: `http://127.0.0.1:8000`
-- **API Health Check**: `http://127.0.0.1:8000/healthz`
+-   **Frontend URL**: `http://127.0.0.1:5173`
+-   **Backend URL**: `http://127.0.0.1:8000`
+-   **API Health Check**: `http://127.0.0.1:8000/healthz`
 
 ## Run Docker Container
 
 Run the backend using Docker [docker-compose.yml](docker-compose.yaml).
 
 1. **Build and Start**:
-   ```bash
-   docker compose up -d --force-recreate tiler
-   ```
+    ```bash
+    docker compose up -d --force-recreate tiler
+    ```
 2. **Verify**:
    Container will run health-check you can see in the logs or
-   ```bash
-   curl http://localhost:8000/healthz
-   # linux
-   ./scripts/smoke-test.sh
-   # Windows
-   .\scripts\smoke-test.ps1
-   ```
+    ```bash
+    curl http://localhost:8000/healthz
+    # linux
+    ./scripts/smoke-test.sh
+    # Windows
+    .\scripts\smoke-test.ps1
+    ```
 
 ### How to Use in Production
 
 1. **Deployment**:
    Git pull updates to the VPS.
 2. **Re-Starting the Service**:
-   ```bash
-   ssh gregor@$IP_VPS "./scripts/docker.sh"
-   ```
-   _Environment variables and GDAL optimizations are set in docker-compose-yaml [VPS Setup](docs/vps_setup.md)._
+    ```bash
+    ssh gregor@$IP_VPS "./scripts/docker.sh"
+    ```
+    _Environment variables and GDAL optimizations are set in docker-compose-yaml [VPS Setup](docs/vps_setup.md)._
 
 # Helper Scripts
 
@@ -182,9 +216,9 @@ Each script has a Linux (`.sh`) and a Windows PowerShell (`.ps1`) variant with i
 
 Review the sub-documents in the `docs/` folder to understand specific platform integrations:
 
-- [VPS and System Setup](docs/vps_setup.md)
-- [Cloudflare Tunnel & Caching](docs/cloudflare_setup.md)
-- [Tailscale Networking](docs/tailscale_setup.md)
-- [Development Workflow (Commitizen & Actions)](docs/development_workflow.md)
-- [Architecture & Sequence Diagrams](docs/architecture.md)
-- [Raster Creation Pipeline](docs/raster_creation.md)
+-   [VPS and System Setup](docs/vps_setup.md)
+-   [Cloudflare Tunnel & Caching](docs/cloudflare_setup.md)
+-   [Tailscale Networking](docs/tailscale_setup.md)
+-   [Development Workflow (Commitizen & Actions)](docs/development_workflow.md)
+-   [Architecture & Sequence Diagrams](docs/architecture.md)
+-   [Raster Creation Pipeline](docs/raster_creation.md)

@@ -19,37 +19,37 @@ package_update: true
 package_upgrade: true
 
 users:
-  - name: gregor
-    groups: sudo
-    shell: /bin/bash
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    lock_passwd: true
-    ssh_authorized_keys:
-      - ssh-rsa AAA......sJDCE= diden@gregdesk
+    - name: gregor
+      groups: sudo
+      shell: /bin/bash
+      sudo: ALL=(ALL) NOPASSWD:ALL
+      lock_passwd: true
+      ssh_authorized_keys:
+          - ssh-rsa AAA......sJDCE= diden@gregdesk
 
 ssh_pwauth: false
 disable_root: true
 
 packages:
-  - fail2ban
-  - curl
-  - git
-  - ca-certificates
+    - fail2ban
+    - curl
+    - git
+    - ca-certificates
 
 write_files:
-  - path: /etc/ssh/sshd_config.d/99-hardening.conf
-    permissions: "0644"
-    content: |
-      PermitRootLogin no
-      PasswordAuthentication no
-      KbdInteractiveAuthentication no
-      PubkeyAuthentication yes
-      X11Forwarding no
-      AllowUsers gregor
+    - path: /etc/ssh/sshd_config.d/99-hardening.conf
+      permissions: '0644'
+      content: |
+          PermitRootLogin no
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PubkeyAuthentication yes
+          X11Forwarding no
+          AllowUsers gregor
 
 runcmd:
-  - systemctl restart ssh
-  - systemctl enable --now fail2ban
+    - systemctl restart ssh
+    - systemctl enable --now fail2ban
 ```
 
 ## Docker Setup

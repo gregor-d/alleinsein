@@ -6,7 +6,8 @@ This document describes the full raster pipeline: data sources, configuration, e
 
 | Script                                | Description                                                                                                                                                                                        |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `raster/create_raster.sh`             | Full pipeline entry point — runs all five stages below in sequence to build the full-detail 20 m COG                                                                                               |
+| `python -m raster.create_raster`      | Preferred full pipeline entry point; runs all five stages below in sequence to build the full-detail 20 m COG                                                                                      |
+| `raster/create_raster.sh`             | Legacy shell entry point, kept for manual/debug workflows                                                                                                                                          |
 | `raster/create_coarse_raster.sh`      | Derives the 160/320/640/1280 m overview COGs from the Stage 3/4 intermediates, served by the backend at low zooms (see [Coarse overview rasters](#coarse-overview-rasters-create_coarse_rastersh)) |
 | `raster/utils/osm_filter_pbf.sh`      | Pre-filters the OSM PBF to highway and railway ways using osmium-tool, producing a much smaller PBF for GDAL to process                                                                            |
 | `raster/utils/osm_create_gpkg.sh`     | Extracts roads, paths, and railways from the filtered OSM PBF into a single GeoPackage                                                                                                             |
@@ -20,7 +21,7 @@ This document describes the full raster pipeline: data sources, configuration, e
 
 The pipeline converts two data sources — OpenStreetMap road/path/railway geometries and the CORINE Land Cover (CLC) 2018 dataset — into a single-band, web-optimized Cloud Optimized GeoTIFF (COG). Each pixel encodes both a land-cover class and a road-proximity score in a compact `Byte` value, so the frontend needs only one tile request per viewport instead of one per layer.
 
-Entry point: `raster/create_raster.sh`
+Entry point: `python -m raster.create_raster`
 
 ```
 OSM .pbf
@@ -72,44 +73,41 @@ The venv provides `gdal` (≥ 3.10, for the pipeline sub-commands), `rio-cogeo`,
 
 ---
 
-## Configuration (`raster/raster.conf`)
+## Configuration (`raster/raster_config.yaml`)
 
-All scripts source `raster/raster.conf` (or `$RASTER_CONFIG_FILE`) before running.
+The preferred Python workflow reads `raster/raster_config.yaml` (loaded and validated by `raster/utils/load_raster_config.py`; point the loader elsewhere with the `RASTER_CONFIG_FILE` env var). Legacy shell scripts still source `raster/raster.conf` when run manually.
 
-```bash
-# raster/raster.conf — annotated example
-AREA="germany"              # Area name: drives file naming throughout the pipeline
-OVERWRITE="--overwrite"     # Remove to protect existing intermediate files
+```yaml
+# raster/raster_config.yaml annotated example
+AREA: germany # Area name: drives file naming throughout the pipeline
+OVERWRITE: true # false protects existing intermediate files
 
-TARGET_EPSG="EPSG:3035"    # Processing CRS (ETRS89-LAEA for metric accuracy over Europe)
-WEB_EPSG="EPSG:3857"       # Output CRS for the final COG (Web Mercator)
+TARGET_EPSG: 'EPSG:3035' # Processing CRS (ETRS89-LAEA for metric accuracy over Europe)
+WEB_EPSG: 'EPSG:3857' # Output CRS for the final COG (Web Mercator)
 
-RASTER_RESOLUTION="20,20"  # Pixel size in meters for the road raster
-RASTER_NODATA="255"        # NoData sentinel used across all intermediate rasters
-RASTER_DATA_TYPE="Byte"    # Output data type (0–254 usable values; 255 = NoData)
+RASTER_RESOLUTION: '20,20' # Pixel size in meters for the road raster
+RASTER_NODATA: 255 # NoData sentinel used across all intermediate rasters
+RASTER_DATA_TYPE: Byte # Output data type (0-254 usable values; 255 = NoData)
 
 # GDAL/OSM memory and temporary file settings.
-# Allow GDAL to use up to 2GB RAM for block caching.
-GDAL_CACHEMAX="2048"
-# Keep OSM node indexing in memory up to 2GB.
-OSM_MAX_TMPFILE_SIZE="2048"
-# Redirect temporary files to WSL native /tmp.
-CPL_TMPDIR="/tmp"
+GDAL_CACHEMAX: '2048' # Allow GDAL up to 2GB RAM for block caching.
+OSM_MAX_TMPFILE_SIZE: '2048' # Keep OSM node indexing in memory up to 2GB.
+CPL_TMPDIR: '/tmp' # Redirect temporary files to WSL native /tmp.
 
 # Bounding box in TARGET_EPSG.
 # Align to a 100 m grid to avoid sub-pixel clipping when mixing 20 m and 100 m rasters.
-MINX="4031300"
-MINY="2684000"
-MAXX="4672600"
-MAXY="3556600"
+MINX: 4031300
+MINY: 2684000
+MAXX: 4672600
+MAXY: 3556600
 
-GTIFF_WRITE_OPTIONS=(
-  "--of=GTiff"
-  "--co=TILED=YES"
-  "--co=COMPRESS=DEFLATE"
-  "--co=PREDICTOR=2"
-  "--co=BIGTIFF=IF_SAFER"
-)
+GTIFF_CREATION_OPTIONS:
+    - TILED=YES
+    - COMPRESS=DEFLATE
+    - PREDICTOR=2
+    - BIGTIFF=IF_SAFER
+
+COG_BLOCKSIZE: 512
 ```
 
 ---
@@ -134,16 +132,16 @@ Reads the pre-filtered OSM PBF using the GDAL OSM driver and writes a single Geo
 
 Roads, paths, and railways are extracted based on the following combined query:
 
-- **Roads**: motorized carriageways and bicycle/pedestrian infrastructure sharing space with traffic (`residential`, `secondary`, `primary`, `tertiary`, `service`, `living_street`, `primary_link`, `secondary_link`, `tertiary_link`, `unclassified`, `trunk`, `motorway_link`, `trunk_link`, `motorway`, `road`, `ramp`, `pedestrian`, `cycleway`, `proposed`, `construction`)
-- **Paths**: off-carriageway routes (`footway`, `path`, `track`, `bridleway`, `trail`)
-- **Railways**: track-bearing lines (`rail`, `light_rail`, `tram`, `subway`, `narrow_gauge`, `funicular`, `monorail`, `miniature`, `preserved`, `construction`, `proposed`)
+-   **Roads**: motorized carriageways and bicycle/pedestrian infrastructure sharing space with traffic (`residential`, `secondary`, `primary`, `tertiary`, `service`, `living_street`, `primary_link`, `secondary_link`, `tertiary_link`, `unclassified`, `trunk`, `motorway_link`, `trunk_link`, `motorway`, `road`, `ramp`, `pedestrian`, `cycleway`, `proposed`, `construction`)
+-   **Paths**: off-carriageway routes (`footway`, `path`, `track`, `bridleway`, `trail`)
+-   **Railways**: track-bearing lines (`rail`, `light_rail`, `tram`, `subway`, `narrow_gauge`, `funicular`, `monorail`, `miniature`, `preserved`, `construction`, `proposed`)
 
 ### Performance and Size Optimizations
 
 To keep the GeoPackage file size minimal:
 
-- Only the geometry column is retained (`--fields _ogr_geometry_`).
-- Spatial index creation is disabled (`--lco SPATIAL_INDEX=NO`) since the rasterization step processes the vector layers line-by-line and does not require a spatial query index.
+-   Only the geometry column is retained (`--fields _ogr_geometry_`).
+-   Spatial index creation is disabled (`--lco SPATIAL_INDEX=NO`) since the rasterization step processes the vector layers line-by-line and does not require a spatial query index.
 
 ---
 
@@ -227,13 +225,13 @@ Each band is a binary mask: `1` = pixel belongs to that class, `0` = it does not
 
 ---
 
-## Stage 5 — Value encoding and COG assembly (`create_raster.sh`)
+## Stage 5 — Value encoding and COG assembly (`create_raster.py`)
 
 **Inputs:**
 
-- `input/osm/<AREA>_roads_smooth.tif` — road heatmap (A, values 1–10)
-- `input/clc/<AREA>_clc_classes_stack.tif` — 5-band one-hot stack (B–F)
-- `input/bounds/<AREA>.gpkg` — area boundary for clipping
+-   `input/osm/<AREA>_roads_smooth.tif` — road heatmap (A, values 1–10)
+-   `input/clc/<AREA>_clc_classes_stack.tif` — 5-band one-hot stack (B–F)
+-   `input/bounds/<AREA>.gpkg` — area boundary for clipping
 
 **Output:** `out/<AREA>_20m_v<N>.tif`
 
@@ -275,7 +273,7 @@ raw_calc.tif
      → out/<AREA>_20m_v<N>.tif
 ```
 
-The output version number auto-increments (`v1`, `v2`, …) so existing COGs are never silently overwritten (unless `OVERWRITE` is set in `raster.conf`).
+The output version number auto-increments (`v1`, `v2`, …) so existing COGs are never silently overwritten.
 
 ---
 
@@ -314,14 +312,16 @@ Prints file sizes and `rio cogeo info` output for every `.tif` in `raster/out/`,
 # activate the venv first
 source .venv/bin/activate
 
-bash raster/create_raster.sh
+uv run python -m raster.create_raster
 ```
 
-Override the config path:
+Change Python workflow settings by editing:
 
 ```bash
-RASTER_CONFIG_FILE=/path/to/custom.conf bash raster/create_raster.sh
+raster/raster_config.yaml
 ```
+
+The legacy shell workflow remains available as `bash raster/create_raster.sh`.
 
 Then build the coarse overview COGs the backend serves at low zooms:
 
