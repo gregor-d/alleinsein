@@ -6,13 +6,13 @@ from pathlib import Path
 # Core pipeline settings
 
 # Output COG version suffix.
-raster_version: str = "v4"
-overwrite: bool = True
+raster_version: str = "v5"
+# Combined product name for output and dissolved-boundary paths.
+output_area: str = "full_eu"
 
 # Projections & raster properties
-
 target_epsg: str = "EPSG:3035"
-
+overwrite: bool = True
 resolution: str = "20,20"
 nodata: int = 255
 data_type: str = "Byte"
@@ -64,14 +64,13 @@ countries: tuple[str, ...] = (
     "Hungary",
     "Romania",
     "Bulgaria",
-    "Moldova",
-    "Ukraine",
     # missing: "Faroe Islands", "Gibraltar", "Svalbard and Jan Mayen",
     # "Iceland", # island currently is out of bounds
+    # no clc landcover data
+    # "Moldova",
+    # "Ukraine",
 )
 
-# Combined product name for output and dissolved-boundary paths.
-output_area: str = "east_eu"
 # Country processing buffer in metres; final boundary masking removes it.
 bounds_buffer_m: int = 1000
 # Buffered bbox snap grid in metres.
