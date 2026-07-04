@@ -99,7 +99,7 @@ def browsing_scenario(
 
 
 def viewport_tiles(zoom: int, cx: float, cy: float) -> list[tuple[int, int, int]]:
-    """All (z, x, y) tiles visible in a VIEWPORT_W × VIEWPORT_H grid centred on cx/cy."""
+    """All (z, x, y) tiles visible in a VIEWPORT_W x VIEWPORT_H grid centred on cx/cy."""
     ct = morecantile.tms.get("WebMercatorQuad").tile(cx, cy, zoom)
     hw, hh = VIEWPORT_W // 2, VIEWPORT_H // 2
     return [
@@ -172,7 +172,7 @@ def print_report(
     )
     sep = "-" * len(header)
     print(f"\n{sep}\n{header}\n{sep}")
-    for a, b in zip(ra, rb):
+    for a, b in zip(ra, rb, strict=False):
         sa, sb = a.stats(), b.stats()
         faster = label_a if a.wall_s <= b.wall_s else label_b
         print(
@@ -220,7 +220,7 @@ def test_browsing_simulation():
             trust_env=False,
         ) as client:
             # warm up: open each dataset with one tile before measuring
-            action, zoom, cx, cy = scenario[0]
+            _action, zoom, cx, cy = scenario[0]
             z0, x0, y0 = viewport_tiles(zoom, cx, cy)[0]
             for raster in (RASTER_256, RASTER_512):
                 await client.get(
@@ -268,7 +268,7 @@ def test_tilesize_comparison():
             limits=limits,
             trust_env=False,
         ) as client:
-            action, zoom, cx, cy = scenario[0]
+            _action, zoom, cx, cy = scenario[0]
             z0, x0, y0 = viewport_tiles(zoom, cx, cy)[0]
             for ts in (256, 512):
                 await client.get(
