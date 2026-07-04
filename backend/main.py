@@ -101,8 +101,18 @@ def select_tier_raster(z: int | None) -> str:
     return tiers[-1].raster
 
 
-def get_raster_path(z: int | None = None, raster: str | None = None) -> Path:
-    name = raster if raster else select_tier_raster(z)
+def get_raster_path(
+    z: int | None = None,
+    raster: str | None = None,
+    fine_detail: bool = False,
+) -> Path:
+    if raster:
+        name = raster
+    elif fine_detail:
+        # Pin the finest tier (20m) for every tile, bypassing per-zoom tiering.
+        name = settings.raster_tiers[-1].raster
+    else:
+        name = select_tier_raster(z)
 
     # prevent directory traversal or access to subdirectories
     if not name or "/" in name or "\\" in name or name.startswith("."):

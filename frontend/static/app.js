@@ -394,11 +394,9 @@ function dataOpacityRowHTML(label) {
 }
 
 // BACKEND block: map engine, basemap (+ opacity), overlays (shared by full + mini panel).
-// Data-layer raster source switch (single pinned raster vs. backend zoom-tiering).
-// Only meaningful when a raster_override is configured; otherwise the backend
-// always tiers by zoom, so the switch is omitted.
+// Data-layer detail switch: "Fine" requests the backend's finest (20m) tier for
+// every zoom (?fine_detail=true); "Auto" lets the backend tier by zoom.
 function rasterSourceRowHTML() {
-    if (!CONFIG.raster_override) return '';
     return [
         '<div class="sub-label-row raster-source-row">',
         '  <div class="sub-label">Detail</div>',

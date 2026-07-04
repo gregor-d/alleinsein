@@ -9,16 +9,13 @@ const CONFIG = {
         : 'https://tiles.alleinseinkarte.de',
     tile_json_path: 'WebMercatorQuad/tilejson.json',
     tile_size: 512,
-    // Optional: pin a single raster (e.g. "germany_raster_v3.tif") bypassing the backend's per-zoom
-    // tiering. Leave null/empty to let the backend tier by zoom (the default).
-    raster_override: 'full_eu_20m_v5.tif',
     mask_geojson_path: 'raster-data-mask.geojson',
     mask_source_id: 'mask-source',
     mask_layer_id: 'mask-layer',
     mask_opacity: 0.45,
     mask_color: '#111111',
     measure_color: '#e6007e',
-    minimal_zoom: 6,
+    minimal_zoom: 5,
     maximal_zoom: 18,
     location_zoom: 12,
 };
@@ -212,8 +209,9 @@ let bottomBarEnabled = true;
 // (LOCATION → Interact → "Show in Map"). The settings-panel readout shows either
 // way; this only gates the floating window. Enabled by default.
 let pixelInMapEnabled = true;
-// Data-layer raster source mode. true = pin CONFIG.raster_override (single raster,
-// no tiering); false = let the backend pick a raster per zoom tier. Defaults to tiering.
+// Data-layer detail mode. true = ask the backend for fine detail (its finest 20m
+// tier for every zoom, via ?fine_detail=true); false = let the backend tier by zoom.
+// Defaults to tiering.
 let useRasterOverride = false;
 
 let activeOverlays = {
