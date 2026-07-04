@@ -202,7 +202,7 @@ class MapLibreEngine {
      * `opts.bidx` picks which raster band to render (1 = normal aloneness, 2 = the
      * slope-boosted hotspot band); the data COG can be multi-band, so titiler needs it
      * explicitly. `opts.raster` pins a specific raster file (used by hotspot-slope mode
-     * to point at the 2-band COG), bypassing per-zoom tiering like the override.
+     * to point at the 2-band COG), bypassing per-zoom tiering like fine-detail mode.
      */
     updateDataLayer(colormapJson, opacity, opts) {
         opts = opts || {};
@@ -228,9 +228,10 @@ class MapLibreEngine {
             if (opts.raster) {
                 // Hotspot-slope mode pins the 2-band raster (its overviews cover all zooms).
                 url.searchParams.set('raster', opts.raster);
-            } else if (useRasterOverride && CONFIG.raster_override) {
-                // Pin a single raster, bypasses the backend's per-zoom tiering entirely.
-                url.searchParams.set('raster', CONFIG.raster_override);
+            } else if (useRasterOverride) {
+                // Ask the backend for fine detail: it serves its finest (20m) tier
+                // for every zoom, bypassing per-zoom tiering.
+                url.searchParams.set('fine_detail', 'true');
             } else {
                 // Omitting `raster` lets the backend select the tier by zoom. Advertise
                 // the full zoom span (in titiler/camera-zoom terms) so MapLibre requests
