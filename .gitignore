@@ -60,7 +60,6 @@ Thumbs.db
 *.vrt
 
 # UV specific environment files
-uv.lock
 cloud-config.env.txt
 
 cache/
