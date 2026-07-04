@@ -16,6 +16,7 @@ const CONFIG = {
     minimal_zoom: 5,
     maximal_zoom: 18,
     location_zoom: 12,
+    dev_bar: false,
 };
 
 // Default map view used when no stored position is available.

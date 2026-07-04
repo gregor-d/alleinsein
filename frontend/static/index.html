@@ -117,6 +117,15 @@
             </div>
         </div>
         <!-- ░░░ DEV-BAR END ░░░ -->
+        <script>
+            // Hide the dev-bar when disabled in config.js. Collapsing
+            // --devbar-h to 0 slides #top-bar/#map/#settings-panel/
+            // #settings-cog back up, since they all offset by this variable.
+            if (typeof CONFIG !== 'undefined' && !CONFIG.dev_bar) {
+                document.getElementById('dev-bar').style.display = 'none';
+                document.documentElement.style.setProperty('--devbar-h', '0px');
+            }
+        </script>
 
         <!-- Top bar -->
         <header id="top-bar">
