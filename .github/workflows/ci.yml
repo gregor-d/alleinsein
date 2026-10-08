@@ -12,6 +12,9 @@ permissions:
 jobs:
     lint-and-type-check:
         runs-on: ubuntu-latest
+        env:
+            # keep `uv run` from re-syncing the default groups (incl. gdal)
+            UV_NO_SYNC: "1"
 
         steps:
             - name: Checkout
@@ -28,7 +31,7 @@ jobs:
                   python-version: "3.13"
 
             - name: Install dependencies
-              run: uv sync --locked --no-dev --group lint
+              run: uv sync --locked --no-group gdal
 
             - name: Ruff lint
               run: uv run ruff check .
