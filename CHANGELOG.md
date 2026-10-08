@@ -1,3 +1,28 @@
+## v2.6.0 (2026-10-08)
+
+### Feat
+
+- Implement dev-bar visibility toggle based on configuration
+- Add background layer for basemap opacity in MapLibre engine
+- Update basemap configuration to replace 'schummerung' with 'hillshade-dark' and streamline raster source handling
+- Update raster settings to version v5 and adjust output area configuration
+- Enhance raster path retrieval with fine detail option for improved tiering in backend and frontend
+- Add update_existing_cog script for advanced COG manipulation
+- Introduce slugify helpers for normalizing country/area names
+- Add unit tests for raster utilities and functionalities
+- Rebuild the dissolved boundary so it always matches the configured countries
+- add scripts for verifying raster integrity and killing dev ports
+- add dev-only endpoint to list available raster files
+- add CI workflow and update pyproject.toml for using project as a packge, linting and type checking
+- add slope-mod and dev-page to ui
+- add mosaic functionality for existing area web COG with patching support
+
+### Refactor
+
+- replace bash script with Python implementation for coarse raster generation
+- move raster pipeline to Python
+- update titiler environment configuration and enhance raster file handling
+
 ## v2.5.0 (2026-06-27)
 
 ### Feat
