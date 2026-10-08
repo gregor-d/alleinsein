@@ -29,12 +29,17 @@ dev = [
     { include-group = "lint" },
     "osmnx>=2.1.0",
     "python-dotenv>=1.0.1",
-    "gdal==3.12.2; sys_platform != 'win32'",
     "shapely>=2.1.2",
     "geopandas>=1.1.3",
     "pytest-playwright>=0.7.0",
     "playwright>=1.60.0",
 ]
+gdal = [
+    "gdal==3.12.2 ; sys_platform != 'win32'",
+]
+
+[tool.uv]
+default-groups = ["dev", "gdal"]
 
 
 [tool.pytest.ini_options]
@@ -60,6 +65,10 @@ select = [
 
 [tool.ty.src]
 include = ["backend", "raster", "tests"]
+
+[tool.ty.analysis]
+# GDAL needs native libs and is skipped in CI (see the `gdal` dependency group)
+allowed-unresolved-imports = ["osgeo.**", "osgeo_utils.**"]
 
 [tool.ty.terminal]
 output-format = "concise"
