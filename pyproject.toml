@@ -35,7 +35,7 @@ dev = [
     "playwright>=1.60.0",
 ]
 gdal = [
-    "gdal==3.12.2 ; sys_platform != 'win32'",
+    "gdal==3.13.1 ; sys_platform != 'win32'",
 ]
 
 [tool.uv]
