@@ -1421,30 +1421,30 @@ body.bottombar-hidden #bottom-bar {
    every component's base rules, so the responsive rules always win on source
    order (media queries add no specificity of their own). */
 @media (max-width: 767px) {
-  #map {
-    bottom: var(--bottombar-h);
-  }
-  /* No bar reserved at the bottom when it's toggled off. */
-  body.bottombar-hidden #map {
-    bottom: 0;
-  }
-  #bottom-bar {
-    display: block;
-  }
-  #fab-group {
-    bottom: calc(var(--bottombar-h) + 12px);
-    right: 12px;
-  }
-  /* Drop the FABs down to the screen edge when the bottom bar is toggled off. */
-  body.bottombar-hidden #fab-group {
-    bottom: 12px;
-  }
-  #fab-settings {
-    display: flex;
-  }
-  #settings-cog {
-    right: 12px;
-  }
+    #map {
+        bottom: var(--bottombar-h);
+    }
+    /* No bar reserved at the bottom when it's toggled off. */
+    body.bottombar-hidden #map {
+        bottom: 0;
+    }
+    #bottom-bar {
+        display: block;
+    }
+    #fab-group {
+        bottom: calc(var(--bottombar-h) + 12px);
+        right: 12px;
+    }
+    /* Drop the FABs down to the screen edge when the bottom bar is toggled off. */
+    body.bottombar-hidden #fab-group {
+        bottom: 12px;
+    }
+    #fab-settings {
+        display: flex;
+    }
+    #settings-cog {
+        right: 12px;
+    }
 
     #settings-panel {
         width: var(--panel-w);
